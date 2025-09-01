@@ -1,0 +1,11 @@
+[project]
+name = "CogniPredictAD"
+version = "0.1.0"
+dependencies = [
+    "numpy",
+    "matplotlib",
+    "scipy",
+    "networkx",
+]
+[tool.setuptools]
+package-dir = {"CogniPredictAD" = "src"}
