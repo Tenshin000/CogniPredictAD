@@ -1,11 +1,30 @@
 [project]
 name = "CogniPredictAD"
 version = "0.1.0"
+description = "Cognitive prediction pipeline with ML models"
+readme = "README.md"
+requires-python = ">=3.11"
 dependencies = [
     "numpy",
-    "matplotlib",
+    "pandas",
     "scipy",
+    "matplotlib",
+    "seaborn",
+    "plotly",
     "networkx",
+    "folium",
+    "imbalanced-learn",
+    "scikit-learn",
+    "mlxtend",
+    "xgboost",
+    "lightgbm",
+    "catboost",
+    "imodels",
+    "interpret",
+    "shap",
+    "openpyxl",
+    "jupyter",
 ]
+
 [tool.setuptools]
-package-dir = {"CogniPredictAD" = "src"}
+package-dir = { "CogniPredictAD" = "src" }
