@@ -1,0 +1,733 @@
+IF EcogSPMem <= 1.79
+|   |--- FAQ <= 0.50
+|   |   |--- MOCA <= 23.50
+|   |   |   |--- ADAS13 <= 10.50
+|   |   |   |   |--- EcogPtLang <= 2.16
+|   |   |   |   |   |--- Hippocampus/ICV <= 0.00
+|   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |--- Hippocampus/ICV >  0.00
+|   |   |   |   |   |   |--- PTAU/ABETA <= 0.06
+|   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |--- PTAU/ABETA >  0.06
+|   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |--- EcogPtLang >  2.16
+|   |   |   |   |   |--- MMSE <= 27.50
+|   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |--- MMSE >  27.50
+|   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |--- ADAS13 >  10.50
+|   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |--- AGE <= 76.50
+|   |   |   |   |   |   |--- RAVLT_perc_forgetting <= 59.03
+|   |   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |   |--- EcogPtPlan <= 1.46
+|   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- EcogPtPlan >  1.46
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- RAVLT_perc_forgetting >  59.03
+|   |   |   |   |   |   |   |--- ADAS13 <= 30.00
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- ADAS13 >  30.00
+|   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |--- AGE >  76.50
+|   |   |   |   |   |   |--- PTAU/ABETA <= 0.02
+|   |   |   |   |   |   |   |--- FDG <= 1.21
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- FDG >  1.21
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |--- PTAU/ABETA >  0.02
+|   |   |   |   |   |   |   |--- EcogSPPlan <= 1.34
+|   |   |   |   |   |   |   |   |--- ADAS13 <= 21.50
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate <= 40.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate >  40.50
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPDivatt <= 1.05
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPDivatt >  1.05
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- ADAS13 >  21.50
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- EcogSPPlan >  1.34
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |--- PTEDUCAT <= 13.50
+|   |   |   |   |   |   |--- WholeBrain/ICV <= 0.63
+|   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |--- WholeBrain/ICV >  0.63
+|   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |--- PTEDUCAT >  13.50
+|   |   |   |   |   |   |--- FDG <= 1.36
+|   |   |   |   |   |   |   |--- RAVLT_immediate <= 39.50
+|   |   |   |   |   |   |   |   |--- Ventricles/ICV <= 0.03
+|   |   |   |   |   |   |   |   |   |--- EcogPtMem <= 2.50
+|   |   |   |   |   |   |   |   |   |   |--- AGE <= 77.50
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 5
+|   |   |   |   |   |   |   |   |   |   |--- AGE >  77.50
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |   |   |   |   |   |--- EcogPtMem >  2.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- Ventricles/ICV >  0.03
+|   |   |   |   |   |   |   |   |   |--- EcogPtOrgan <= 1.55
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |   |--- EcogPtOrgan >  1.55
+|   |   |   |   |   |   |   |   |   |   |--- EcogPtDivatt <= 3.02
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |   |--- EcogPtDivatt >  3.02
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- RAVLT_immediate >  39.50
+|   |   |   |   |   |   |   |   |--- EcogPtOrgan <= 1.63
+|   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- EcogPtOrgan >  1.63
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- FDG >  1.36
+|   |   |   |   |   |   |   |--- RAVLT_learning <= 6.00
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- RAVLT_learning >  6.00
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |--- MOCA >  23.50
+|   |   |   |--- EcogPtMem <= 2.24
+|   |   |   |   |--- EcogSPVisspat <= 1.57
+|   |   |   |   |   |--- EcogSPPlan <= 1.30
+|   |   |   |   |   |   |--- RAVLT_immediate <= 33.50
+|   |   |   |   |   |   |   |--- EcogSPDivatt <= 1.71
+|   |   |   |   |   |   |   |   |--- FDG <= 1.40
+|   |   |   |   |   |   |   |   |   |--- ADAS13 <= 13.50
+|   |   |   |   |   |   |   |   |   |   |--- ADAS13 <= 5.00
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |   |--- ADAS13 >  5.00
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |   |--- ADAS13 >  13.50
+|   |   |   |   |   |   |   |   |   |   |--- TRABSCOR <= 53.00
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |   |--- TRABSCOR >  53.00
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 4
+|   |   |   |   |   |   |   |   |--- FDG >  1.40
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- EcogSPDivatt >  1.71
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- RAVLT_immediate >  33.50
+|   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |--- PTAU/ABETA <= 0.01
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |--- PTAU/ABETA >  0.01
+|   |   |   |   |   |   |   |   |   |--- RAVLT_learning <= -1.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |--- RAVLT_learning >  -1.50
+|   |   |   |   |   |   |   |   |   |   |--- FDG <= 1.66
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 18
+|   |   |   |   |   |   |   |   |   |   |--- FDG >  1.66
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |--- EcogSPPlan >  1.30
+|   |   |   |   |   |   |--- AGE <= 66.50
+|   |   |   |   |   |   |   |--- EcogSPOrgan <= 1.05
+|   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- EcogSPOrgan >  1.05
+|   |   |   |   |   |   |   |   |--- EcogPtMem <= 1.90
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |--- EcogPtMem >  1.90
+|   |   |   |   |   |   |   |   |   |--- EcogPtPlan <= 1.36
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- EcogPtPlan >  1.36
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- AGE >  66.50
+|   |   |   |   |   |   |   |--- RAVLT_perc_forgetting <= 10.80
+|   |   |   |   |   |   |   |   |--- RAVLT_immediate <= 50.50
+|   |   |   |   |   |   |   |   |   |--- MidTemp/ICV <= 0.02
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |--- MidTemp/ICV >  0.02
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- RAVLT_immediate >  50.50
+|   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- RAVLT_perc_forgetting >  10.80
+|   |   |   |   |   |   |   |   |--- Ventricles/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |--- RAVLT_perc_forgetting <= 18.33
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |--- RAVLT_perc_forgetting >  18.33
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- Ventricles/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |--- EcogSPVisspat >  1.57
+|   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |--- EcogPtMem >  2.24
+|   |   |   |   |--- MMSE <= 27.50
+|   |   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |   |--- EcogSPOrgan <= 1.07
+|   |   |   |   |   |   |   |--- EcogSPMem <= 1.25
+|   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- EcogSPMem >  1.25
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- EcogSPOrgan >  1.07
+|   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |--- MMSE >  27.50
+|   |   |   |   |   |--- EcogPtMem <= 2.81
+|   |   |   |   |   |   |--- AGE <= 71.50
+|   |   |   |   |   |   |   |--- EcogSPPlan <= 1.18
+|   |   |   |   |   |   |   |   |--- ADAS13 <= 14.50
+|   |   |   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- ADAS13 >  14.50
+|   |   |   |   |   |   |   |   |   |--- EcogSPDivatt <= 1.38
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |--- EcogSPDivatt >  1.38
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- EcogSPPlan >  1.18
+|   |   |   |   |   |   |   |   |--- MidTemp/ICV <= 0.02
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |--- MidTemp/ICV >  0.02
+|   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |--- AGE >  71.50
+|   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |--- EcogPtMem >  2.81
+|   |   |   |   |   |   |--- RAVLT_immediate <= 32.00
+|   |   |   |   |   |   |   |--- EcogPtOrgan <= 1.42
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- EcogPtOrgan >  1.42
+|   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |--- RAVLT_immediate >  32.00
+|   |   |   |   |   |   |   |--- AGE <= 71.50
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- AGE >  71.50
+|   |   |   |   |   |   |   |   |--- AGE <= 73.50
+|   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- AGE >  73.50
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |--- FAQ >  0.50
+|   |   |--- EcogSPMem <= 1.39
+|   |   |   |--- EcogPtMem <= 2.05
+|   |   |   |   |--- MOCA <= 24.50
+|   |   |   |   |   |--- RAVLT_immediate <= 41.50
+|   |   |   |   |   |   |--- Ventricles/ICV <= 0.03
+|   |   |   |   |   |   |   |--- PTAU/ABETA <= 0.02
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- PTAU/ABETA >  0.02
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- Ventricles/ICV >  0.03
+|   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |--- RAVLT_immediate >  41.50
+|   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |--- MOCA >  24.50
+|   |   |   |   |   |--- Ventricles/ICV <= 0.01
+|   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |--- Ventricles/ICV >  0.01
+|   |   |   |   |   |   |--- EcogPtDivatt <= 1.98
+|   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |--- EcogPtDivatt >  1.98
+|   |   |   |   |   |   |   |--- Ventricles/ICV <= 0.02
+|   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- Ventricles/ICV >  0.02
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |--- EcogPtMem >  2.05
+|   |   |   |   |--- FDG <= 1.29
+|   |   |   |   |   |--- Ventricles/ICV <= 0.04
+|   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |--- Ventricles/ICV >  0.04
+|   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |--- FDG >  1.29
+|   |   |   |   |   |--- PTAU/ABETA <= 0.04
+|   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |--- PTAU/ABETA >  0.04
+|   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |--- EcogSPMem >  1.39
+|   |   |   |--- WholeBrain/ICV <= 0.69
+|   |   |   |   |--- EcogPtMem <= 3.12
+|   |   |   |   |   |--- EcogSPLang <= 1.94
+|   |   |   |   |   |   |--- PTAU/ABETA <= 0.01
+|   |   |   |   |   |   |   |--- EcogPtVisspat <= 1.35
+|   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- EcogPtVisspat >  1.35
+|   |   |   |   |   |   |   |   |--- ADAS13 <= 16.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |--- ADAS13 >  16.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |--- PTAU/ABETA >  0.01
+|   |   |   |   |   |   |   |--- EcogPtDivatt <= 1.12
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- EcogPtDivatt >  1.12
+|   |   |   |   |   |   |   |   |--- FDG <= 1.51
+|   |   |   |   |   |   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |   |--- TRABSCOR <= 81.00
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |   |   |--- TRABSCOR >  81.00
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |--- FDG >  1.51
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |--- EcogSPLang >  1.94
+|   |   |   |   |   |   |--- FAQ <= 5.50
+|   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- FAQ >  5.50
+|   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |--- EcogPtMem >  3.12
+|   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |--- WholeBrain/ICV >  0.69
+|   |   |   |   |--- Ventricles/ICV <= 0.02
+|   |   |   |   |   |--- AGE <= 73.00
+|   |   |   |   |   |   |--- EcogPtMem <= 3.06
+|   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |--- EcogPtMem >  3.06
+|   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |--- AGE >  73.00
+|   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |--- Ventricles/ICV >  0.02
+|   |   |   |   |   |--- ADAS13 <= 4.50
+|   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |--- ADAS13 >  4.50
+|   |   |   |   |   |   |--- EcogPtVisspat <= 3.20
+|   |   |   |   |   |   |   |--- EcogSPPlan <= 1.45
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |   |--- WholeBrain/ICV <= 0.71
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- WholeBrain/ICV >  0.71
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- EcogSPPlan >  1.45
+|   |   |   |   |   |   |   |   |--- EcogSPDivatt <= 1.88
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate <= 45.00
+|   |   |   |   |   |   |   |   |   |   |--- Ventricles/ICV <= 0.03
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |   |   |--- Ventricles/ICV >  0.03
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate >  45.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- EcogSPDivatt >  1.88
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- EcogPtVisspat >  3.20
+|   |   |   |   |   |   |   |--- THEN class = 2.0
+IF EcogSPMem >  1.79
+|   |--- MMSE <= 23.50
+|   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |--- FAQ <= 1.50
+|   |   |   |   |--- PTEDUCAT <= 15.00
+|   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |--- PTEDUCAT >  15.00
+|   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |--- FAQ >  1.50
+|   |   |   |   |--- TRABSCOR <= 114.00
+|   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |--- EcogSPMem <= 2.81
+|   |   |   |   |   |   |   |--- PTGENDER <= 0.50
+|   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |--- PTGENDER >  0.50
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |--- EcogSPMem >  2.81
+|   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |--- TRABSCOR >  114.00
+|   |   |   |   |   |--- THEN class = 3.0
+|   |   |--- Fusiform/ICV >  0.01
+|   |   |   |--- ADAS13 <= 23.50
+|   |   |   |   |--- EcogSPDivatt <= 2.12
+|   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |--- EcogSPDivatt >  2.12
+|   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |--- ADAS13 >  23.50
+|   |   |   |   |--- THEN class = 2.0
+|   |--- MMSE >  23.50
+|   |   |--- ADAS13 <= 16.50
+|   |   |   |--- WholeBrain/ICV <= 0.65
+|   |   |   |   |--- EcogSPLang <= 1.40
+|   |   |   |   |   |--- EcogSPLang <= 1.33
+|   |   |   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |   |   |--- PTAU/ABETA <= 0.01
+|   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- PTAU/ABETA >  0.01
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |--- EcogSPLang >  1.33
+|   |   |   |   |   |   |--- MMSE <= 27.50
+|   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |--- MMSE >  27.50
+|   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |--- EcogSPLang >  1.40
+|   |   |   |   |   |--- MOCA <= 27.50
+|   |   |   |   |   |   |--- EcogPtMem <= 1.53
+|   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- EcogPtMem >  1.53
+|   |   |   |   |   |   |   |--- EcogPtMem <= 2.68
+|   |   |   |   |   |   |   |   |--- RAVLT_immediate <= 52.50
+|   |   |   |   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPLang <= 1.83
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPLang >  1.83
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- RAVLT_immediate >  52.50
+|   |   |   |   |   |   |   |   |   |--- EcogPtDivatt <= 2.25
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- EcogPtDivatt >  2.25
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- EcogPtMem >  2.68
+|   |   |   |   |   |   |   |   |--- MOCA <= 22.50
+|   |   |   |   |   |   |   |   |   |--- ADAS13 <= 15.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- ADAS13 >  15.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |--- MOCA >  22.50
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |--- MOCA >  27.50
+|   |   |   |   |   |   |--- RAVLT_immediate <= 33.00
+|   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- RAVLT_immediate >  33.00
+|   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |--- WholeBrain/ICV >  0.65
+|   |   |   |   |--- EcogSPMem <= 2.34
+|   |   |   |   |   |--- MOCA <= 25.50
+|   |   |   |   |   |   |--- MidTemp/ICV <= 0.02
+|   |   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |   |--- EcogSPVisspat <= 1.04
+|   |   |   |   |   |   |   |   |   |--- EcogPtDivatt <= 1.38
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |--- EcogPtDivatt >  1.38
+|   |   |   |   |   |   |   |   |   |   |--- EcogPtOrgan <= 1.45
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 2
+|   |   |   |   |   |   |   |   |   |   |--- EcogPtOrgan >  1.45
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 2
+|   |   |   |   |   |   |   |   |--- EcogSPVisspat >  1.04
+|   |   |   |   |   |   |   |   |   |--- EcogPtVisspat <= 2.38
+|   |   |   |   |   |   |   |   |   |   |--- FAQ <= 1.50
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |   |   |   |   |   |   |--- FAQ >  1.50
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |   |   |   |   |   |--- EcogPtVisspat >  2.38
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPDivatt <= 3.38
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPDivatt >  3.38
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate <= 27.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate >  27.50
+|   |   |   |   |   |   |   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |   |   |--- MidTemp/ICV >  0.02
+|   |   |   |   |   |   |   |--- EcogSPLang <= 1.81
+|   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- EcogSPLang >  1.81
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |--- MOCA >  25.50
+|   |   |   |   |   |   |--- AGE <= 62.50
+|   |   |   |   |   |   |   |--- TRABSCOR <= 52.50
+|   |   |   |   |   |   |   |   |--- Ventricles/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |--- ADAS13 <= 5.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- ADAS13 >  5.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- Ventricles/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- TRABSCOR >  52.50
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |--- AGE >  62.50
+|   |   |   |   |   |   |   |--- Ventricles/ICV <= 0.02
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- Ventricles/ICV >  0.02
+|   |   |   |   |   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate <= 35.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate >  35.00
+|   |   |   |   |   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 4
+|   |   |   |   |   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |--- EcogSPMem >  2.34
+|   |   |   |   |   |--- PTAU/ABETA <= 0.03
+|   |   |   |   |   |   |--- TRABSCOR <= 52.00
+|   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |--- TRABSCOR >  52.00
+|   |   |   |   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |   |   |   |--- EcogSPVisspat <= 1.31
+|   |   |   |   |   |   |   |   |   |--- AGE <= 74.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |--- AGE >  74.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- EcogSPVisspat >  1.31
+|   |   |   |   |   |   |   |   |   |--- PTGENDER <= 0.50
+|   |   |   |   |   |   |   |   |   |   |--- WholeBrain/ICV <= 0.66
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |   |--- WholeBrain/ICV >  0.66
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- PTGENDER >  0.50
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPDivatt <= 2.55
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPDivatt >  2.55
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 2
+|   |   |   |   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |   |--- EcogPtVisspat <= 1.07
+|   |   |   |   |   |   |   |   |   |   |--- RAVLT_immediate <= 42.50
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 2
+|   |   |   |   |   |   |   |   |   |   |--- RAVLT_immediate >  42.50
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |   |--- EcogPtVisspat >  1.07
+|   |   |   |   |   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |   |--- MMSE <= 28.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |--- MMSE >  28.50
+|   |   |   |   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 2
+|   |   |   |   |   |--- PTAU/ABETA >  0.03
+|   |   |   |   |   |   |--- PTAU/ABETA <= 0.05
+|   |   |   |   |   |   |   |--- WholeBrain/ICV <= 0.71
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |--- WholeBrain/ICV >  0.71
+|   |   |   |   |   |   |   |   |--- EcogSPVisspat <= 1.27
+|   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |--- EcogSPVisspat >  1.27
+|   |   |   |   |   |   |   |   |   |--- TRABSCOR <= 53.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- TRABSCOR >  53.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- PTAU/ABETA >  0.05
+|   |   |   |   |   |   |   |--- EcogSPLang <= 1.42
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- EcogSPLang >  1.42
+|   |   |   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |--- PTEDUCAT <= 15.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |   |--- PTEDUCAT >  15.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |--- TRABSCOR <= 192.50
+|   |   |   |   |   |   |   |   |   |   |--- EcogPtOrgan <= 3.27
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |   |--- EcogPtOrgan >  3.27
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |   |--- TRABSCOR >  192.50
+|   |   |   |   |   |   |   |   |   |   |--- Ventricles/ICV <= 0.02
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |   |--- Ventricles/ICV >  0.02
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |--- ADAS13 >  16.50
+|   |   |   |--- FAQ <= 8.50
+|   |   |   |   |--- MMSE <= 26.50
+|   |   |   |   |   |--- FAQ <= 2.50
+|   |   |   |   |   |   |--- WholeBrain/ICV <= 0.73
+|   |   |   |   |   |   |   |--- EcogSPPlan <= 3.10
+|   |   |   |   |   |   |   |   |--- EcogPtDivatt <= 2.88
+|   |   |   |   |   |   |   |   |   |--- AGE <= 88.50
+|   |   |   |   |   |   |   |   |   |   |--- RAVLT_learning <= -0.50
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |   |   |--- RAVLT_learning >  -0.50
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 4
+|   |   |   |   |   |   |   |   |   |--- AGE >  88.50
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |--- EcogPtDivatt >  2.88
+|   |   |   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- EcogSPPlan >  3.10
+|   |   |   |   |   |   |   |   |--- PTEDUCAT <= 15.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |--- PTEDUCAT >  15.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- WholeBrain/ICV >  0.73
+|   |   |   |   |   |   |   |--- FDG <= 1.19
+|   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |--- FDG >  1.19
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |--- FAQ >  2.50
+|   |   |   |   |   |   |--- EcogPtLang <= 3.11
+|   |   |   |   |   |   |   |--- Ventricles/ICV <= 0.01
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- Ventricles/ICV >  0.01
+|   |   |   |   |   |   |   |   |--- ADAS13 <= 35.50
+|   |   |   |   |   |   |   |   |   |--- EcogPtPlan <= 2.02
+|   |   |   |   |   |   |   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 5
+|   |   |   |   |   |   |   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 5
+|   |   |   |   |   |   |   |   |   |--- EcogPtPlan >  2.02
+|   |   |   |   |   |   |   |   |   |   |--- FDG <= 1.25
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |   |   |--- FDG >  1.25
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 2
+|   |   |   |   |   |   |   |   |--- ADAS13 >  35.50
+|   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |--- EcogPtLang >  3.11
+|   |   |   |   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |--- MMSE >  26.50
+|   |   |   |   |   |--- WholeBrain/ICV <= 0.66
+|   |   |   |   |   |   |--- EcogPtMem <= 3.25
+|   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |--- EcogPtMem >  3.25
+|   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |--- WholeBrain/ICV >  0.66
+|   |   |   |   |   |   |--- EcogPtLang <= 2.10
+|   |   |   |   |   |   |   |--- EcogSPLang <= 2.06
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |   |   |--- FDG <= 1.37
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPPlan <= 1.25
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 2
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPPlan >  1.25
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- FDG >  1.37
+|   |   |   |   |   |   |   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate <= 32.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate >  32.00
+|   |   |   |   |   |   |   |   |   |   |--- Hippocampus/ICV <= 0.00
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |   |--- Hippocampus/ICV >  0.00
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |--- EcogSPLang >  2.06
+|   |   |   |   |   |   |   |   |--- RAVLT_learning <= 2.50
+|   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |--- RAVLT_learning >  2.50
+|   |   |   |   |   |   |   |   |   |--- FDG <= 1.01
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- FDG >  1.01
+|   |   |   |   |   |   |   |   |   |   |--- Hippocampus/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |   |   |--- Hippocampus/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |--- EcogPtLang >  2.10
+|   |   |   |   |   |   |   |--- PTAU/ABETA <= 0.04
+|   |   |   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate <= 27.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- RAVLT_immediate >  27.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 0.0
+|   |   |   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |--- PTAU/ABETA >  0.04
+|   |   |   |   |   |   |   |   |--- MOCA <= 17.50
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |--- MOCA >  17.50
+|   |   |   |   |   |   |   |   |   |--- PTEDUCAT <= 15.00
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPMem <= 3.44
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |   |   |--- EcogSPMem >  3.44
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- PTEDUCAT >  15.00
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |--- FAQ >  8.50
+|   |   |   |   |--- MMSE <= 26.50
+|   |   |   |   |   |--- EcogSPVisspat <= 2.14
+|   |   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |   |--- EcogPtMem <= 1.99
+|   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |--- EcogPtMem >  1.99
+|   |   |   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |--- WholeBrain/ICV <= 0.65
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |   |--- WholeBrain/ICV >  0.65
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |   |--- EcogSPOrgan <= 1.92
+|   |   |   |   |   |   |   |   |--- EcogPtVisspat <= 1.06
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |   |   |--- EcogPtVisspat >  1.06
+|   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- EcogSPOrgan >  1.92
+|   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |--- EcogSPVisspat >  2.14
+|   |   |   |   |   |   |--- RAVLT_perc_forgetting <= 46.43
+|   |   |   |   |   |   |   |--- EcogPtVisspat <= 2.08
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- EcogPtVisspat >  2.08
+|   |   |   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- RAVLT_perc_forgetting >  46.43
+|   |   |   |   |   |   |   |--- Hippocampus/ICV <= 0.00
+|   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- Hippocampus/ICV >  0.00
+|   |   |   |   |   |   |   |   |--- EcogSPLang <= 1.17
+|   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |--- EcogSPLang >  1.17
+|   |   |   |   |   |   |   |   |   |--- EcogPtPlan <= 2.42
+|   |   |   |   |   |   |   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 2
+|   |   |   |   |   |   |   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |   |   |   |   |   |   |--- truncated branch of depth 3
+|   |   |   |   |   |   |   |   |   |--- EcogPtPlan >  2.42
+|   |   |   |   |   |   |   |   |   |   |--- FAQ <= 11.50
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |   |--- FAQ >  11.50
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |--- MMSE >  26.50
+|   |   |   |   |   |--- EcogPtVisspat <= 3.00
+|   |   |   |   |   |   |--- EcogPtPlan <= 1.08
+|   |   |   |   |   |   |   |--- EcogSPVisspat <= 2.23
+|   |   |   |   |   |   |   |   |--- EcogSPPlan <= 2.70
+|   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |--- EcogSPPlan >  2.70
+|   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |--- EcogSPVisspat >  2.23
+|   |   |   |   |   |   |   |   |--- THEN class = 1.0
+|   |   |   |   |   |   |--- EcogPtPlan >  1.08
+|   |   |   |   |   |   |   |--- Hippocampus/ICV <= 0.00
+|   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |--- Hippocampus/ICV >  0.00
+|   |   |   |   |   |   |   |   |--- AGE <= 80.00
+|   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |--- AGE >  80.00
+|   |   |   |   |   |   |   |   |   |--- EcogSPLang <= 2.20
+|   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |   |   |   |   |--- EcogSPLang >  2.20
+|   |   |   |   |   |   |   |   |   |   |--- EcogPtOrgan <= 1.81
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 3.0
+|   |   |   |   |   |   |   |   |   |   |--- EcogPtOrgan >  1.81
+|   |   |   |   |   |   |   |   |   |   |   |--- THEN class = 2.0
+|   |   |   |   |   |--- EcogPtVisspat >  3.00
+|   |   |   |   |   |   |--- THEN class = 1.0

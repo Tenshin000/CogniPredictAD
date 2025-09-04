@@ -69,31 +69,34 @@ class ADNIClassifier:
     #   CLASSIFIERS DEFINITION    #
     # ----------------------------# 
     def _default_classifiers_1(self):
-        """
-        Return a dictionary with tuned classifier instances.
-        """
         return {
             'Random Forest': RandomForestClassifier(
                 random_state=42, class_weight='balanced', n_jobs=-1,
-                max_depth=None, max_features=0.8, min_samples_leaf=1, n_estimators=100
+                criterion='entropy', max_depth=None, max_features=1.0,
+                min_samples_leaf=2, n_estimators=100
             ),
             'Extra Trees': ExtraTreesClassifier(
                 random_state=42, class_weight='balanced', n_jobs=-1,
-                max_depth=None, max_features=1.0, min_samples_leaf=4, n_estimators=50
+                criterion='entropy', max_depth=None, max_features=1.0,
+                min_samples_leaf=2, n_estimators=75
             ),
             'XGBoost': XGBClassifier(
                 random_state=42, use_label_encoder=False, eval_metric='mlogloss', verbosity=0,
-                colsample_bytree=1.0, learning_rate=0.05, max_depth=6, n_estimators=50,
-                reg_alpha=0, reg_lambda=5, subsample=1.0
+                colsample_bytree=0.7, gamma=1.0, learning_rate=0.1,
+                max_depth=6, n_estimators=50, reg_alpha=1, reg_lambda=0,
+                subsample=1.0
             ),
             'LightGBM': LGBMClassifier(
                 random_state=42, verbose=-1,
-                colsample_bytree=1.0, learning_rate=0.3, max_depth=6, min_child_samples=5,
-                n_estimators=50, num_leaves=30, reg_alpha=1, reg_lambda=0, subsample=0.8
+                colsample_bytree=1.0, learning_rate=0.01, max_depth=8,
+                min_child_samples=20, n_estimators=100, num_leaves=15,
+                reg_alpha=0, reg_lambda=1, subsample=0.8
             ),
             'CatBoost': CatBoostClassifier(
                 random_state=42, verbose=False, loss_function='MultiClass',
-                depth=3, iterations=100, l2_leaf_reg=3, learning_rate=0.3
+                bagging_temperature=0.0, border_count=64, depth=8,
+                iterations=75, l2_leaf_reg=3, learning_rate=0.1,
+                random_strength=0.5
             ),
             'Multinomial Logistic Regression': Pipeline([
                 ('scaler', StandardScaler()),
@@ -104,28 +107,16 @@ class ADNIClassifier:
             ]),
             'KNN': Pipeline([
                 ('scaler', StandardScaler()),
-                ('knn', KNeighborsClassifier(
-                    n_neighbors=10, p=1, weights='distance', n_jobs=-1
-                ))
+                ('knn', KNeighborsClassifier(n_neighbors=10, p=1, weights='distance', n_jobs=-1))
             ]),
-            'Bagging': BaggingClassifier(
-                random_state=42, n_jobs=-1,
-                bootstrap=False, max_features=1.0, max_samples=0.6, n_estimators=100
-            )
+            'Bagging': BaggingClassifier(random_state=42, n_jobs=-1, bootstrap=False, max_features=1.0, max_samples=0.6, n_estimators=100)
         }
 
+
     def _xai_classifiers_1(self):
-        """
-        Return a dictionary with XAI classifier instances (tuned where possible).
-        """
         return {
-            'Decision Tree': DecisionTreeClassifier(
-                random_state=42, class_weight='balanced',
-                max_depth=None, max_features=0.8, min_samples_leaf=10, min_samples_split=2
-            ),
-            'OptimalTree': OptimalTreeClassifier(random_state=42, class_weight='balanced',
-                max_depth=None, max_features=0.8, min_samples_leaf=10, min_samples_split=2),
-            'ExplainableBoosting': ExplainableBoostingClassifier(random_state=42)
+            'Decision Tree': DecisionTreeClassifier(random_state=42, class_weight='balanced', max_depth=None, max_features=0.8, min_samples_leaf=10, min_samples_split=2),
+            'OptimalTree': OptimalTreeClassifier(random_state=42, balance=True, feature_exchange=True, look_ahead=True, regularization=0.0)
         }
 
     
@@ -136,25 +127,31 @@ class ADNIClassifier:
         return {
             'Random Forest': RandomForestClassifier(
                 random_state=42, class_weight='balanced', n_jobs=-1,
-                max_depth=6, max_features=0.5, min_samples_leaf=1, n_estimators=100
+                criterion='entropy', max_depth=6, max_features=0.5,
+                min_samples_leaf=2, n_estimators=50
             ),
             'Extra Trees': ExtraTreesClassifier(
                 random_state=42, class_weight='balanced', n_jobs=-1,
-                max_depth=None, max_features=0.8, min_samples_leaf=10, n_estimators=100
+                criterion='entropy', max_depth=None, max_features=1.0,
+                min_samples_leaf=8, n_estimators=50
             ),
             'XGBoost': XGBClassifier(
                 random_state=42, use_label_encoder=False, eval_metric='mlogloss', verbosity=0,
-                colsample_bytree=1.0, learning_rate=0.3, max_depth=3, n_estimators=50,
-                reg_alpha=1, reg_lambda=5, subsample=0.8
+                colsample_bytree=1.0, gamma=1.0, learning_rate=0.1,
+                max_depth=8, n_estimators=100, reg_alpha=0, reg_lambda=1,
+                subsample=0.8
             ),
             'LightGBM': LGBMClassifier(
                 random_state=42, verbose=-1,
-                colsample_bytree=1.0, learning_rate=0.05, max_depth=6, min_child_samples=50,
-                n_estimators=100, num_leaves=15, reg_alpha=0, reg_lambda=1, subsample=0.8
+                colsample_bytree=0.7, learning_rate=0.1, max_depth=8,
+                min_child_samples=5, n_estimators=100, num_leaves=15,
+                reg_alpha=1, reg_lambda=1, subsample=0.8
             ),
             'CatBoost': CatBoostClassifier(
                 random_state=42, verbose=False, loss_function='MultiClass',
-                depth=6, iterations=100, l2_leaf_reg=7, learning_rate=0.3
+                bagging_temperature=0.0, border_count=32, depth=6,
+                iterations=100, l2_leaf_reg=1, learning_rate=0.1,
+                random_strength=0.5
             ),
             'Multinomial Logistic Regression': Pipeline([
                 ('scaler', StandardScaler()),
@@ -165,27 +162,16 @@ class ADNIClassifier:
             ]),
             'KNN': Pipeline([
                 ('scaler', StandardScaler()),
-                ('knn', KNeighborsClassifier(
-                    n_neighbors=10, p=1, weights='distance', n_jobs=-1
-                ))
+                ('knn', KNeighborsClassifier(n_neighbors=10, p=1, weights='distance', n_jobs=-1))
             ]),
-            'Bagging': BaggingClassifier(
-                random_state=42, n_jobs=-1,
-                bootstrap=False, max_features=0.8, max_samples=0.6, n_estimators=100
-            )
+            'Bagging': BaggingClassifier(random_state=42, n_jobs=-1, bootstrap=False, max_features=0.8, max_samples=0.6, n_estimators=100)
         }
 
+
     def _xai_classifiers_2(self): 
-        """
-        Return a dictionary with XAI classifier instances (tuned where possible).
-        """
         return {
-            'Decision Tree': DecisionTreeClassifier(
-                random_state=42, class_weight='balanced',
-                max_depth=6, max_features=0.5, min_samples_leaf=1, min_samples_split=8
-            ),
-            'OptimalTree': OptimalTreeClassifier(random_state=42),
-            'ExplainableBoosting': ExplainableBoostingClassifier(random_state=42)
+            'Decision Tree': DecisionTreeClassifier(random_state=42, class_weight='balanced', max_depth=4, max_features=1.0, min_samples_leaf=1, min_samples_split=2),
+            'OptimalTree': OptimalTreeClassifier(random_state=42, balance=True, feature_exchange=True, look_ahead=True, regularization=0.0)
         }
 
     # ----------------------------#
@@ -306,21 +292,65 @@ class ADNIClassifier:
     # ----------------------------# 
     def _plot_roc_per_class(self, roc_dict, classes):
         """
-        Plot ROC curves for each class comparing all models (one figure per class).
+        Plot ROC curves for each class comparing all models in a single figure.
+        Uses a grid with 2 columns (2 graphs above, 2 below for 4 classes).
+        If number of classes != 4, uses ncols=2 and computes nrows = ceil(n_classes/2).
         """
-        for cls in classes:
-            plt.figure(figsize=(8, 6))
+        import math
+
+        n_classes = len(classes)
+        if n_classes == 0:
+            return
+
+        ncols = 2
+        nrows = math.ceil(n_classes / ncols)
+        figsize = (12, 5 * nrows)  # width x height, adjust if you want bigger/smaller
+
+        fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
+        # ensure axes is a flattened array for simple indexing
+        if isinstance(axes, np.ndarray):
+            axes = axes.flatten()
+        else:
+            axes = [axes]
+
+        for idx, cls in enumerate(classes):
+            ax = axes[idx]
+            # plot each classifier's ROC for this class
             for clf_name, (fpr_dict, tpr_dict, auc_dict) in roc_dict.items():
+                fpr = fpr_dict.get(cls, None)
+                tpr = tpr_dict.get(cls, None)
                 auc_val = auc_dict.get(cls, np.nan)
-                plt.plot(fpr_dict.get(cls, [0, 1]), tpr_dict.get(cls, [0, 1]),
-                         label=f'{clf_name} (AUC={auc_val:.2f})' if not np.isnan(auc_val) else f'{clf_name} (AUC=nan)')
-            plt.plot([0, 1], [0, 1], 'k--')
-            plt.xlabel('False Positive Rate')
-            plt.ylabel('True Positive Rate')
-            plt.title(f'ROC Curve - Class {cls} (One-vs-Rest)')
-            plt.legend(loc='lower right')
-            plt.tight_layout()
-            plt.show()
+
+                # if fpr/tpr missing or length mismatch, fallback to diagonal
+                if fpr is None or tpr is None or len(fpr) == 0 or len(tpr) == 0:
+                    fpr = np.array([0.0, 1.0])
+                    tpr = np.array([0.0, 1.0])
+                    label = f"{clf_name} (AUC=nan)"
+                else:
+                    if np.isnan(auc_val):
+                        label = f"{clf_name} (AUC=nan)"
+                    else:
+                        label = f"{clf_name} (AUC={auc_val:.2f})"
+
+                ax.plot(fpr, tpr, lw=2, label=label)
+
+            # plot diagonal
+            ax.plot([0, 1], [0, 1], 'k--', lw=1)
+            ax.set_xlim([-0.01, 1.01])
+            ax.set_ylim([-0.01, 1.01])
+            ax.set_xlabel('False Positive Rate')
+            ax.set_ylabel('True Positive Rate')
+            ax.set_title(f'ROC Curve - Class {cls} (One-vs-Rest)')
+            ax.legend(loc='lower right', fontsize='small')
+            ax.grid(alpha=0.2)
+
+        # remove unused axes if any
+        total_plots = nrows * ncols
+        for j in range(len(classes), total_plots):
+            fig.delaxes(axes[j])
+
+        plt.tight_layout()
+        plt.show()
 
 
     def _plot_confusion_matrices(self, confusion_dict, title_prefix='Confusion Matrix'):

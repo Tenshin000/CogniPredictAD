@@ -236,7 +236,7 @@ class Visualizer:
             x = self._validate_column(x, dtype='categorical')
             y = self._validate_column(y, dtype='numeric')
             fig, ax = plt.subplots(figsize=figsize)
-            sns.barplot(data=self.dataset, x=x, y=y, estimator=estimator, ci=ci, ax=ax, **kwargs)
+            sns.barplot(data=self.dataset, x=x, y=y, estimator=estimator, errorbar="sd", ax=ax, **kwargs)
             if annotate:
                 for p in ax.patches:
                     height = p.get_height()

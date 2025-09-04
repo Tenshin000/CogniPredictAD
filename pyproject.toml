@@ -22,6 +22,8 @@ dependencies = [
     "imodels",
     "interpret",
     "shap",
+    "graphviz",
+    "lime",
     "openpyxl",
     "jupyter",
 ]
