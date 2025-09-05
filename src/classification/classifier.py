@@ -2,6 +2,7 @@ import os
 import joblib
 import numpy as np
 import pandas as pd
+import pickle
 import matplotlib.pyplot as plt
 import seaborn as sns
 
@@ -16,13 +17,11 @@ from sklearn.metrics import (
 from catboost import CatBoostClassifier
 from lightgbm import LGBMClassifier
 from xgboost import XGBClassifier
-from interpret.glassbox import ExplainableBoostingClassifier
-from imodels import OptimalTreeClassifier
 from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, BaggingClassifier
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.preprocessing import StandardScaler, label_binarize
 from sklearn.linear_model import LogisticRegression
-from sklearn.neighbors import KNeighborsClassifier
+from IPython.display import display
 
 
 class ADNIClassifier:
@@ -36,32 +35,11 @@ class ADNIClassifier:
         """
         Initialize the class and load a predefined set of classifiers 
         based on the provided selection string.
-
-        Parameters
-        ----------
-        classifier : str, optional (default="Standard")
-            Defines which group of classifiers to initialize:
-            
-            - "Standard1" : Load tuned classifiers set 1
-            - "XAI1"      : Load explainable (XAI) classifiers set 1
-            - "Standard2" : Load tuned classifiers set 2
-            - "XAI2"      : Load explainable (XAI) classifiers set 2
-            - Any other value defaults to "Standard1"
-
-        Notes
-        -----
-        This constructor sets `self.classifiers` to a dictionary containing 
-        sklearn-compatible models (or pipelines), preconfigured with the 
-        best hyperparameters found via Grid Search.
         """
         if classifier == "Standard1" or classifier == "standard1" or classifier == "STANDARD1" or classifier == "None":
             self.classifiers = self._default_classifiers_1()
-        elif classifier == "XAI1" or classifier == "xai1" or classifier == "Xai1":
-            self.classifiers = self._xai_classifiers_1()
         elif classifier == "Standard2" or classifier == "standard2" or classifier == "STANDARD2":
             self.classifiers = self._default_classifiers_1()
-        elif classifier == "XAI2" or classifier == "xai2" or classifier == "Xai2":
-            self.classifiers = self._xai_classifiers_1()
         else:
             self.classifiers = self._default_classifiers_1()
 
@@ -70,53 +48,46 @@ class ADNIClassifier:
     # ----------------------------# 
     def _default_classifiers_1(self):
         return {
-            'Random Forest': RandomForestClassifier(
-                random_state=42, class_weight='balanced', n_jobs=-1,
-                criterion='entropy', max_depth=None, max_features=1.0,
+            "Decision Tree": DecisionTreeClassifier(
+                random_state=42, class_weight="balanced", max_depth=6, splitter="best",
+                max_features=0.8, min_samples_leaf=10, min_samples_split=2
+            ),
+            "Random Forest": RandomForestClassifier(
+                random_state=42, class_weight="balanced", n_jobs=-1,
+                criterion="entropy", max_depth=None, max_features=1.0,
                 min_samples_leaf=2, n_estimators=100
             ),
-            'Extra Trees': ExtraTreesClassifier(
-                random_state=42, class_weight='balanced', n_jobs=-1,
-                criterion='entropy', max_depth=None, max_features=1.0,
+            "Extra Trees": ExtraTreesClassifier(
+                random_state=42, class_weight="balanced", n_jobs=-1,
+                criterion="entropy", max_depth=None, max_features=1.0,
                 min_samples_leaf=2, n_estimators=75
             ),
-            'XGBoost': XGBClassifier(
-                random_state=42, use_label_encoder=False, eval_metric='mlogloss', verbosity=0,
+            "XGBoost": XGBClassifier(
+                random_state=42, use_label_encoder=False, eval_metric="mlogloss", verbosity=0,
                 colsample_bytree=0.7, gamma=1.0, learning_rate=0.1,
                 max_depth=6, n_estimators=50, reg_alpha=1, reg_lambda=0,
                 subsample=1.0
             ),
-            'LightGBM': LGBMClassifier(
+            "LightGBM": LGBMClassifier(
                 random_state=42, verbose=-1,
                 colsample_bytree=1.0, learning_rate=0.01, max_depth=8,
                 min_child_samples=20, n_estimators=100, num_leaves=15,
                 reg_alpha=0, reg_lambda=1, subsample=0.8
             ),
-            'CatBoost': CatBoostClassifier(
-                random_state=42, verbose=False, loss_function='MultiClass',
+            "CatBoost": CatBoostClassifier(
+                random_state=42, verbose=False, loss_function="MultiClass",
                 bagging_temperature=0.0, border_count=64, depth=8,
                 iterations=75, l2_leaf_reg=3, learning_rate=0.1,
                 random_strength=0.5
             ),
-            'Multinomial Logistic Regression': Pipeline([
-                ('scaler', StandardScaler()),
-                ('logreg', LogisticRegression(
-                    random_state=42, solver='saga', max_iter=2000, class_weight='balanced',
-                    C=1.0, penalty='l1'
+            "Multinomial Logistic Regression": Pipeline([
+                ("scaler", StandardScaler()),
+                ("logreg", LogisticRegression(
+                    random_state=42, solver="saga", max_iter=2000, class_weight="balanced",
+                    C=1.0, penalty="l1"
                 ))
             ]),
-            'KNN': Pipeline([
-                ('scaler', StandardScaler()),
-                ('knn', KNeighborsClassifier(n_neighbors=10, p=1, weights='distance', n_jobs=-1))
-            ]),
-            'Bagging': BaggingClassifier(random_state=42, n_jobs=-1, bootstrap=False, max_features=1.0, max_samples=0.6, n_estimators=100)
-        }
-
-
-    def _xai_classifiers_1(self):
-        return {
-            'Decision Tree': DecisionTreeClassifier(random_state=42, class_weight='balanced', max_depth=None, max_features=0.8, min_samples_leaf=10, min_samples_split=2),
-            'OptimalTree': OptimalTreeClassifier(random_state=42, balance=True, feature_exchange=True, look_ahead=True, regularization=0.0)
+            "Bagging": BaggingClassifier(random_state=42, n_jobs=-1, bootstrap=False, max_features=1.0, max_samples=0.6, n_estimators=100)
         }
 
     
@@ -125,78 +96,60 @@ class ADNIClassifier:
         Return a dictionary with tuned classifier instances.
         """
         return {
-            'Random Forest': RandomForestClassifier(
-                random_state=42, class_weight='balanced', n_jobs=-1,
-                criterion='entropy', max_depth=6, max_features=0.5,
+            "Decision Tree": DecisionTreeClassifier(
+                random_state=42, class_weight="balanced", max_depth=6, splitter="best",
+                max_features=1.0, min_samples_leaf=1, min_samples_split=2
+            ),
+            "Random Forest": RandomForestClassifier(
+                random_state=42, class_weight="balanced", n_jobs=-1,
+                criterion="entropy", max_depth=6, max_features=0.5,
                 min_samples_leaf=2, n_estimators=50
             ),
-            'Extra Trees': ExtraTreesClassifier(
-                random_state=42, class_weight='balanced', n_jobs=-1,
-                criterion='entropy', max_depth=None, max_features=1.0,
+            "Extra Trees": ExtraTreesClassifier(
+                random_state=42, class_weight="balanced", n_jobs=-1,
+                criterion="entropy", max_depth=None, max_features=1.0,
                 min_samples_leaf=8, n_estimators=50
             ),
-            'XGBoost': XGBClassifier(
-                random_state=42, use_label_encoder=False, eval_metric='mlogloss', verbosity=0,
+            "XGBoost": XGBClassifier(
+                random_state=42, use_label_encoder=False, eval_metric="mlogloss", verbosity=0,
                 colsample_bytree=1.0, gamma=1.0, learning_rate=0.1,
                 max_depth=8, n_estimators=100, reg_alpha=0, reg_lambda=1,
                 subsample=0.8
             ),
-            'LightGBM': LGBMClassifier(
+            "LightGBM": LGBMClassifier(
                 random_state=42, verbose=-1,
                 colsample_bytree=0.7, learning_rate=0.1, max_depth=8,
                 min_child_samples=5, n_estimators=100, num_leaves=15,
                 reg_alpha=1, reg_lambda=1, subsample=0.8
             ),
-            'CatBoost': CatBoostClassifier(
-                random_state=42, verbose=False, loss_function='MultiClass',
+            "CatBoost": CatBoostClassifier(
+                random_state=42, verbose=False, loss_function="MultiClass",
                 bagging_temperature=0.0, border_count=32, depth=6,
                 iterations=100, l2_leaf_reg=1, learning_rate=0.1,
                 random_strength=0.5
             ),
-            'Multinomial Logistic Regression': Pipeline([
-                ('scaler', StandardScaler()),
-                ('logreg', LogisticRegression(
-                    random_state=42, solver='saga', max_iter=2000, class_weight='balanced',
-                    C=1.0, penalty='l1'
+            "Multinomial Logistic Regression": Pipeline([
+                ("scaler", StandardScaler()),
+                ("logreg", LogisticRegression(
+                    random_state=42, solver="saga", max_iter=2000, class_weight="balanced",
+                    C=1.0, penalty="l1"
                 ))
             ]),
-            'KNN': Pipeline([
-                ('scaler', StandardScaler()),
-                ('knn', KNeighborsClassifier(n_neighbors=10, p=1, weights='distance', n_jobs=-1))
-            ]),
-            'Bagging': BaggingClassifier(random_state=42, n_jobs=-1, bootstrap=False, max_features=0.8, max_samples=0.6, n_estimators=100)
-        }
-
-
-    def _xai_classifiers_2(self): 
-        return {
-            'Decision Tree': DecisionTreeClassifier(random_state=42, class_weight='balanced', max_depth=4, max_features=1.0, min_samples_leaf=1, min_samples_split=2),
-            'OptimalTree': OptimalTreeClassifier(random_state=42, balance=True, feature_exchange=True, look_ahead=True, regularization=0.0)
+            "Bagging": BaggingClassifier(random_state=42, n_jobs=-1, bootstrap=False, max_features=0.8, max_samples=0.6, n_estimators=100)
         }
 
     # ----------------------------#
     #          UTILITY            #
     # ----------------------------# 
     def _softmax(self, arr):
-        """
-        Numerically stable softmax across last axis.
-        """
         e = np.exp(arr - np.max(arr, axis=1, keepdims=True))
         return e / np.sum(e, axis=1, keepdims=True)
 
-
     def _get_probabilities(self, fitted_clf, X, classes):
-        """
-        Return probability matrix aligned to 'classes' for a fitted classifier.
-        If predict_proba is unavailable, try decision_function and apply softmax.
-        If neither exists, fall back to one-hot encoded predictions (less informative for ROC).
-        """
-        # Primary: predict_proba
         if hasattr(fitted_clf, "predict_proba"):
             try:
                 probs = fitted_clf.predict_proba(X)
                 prob_cols = getattr(fitted_clf, "classes_", None)
-                # If classes_ not present at pipeline level, try final estimator
                 if prob_cols is None and isinstance(fitted_clf, Pipeline):
                     final = fitted_clf.named_steps[list(fitted_clf.named_steps.keys())[-1]]
                     prob_cols = getattr(final, "classes_", None)
@@ -206,11 +159,9 @@ class ADNIClassifier:
             except Exception:
                 pass
 
-        # Secondary: decision_function -> softmax
         if hasattr(fitted_clf, "decision_function"):
             try:
                 df = fitted_clf.decision_function(X)
-                # if binary, decision_function may return shape (n_samples,), convert to 2-col
                 if df.ndim == 1:
                     df = np.vstack([-df, df]).T
                 probs = self._softmax(df)
@@ -220,7 +171,6 @@ class ADNIClassifier:
             except Exception:
                 pass
 
-        # Fallback: one-hot from hard predictions
         preds = fitted_clf.predict(X)
         one_hot = np.zeros((len(preds), len(classes)))
         class_to_idx = {c: i for i, c in enumerate(classes)}
@@ -229,27 +179,28 @@ class ADNIClassifier:
                 one_hot[i, class_to_idx[p]] = 1.0
         return one_hot
 
-
     def _safe_clone_and_fit(self, clf, X_train, y_train):
-        """
-        Clone a classifier and fit it on the provided data. Return the fitted clone.
-        This avoids side-effects on the original estimator object.
-        """
         cloned = clone(clf)
         cloned.fit(X_train, y_train)
         return cloned
 
     def _ensure_dir(self, path):
-        """
-        Ensure output directory exists.
-        """
         os.makedirs(path, exist_ok=True)
 
     def _clean_name(self, name):
+        return name.replace(" ", "_").replace("/", "_")
+    
+    def _unique_model_path(self, base_dir, clf_name):
         """
-        Sanitize a classifier name for filenames.
+        Returns a unique path to the model, avoiding overwriting existing files.
         """
-        return name.replace(' ', '_').replace('/', '_')
+        clean_name = self._clean_name(clf_name)
+        i = 0
+        while True:
+            candidate = os.path.join(base_dir, f"{clean_name}{i}.pkl")
+            if not os.path.exists(candidate):
+                return candidate
+            i += 1
 
     # ----------------------------#
     #     CORE EVALUATION (CV)    #
@@ -315,7 +266,7 @@ class ADNIClassifier:
 
         for idx, cls in enumerate(classes):
             ax = axes[idx]
-            # plot each classifier's ROC for this class
+            # plot each classifier"s ROC for this class
             for clf_name, (fpr_dict, tpr_dict, auc_dict) in roc_dict.items():
                 fpr = fpr_dict.get(cls, None)
                 tpr = tpr_dict.get(cls, None)
@@ -335,13 +286,13 @@ class ADNIClassifier:
                 ax.plot(fpr, tpr, lw=2, label=label)
 
             # plot diagonal
-            ax.plot([0, 1], [0, 1], 'k--', lw=1)
+            ax.plot([0, 1], [0, 1], "k--", lw=1)
             ax.set_xlim([-0.01, 1.01])
             ax.set_ylim([-0.01, 1.01])
-            ax.set_xlabel('False Positive Rate')
-            ax.set_ylabel('True Positive Rate')
-            ax.set_title(f'ROC Curve - Class {cls} (One-vs-Rest)')
-            ax.legend(loc='lower right', fontsize='small')
+            ax.set_xlabel("False Positive Rate")
+            ax.set_ylabel("True Positive Rate")
+            ax.set_title(f"ROC Curve - Class {cls} (One-vs-Rest)")
+            ax.legend(loc="lower right", fontsize="small")
             ax.grid(alpha=0.2)
 
         # remove unused axes if any
@@ -353,7 +304,7 @@ class ADNIClassifier:
         plt.show()
 
 
-    def _plot_confusion_matrices(self, confusion_dict, title_prefix='Confusion Matrix'):
+    def _plot_confusion_matrices(self, confusion_dict, title_prefix="Confusion Matrix"):
         """
         Plot confusion matrices in a grid.
         Automatically chooses integer formatting for count matrices and
@@ -376,16 +327,16 @@ class ADNIClassifier:
 
             # Decide formatting: integer if values are (effectively) integer, else show floats
             if np.allclose(cm_arr, np.round(cm_arr)):
-                fmt = 'd'
+                fmt = "d"
                 annot = cm_arr.astype(int)  # annotate integers for neatness
             else:
-                fmt = '.2f'
+                fmt = ".2f"
                 annot = cm_arr
 
-            sns.heatmap(cm_arr, annot=annot, fmt=fmt, cmap='Blues', cbar=False, ax=ax)
-            ax.set_title(f'{clf_name} {title_prefix}')
-            ax.set_xlabel('Predicted')
-            ax.set_ylabel('True')
+            sns.heatmap(cm_arr, annot=annot, fmt=fmt, cmap="Blues", cbar=False, ax=ax)
+            ax.set_title(f"{clf_name} {title_prefix}")
+            ax.set_xlabel("Predicted")
+            ax.set_ylabel("True")
 
         # remove unused axes
         for idx in range(len(confusion_dict), len(axes)):
@@ -402,15 +353,15 @@ class ADNIClassifier:
         violin_rows = []
         for model_name, acc_list in accuracies_per_model.items():
             for acc in acc_list:
-                violin_rows.append({'Model': model_name, 'Accuracy': acc})
+                violin_rows.append({"Model": model_name, "Accuracy": acc})
         if not violin_rows:
             return
         violin_df = pd.DataFrame(violin_rows)
         plt.figure(figsize=(12, 8))
-        sns.violinplot(x='Model', y='Accuracy', data=violin_df, inner='quartile')
-        plt.xlabel('Model')
-        plt.ylabel('Accuracy')
-        plt.title('Model Accuracy Comparison (per-fold distributions)')
+        sns.violinplot(x="Model", y="Accuracy", data=violin_df, inner="quartile")
+        plt.xlabel("Model")
+        plt.ylabel("Accuracy")
+        plt.title("Model Accuracy Comparison (per-fold distributions)")
         plt.xticks(rotation=45)
         plt.tight_layout()
         plt.show()
@@ -419,7 +370,7 @@ class ADNIClassifier:
     #        PUBLIC METHODS       #
     # ----------------------------# 
     def fit_evaluate_store_models(self, X_train: pd.DataFrame, y_train: pd.Series,
-                                  output_dir: str = '../results/all_models',
+                                  output_dir: str = "../results/all_models",
                                   cv_splits: int = 5, cv_repeats: int = 3):
         """
         Train and evaluate classifiers using repeated stratified CV, save fitted models on full training set,
@@ -458,19 +409,19 @@ class ADNIClassifier:
             roc_auc_macro = np.nan
             try:
                 roc_auc_macro = roc_auc_score(label_binarize(true_all, classes=classes), prob_all,
-                                              average='macro', multi_class='ovr')
+                                              average="macro", multi_class="ovr")
             except Exception:
                 roc_auc_macro = np.nan
 
             clf_metrics = {
-                'Model': clf_name,
-                'Accuracy': accuracy_score(true_all, pred_all),
-                'Balanced Accuracy': balanced_accuracy_score(true_all, pred_all),
-                'Precision (weighted)': precision_score(true_all, pred_all, average='weighted', zero_division=0),
-                'Recall (weighted)': recall_score(true_all, pred_all, average='weighted'),
-                'F1 Score (weighted)': f1_score(true_all, pred_all, average='weighted'),
-                'F1 Score (macro)': f1_score(true_all, pred_all, average='macro'),
-                'ROC AUC (macro)': roc_auc_macro
+                "Model": clf_name,
+                "Accuracy": accuracy_score(true_all, pred_all),
+                "Balanced Accuracy": balanced_accuracy_score(true_all, pred_all),
+                "Precision (weighted)": precision_score(true_all, pred_all, average="weighted", zero_division=0),
+                "Recall (weighted)": recall_score(true_all, pred_all, average="weighted"),
+                "F1 Score (weighted)": f1_score(true_all, pred_all, average="weighted"),
+                "F1 Score (macro)": f1_score(true_all, pred_all, average="macro"),
+                "ROC AUC (macro)": roc_auc_macro
             }
             metrics_list.append(clf_metrics)
 
@@ -479,19 +430,19 @@ class ADNIClassifier:
             for cls in classes:
                 rep = class_report.get(str(cls), {})
                 per_class_metrics_list.append({
-                    'Model': clf_name,
-                    'Class': cls,
-                    'Precision': rep.get('precision', 0.0),
-                    'Recall': rep.get('recall', 0.0),
-                    'F1 Score': rep.get('f1-score', 0.0),
-                    'Support': rep.get('support', 0)
+                    "Model": clf_name,
+                    "Class": cls,
+                    "Precision": rep.get("precision", 0.0),
+                    "Recall": rep.get("recall", 0.0),
+                    "F1 Score": rep.get("f1-score", 0.0),
+                    "Support": rep.get("support", 0)
                 })
 
             # confusion matrix counts and normalized
             cm = confusion_matrix(true_all, pred_all, labels=classes)
             confusion_dict[clf_name] = cm
             row_sums = cm.sum(axis=1, keepdims=True)
-            with np.errstate(divide='ignore', invalid='ignore'):
+            with np.errstate(divide="ignore", invalid="ignore"):
                 cm_norm = np.divide(cm, row_sums, where=row_sums != 0)
                 cm_norm = np.nan_to_num(cm_norm)
             confusion_norm_dict[clf_name] = cm_norm
@@ -517,12 +468,18 @@ class ADNIClassifier:
 
             # Refit classifier on entire training set and save
             fitted_full = self._safe_clone_and_fit(clf, X_train, y_train)
-            model_path = os.path.join(output_dir, f"{self._clean_name(clf_name)}.joblib")
-            joblib.dump(fitted_full, model_path, compress=3)
+            model_path = self._unique_model_path(output_dir, clf_name)
+            # save as .pkl using pickle
+            try:
+                with open(model_path, "wb") as _f:
+                    pickle.dump(fitted_full, _f, protocol=pickle.HIGHEST_PROTOCOL)
+            except Exception:
+                # fallback to joblib (keeps backward compatibility)
+                joblib.dump(fitted_full, model_path)
             saved_model_paths[clf_name] = model_path
 
         # assemble result DataFrames
-        results_df = pd.DataFrame(metrics_list).sort_values('ROC AUC (macro)', ascending=False)
+        results_df = pd.DataFrame(metrics_list).sort_values("ROC AUC (macro)", ascending=False)
         per_class_df = pd.DataFrame(per_class_metrics_list)
 
         # CHANGE WITH "PRINT" IF YOU WANT TO USE OUTSIDE OF IPYTHON
@@ -530,113 +487,298 @@ class ADNIClassifier:
         display(per_class_df)
 
         self._plot_roc_per_class(roc_dict, classes)
-        self._plot_confusion_matrices(confusion_dict, title_prefix='Confusion Matrix')
-        self._plot_confusion_matrices(confusion_norm_dict, title_prefix='Normalized Confusion Matrix')
+        self._plot_confusion_matrices(confusion_dict, title_prefix="Confusion Matrix")
+        self._plot_confusion_matrices(confusion_norm_dict, title_prefix="Normalized Confusion Matrix")
         self._plot_violin(accuracies_per_model)
 
         return {
-            'results_df': results_df,
-            'per_class_df': per_class_df
+            "results_df": results_df,
+            "per_class_df": per_class_df
         }
-    
 
-    def fit_evaluate_models_training(self, X_train: pd.DataFrame, y_train: pd.Series):
+    def evaluate_models_from_dir(self, models_dir: str,
+                                X_train: pd.DataFrame, y_train: pd.Series,
+                                X_test: pd.DataFrame, y_test: pd.Series,
+                                cv_splits: int = 5, cv_repeats: int = 3,
+                                display_individual_tables: bool = True):
         """
-        Fit each classifier on the full training set, evaluate on the same training set (useful
-        for diagnostic / overfitting inspection), and produce metrics + plots.
+        Load pre-trained .joblib models from `models_dir` and evaluate each model on:
+        - Training set
+        - Repeated stratified Cross-Validation (using the model's hyperparameters)
+        - Testing set
 
-        Returns:
-            - results_df: DataFrame of global metrics
-            - per_class_df: DataFrame of per-class metrics
+        For each model this function prints (via `display`) a small table with the same
+        global metrics used in `fit_evaluate_store_models` where rows are ["Train", "CrossVal", "Test"].
+
+        Parameters
+        ----------
+        models_dir : str
+            Directory containing .joblib model files (assumed to be pre-trained).
+        X_train, y_train : training data (pandas DataFrame/Series)
+        X_test, y_test : testing data (pandas DataFrame/Series)
+        cv_splits, cv_repeats : ints for RepeatedStratifiedKFold
+        display_individual_tables : if True, calls `display` for each per-model table
+
+        Returns
+        -------
+        dict with keys:
+        - per_model_tables: dict mapping model_name -> DataFrame (Train/CV/Test metrics)
+        - per_class_test: dict mapping model_name -> DataFrame (per-class metrics on test)
+        - bar_plot_data: DataFrame summarizing balanced accuracies for plotting
+        - confusion_matrices: dict mapping model_name -> raw confusion array (test)
+        - confusion_matrices_norm: dict mapping model_name -> normalized confusion array (test)
+        - test_comparison: DataFrame summarizing scores on test set
         """
-        classes = np.unique(y_train)
-        metrics_list = []
-        per_class_metrics_list = []
+        # collect pkl files
+        all_files = [f for f in os.listdir(models_dir) if f.lower().endswith('.pkl')]
+        all_files = sorted(all_files)
+        if len(all_files) == 0:
+            raise ValueError(f"No .pkl files found in {models_dir}")
+
+        cv_splitter = RepeatedStratifiedKFold(n_splits=cv_splits, n_repeats=cv_repeats, random_state=42)
+        classes = np.unique(np.concatenate([y_train, y_test]))
+
+        per_model_tables = {}
+        per_class_test = {}
+
+        # for bar plot
+        bar_rows = []
+
+        # store confusion matrices per model (raw and normalized)
         confusion_dict = {}
         confusion_norm_dict = {}
-        roc_dict = {}
 
-        for clf_name, clf in self.classifiers.items():
-            print(f"Training & Evaluating on training set: {clf_name}")
-
-            # fit on full training
-            fitted = self._safe_clone_and_fit(clf, X_train, y_train)
-
-            # predictions and probabilities
-            y_pred = fitted.predict(X_train)
-            prob_all = self._get_probabilities(fitted, X_train, classes)
-
-            # global metrics
-            roc_auc_macro = np.nan
+        for fname in all_files:
+            model_path = os.path.join(models_dir, fname)
             try:
-                roc_auc_macro = roc_auc_score(label_binarize(y_train, classes=classes), prob_all,
-                                              average='macro', multi_class='ovr')
+                with open(model_path, "rb") as _f:
+                    loaded = pickle.load(_f)
+            except Exception as e:
+                # Try joblib.load as a fallback for backward compatibility
+                try:
+                    loaded = joblib.load(model_path)
+                except Exception:
+                    print(f"Skipping {fname}: failed to load ({e})")
+                    continue
+
+            model_name = os.path.splitext(fname)[0]
+            print(f"Evaluating model: {model_name}")
+
+            # --- TRAIN evaluation (use loaded model directly, assuming it's fitted) ---
+            try:
+                y_train_pred = loaded.predict(X_train)
+            except Exception as e:
+                print(f"Warning: model {model_name} couldn't predict on X_train directly: {e} -- will clone+fit on full train for train/test predictions")
+                fitted_full = self._safe_clone_and_fit(loaded, X_train, y_train)
+                y_train_pred = fitted_full.predict(X_train)
+                loaded = fitted_full  # use this fitted version for test preds as well
+
+            prob_train = self._get_probabilities(loaded, X_train, classes)
+            roc_auc_train = np.nan
+            try:
+                roc_auc_train = roc_auc_score(label_binarize(y_train, classes=classes), prob_train,
+                                            average="macro", multi_class="ovr")
             except Exception:
-                roc_auc_macro = np.nan
+                roc_auc_train = np.nan
 
-            clf_metrics = {
-                'Model': clf_name,
-                'Accuracy': accuracy_score(y_train, y_pred),
-                'Precision (weighted)': precision_score(y_train, y_pred, average='weighted', zero_division=0),
-                'Recall (weighted)': recall_score(y_train, y_pred, average='weighted'),
-                'F1 Score (weighted)': f1_score(y_train, y_pred, average='weighted'),
-                'ROC AUC (macro)': roc_auc_macro
+            train_metrics = {
+                "Split": "Train",
+                "Accuracy": accuracy_score(y_train, y_train_pred),
+                "Balanced Accuracy": balanced_accuracy_score(y_train, y_train_pred),
+                "Precision (weighted)": precision_score(y_train, y_train_pred, average="weighted", zero_division=0),
+                "Recall (weighted)": recall_score(y_train, y_train_pred, average="weighted"),
+                "F1 Score (weighted)": f1_score(y_train, y_train_pred, average="weighted"),
+                "F1 Score (macro)": f1_score(y_train, y_train_pred, average="macro"),
+                "ROC AUC (macro)": roc_auc_train
             }
-            metrics_list.append(clf_metrics)
 
-            # per-class metrics
-            class_report = classification_report(y_train, y_pred, labels=classes, output_dict=True, zero_division=0)
+            # --- CROSS-VALIDATION evaluation (clone model and run repeated CV) ---
+            true_cv, pred_cv, prob_cv, fold_accuracies = self._run_repeated_cv(loaded, X_train, y_train, cv_splitter)
+            roc_auc_cv = np.nan
+            try:
+                roc_auc_cv = roc_auc_score(label_binarize(true_cv, classes=classes), prob_cv,
+                                        average="macro", multi_class="ovr")
+            except Exception:
+                roc_auc_cv = np.nan
+
+            cv_metrics = {
+                "Split": "CrossVal",
+                "Accuracy": accuracy_score(true_cv, pred_cv),
+                "Balanced Accuracy": balanced_accuracy_score(true_cv, pred_cv),
+                "Precision (weighted)": precision_score(true_cv, pred_cv, average="weighted", zero_division=0),
+                "Recall (weighted)": recall_score(true_cv, pred_cv, average="weighted"),
+                "F1 Score (weighted)": f1_score(true_cv, pred_cv, average="weighted"),
+                "F1 Score (macro)": f1_score(true_cv, pred_cv, average="macro"),
+                "ROC AUC (macro)": roc_auc_cv
+            }
+
+            # --- TEST evaluation ---
+            try:
+                y_test_pred = loaded.predict(X_test)
+            except Exception as e:
+                print(f"Warning: model {model_name} couldn't predict on X_test directly: {e} -- will clone+fit on full train and retry")
+                fitted_full = self._safe_clone_and_fit(loaded, X_train, y_train)
+                y_test_pred = fitted_full.predict(X_test)
+                prob_test = self._get_probabilities(fitted_full, X_test, classes)
+                # ensure loaded points to a fitted estimator for consistency below
+                loaded = fitted_full
+            else:
+                prob_test = self._get_probabilities(loaded, X_test, classes)
+
+            roc_auc_test = np.nan
+            try:
+                roc_auc_test = roc_auc_score(label_binarize(y_test, classes=classes), prob_test,
+                                            average="macro", multi_class="ovr")
+            except Exception:
+                roc_auc_test = np.nan
+
+            test_metrics = {
+                "Split": "Test",
+                "Accuracy": accuracy_score(y_test, y_test_pred),
+                "Balanced Accuracy": balanced_accuracy_score(y_test, y_test_pred),
+                "Precision (weighted)": precision_score(y_test, y_test_pred, average="weighted", zero_division=0),
+                "Recall (weighted)": recall_score(y_test, y_test_pred, average="weighted"),
+                "F1 Score (weighted)": f1_score(y_test, y_test_pred, average="weighted"),
+                "F1 Score (macro)": f1_score(y_test, y_test_pred, average="macro"),
+                "ROC AUC (macro)": roc_auc_test
+            }
+
+            # assemble per-model table
+            model_table = pd.DataFrame([train_metrics, cv_metrics, test_metrics])
+            model_table = model_table.set_index('Split')
+            per_model_tables[model_name] = model_table
+
+            if display_individual_tables:
+                display(model_table)
+
+            # per-class metrics ONLY for test set (same style as fit_evaluate_store_models)
+            class_report = classification_report(y_test, y_test_pred, labels=classes, output_dict=True, zero_division=0)
+            per_class_rows = []
             for cls in classes:
-                rep = class_report.get(str(cls), {})
-                per_class_metrics_list.append({
-                    'Model': clf_name,
-                    'Class': cls,
-                    'Precision': rep.get('precision', 0.0),
-                    'Recall': rep.get('recall', 0.0),
-                    'F1 Score': rep.get('f1-score', 0.0),
-                    'Support': rep.get('support', 0)
+                rep = class_report.get(str(cls), class_report.get(cls, {}))
+                per_class_rows.append({
+                    "Model": model_name,
+                    "Class": cls,
+                    "Precision": rep.get("precision", 0.0),
+                    "Recall": rep.get("recall", 0.0),
+                    "F1 Score": rep.get("f1-score", 0.0),
+                    "Support": rep.get("support", 0)
+                })
+            per_class_df = pd.DataFrame(per_class_rows)
+            per_class_test[model_name] = per_class_df
+            display(per_class_df)
+
+            # --- CONFUSION MATRICES (TEST SET) ---
+            cm = confusion_matrix(y_test, y_test_pred, labels=classes)
+            confusion_dict[model_name] = cm
+
+            # normalized per-row (true) -> percentages
+            row_sums = cm.sum(axis=1, keepdims=True)
+            with np.errstate(divide="ignore", invalid="ignore"):
+                cm_norm = np.divide(cm.astype(float), row_sums, where=row_sums != 0)
+                cm_norm = np.nan_to_num(cm_norm)
+            confusion_norm_dict[model_name] = cm_norm
+
+            # Collect bar plot rows
+            bar_rows.append({"Model": model_name, "Split": "Train", "Balanced Accuracy": model_table.loc['Train', 'Balanced Accuracy']})
+            bar_rows.append({"Model": model_name, "Split": "CrossVal", "Balanced Accuracy": model_table.loc['CrossVal', 'Balanced Accuracy']})
+            bar_rows.append({"Model": model_name, "Split": "Test", "Balanced Accuracy": model_table.loc['Test', 'Balanced Accuracy']})
+
+        # Create bar plot dataframe
+        bar_df = pd.DataFrame(bar_rows)
+        if not bar_df.empty:
+            models = bar_df['Model'].unique()
+            splits = ['Train', 'CrossVal', 'Test']
+
+            x = np.arange(len(models))  # the label locations
+            width = 0.2
+
+            fig, ax = plt.subplots(figsize=(max(8, len(models) * 1.2), 6))
+
+            for i, split in enumerate(splits):
+                vals = [bar_df[(bar_df['Model'] == m) & (bar_df['Split'] == split)]['Balanced Accuracy'].values
+                        for m in models]
+                # extract scalars (if missing -> 0)
+                vals = [v[0] if len(v) > 0 else 0.0 for v in vals]
+                ax.bar(x + (i - 1) * width, vals, width, label=split)
+
+            ax.set_ylabel('Balanced Accuracy')
+            ax.set_title('Balanced Accuracy by Model and Split')
+            ax.set_xticks(x)
+            ax.set_xticklabels(models, rotation=45, ha='right')
+            ax.legend()
+            ax.set_ylim(0, 1)
+            plt.tight_layout()
+            plt.show()
+
+        # ----------------------------
+        #  print confusion matrices (raw) as tables for each model (TEST SET)
+        # ----------------------------
+        if confusion_dict:
+            print("\nConfusion matrices (raw counts) - TEST SET:")
+            for mname, cm in confusion_dict.items():
+                df_cm = pd.DataFrame(cm, index=classes, columns=classes)
+                df_cm.index.name = "True"
+                df_cm.columns.name = "Pred"
+
+            # plot all raw confusion matrices as heatmaps using the class helper
+            self._plot_confusion_matrices(confusion_dict, title_prefix="Confusion Matrix (Test)")
+
+        # ----------------------------
+        #  print confusion matrices (normalized) as tables for each model (TEST SET)
+        # ----------------------------
+        if confusion_norm_dict:
+            print("\nConfusion matrices (normalized by true-row) - TEST SET:")
+            for mname, cmn in confusion_norm_dict.items():
+                df_cmn = pd.DataFrame(cmn, index=classes, columns=classes)
+                df_cmn.index.name = "True"
+                df_cmn.columns.name = "Pred"
+            
+            # plot all normalized confusion matrices as heatmaps using the class helper
+            self._plot_confusion_matrices(confusion_norm_dict, title_prefix="Normalized Confusion Matrix (Test)")
+
+        # ----------------------------
+        #  comparison table for TEST SET only
+        # ----------------------------
+        # Gather test-rows from each model_table into a single DataFrame
+        test_rows = []
+        for mname, table in per_model_tables.items():
+            if 'Test' in table.index:
+                tr = table.loc['Test'].to_dict()
+                tr['Model'] = mname
+                test_rows.append(tr)
+            else:
+                # if unexpectedly missing, create NaN row
+                test_rows.append({
+                    "Model": mname,
+                    "Accuracy": np.nan,
+                    "Balanced Accuracy": np.nan,
+                    "Precision (weighted)": np.nan,
+                    "Recall (weighted)": np.nan,
+                    "F1 Score (weighted)": np.nan,
+                    "F1 Score (macro)": np.nan,
+                    "ROC AUC (macro)": np.nan
                 })
 
-            # confusion matrices
-            cm = confusion_matrix(y_train, y_pred, labels=classes)
-            confusion_dict[clf_name] = cm
-            row_sums = cm.sum(axis=1, keepdims=True)
-            with np.errstate(divide='ignore', invalid='ignore'):
-                cm_norm = np.divide(cm, row_sums, where=row_sums != 0)
-                cm_norm = np.nan_to_num(cm_norm)
-            confusion_norm_dict[clf_name] = cm_norm
-
-            # ROC per class
-            y_true_bin = label_binarize(y_train, classes=classes)
-            fpr_dict, tpr_dict, auc_dict = {}, {}, {}
-            for i, cls in enumerate(classes):
-                if y_true_bin[:, i].sum() == 0:
-                    fpr_dict[cls] = np.array([0.0, 1.0])
-                    tpr_dict[cls] = np.array([0.0, 1.0])
-                    auc_dict[cls] = np.nan
-                    continue
-                try:
-                    fpr, tpr, _ = roc_curve(y_true_bin[:, i], prob_all[:, i])
-                    auc_val = roc_auc_score(y_true_bin[:, i], prob_all[:, i])
-                except Exception:
-                    fpr, tpr, auc_val = np.array([0.0, 1.0]), np.array([0.0, 1.0]), np.nan
-                fpr_dict[cls] = fpr
-                tpr_dict[cls] = tpr
-                auc_dict[cls] = auc_val
-            roc_dict[clf_name] = (fpr_dict, tpr_dict, auc_dict)
-
-        results_df = pd.DataFrame(metrics_list).sort_values('ROC AUC (macro)', ascending=False)
-        per_class_df = pd.DataFrame(per_class_metrics_list)
-
-        # CHANGE WITH "PRINT" IF YOU WANT TO USE OUTSIDE OF IPYTHON
-        display(results_df)
-        display(per_class_df)
-
-        self._plot_roc_per_class(roc_dict, classes)
-        self._plot_confusion_matrices(confusion_dict, title_prefix='Confusion Matrix')
-        self._plot_confusion_matrices(confusion_norm_dict, title_prefix='Normalized Confusion Matrix')
+        if test_rows:
+            test_comparison_df = pd.DataFrame(test_rows)
+            # set Model as index and reorder columns for readability
+            test_comparison_df = test_comparison_df.set_index('Model')[
+                ["Accuracy", "Balanced Accuracy", "Precision (weighted)", "Recall (weighted)",
+                "F1 Score (weighted)", "F1 Score (macro)", "ROC AUC (macro)"]
+            ]
+            # sort by Balanced Accuracy descending
+            test_comparison_df = test_comparison_df.sort_values("Balanced Accuracy", ascending=False)
+            print("\nOverall comparison on TEST SET (sorted by Balanced Accuracy):")
+            display(test_comparison_df)
+        else:
+            test_comparison_df = pd.DataFrame()
 
         return {
-            'results_df': results_df,
-            'per_class_df': per_class_df
+            'per_model_tables': per_model_tables,
+            'per_class_test': per_class_test,
+            'bar_plot_data': bar_df,            
+            'confusion_matrices': confusion_dict,
+            'confusion_matrices_norm': confusion_norm_dict,
+            'test_comparison': test_comparison_df
         }

@@ -1,0 +1,145 @@
+IF MMSE <= 26.50
+|   |--- FAQ <= 4.50
+|   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |--- EcogPtDivatt <= 2.58
+|   |   |   |   |--- EcogPtMem <= 2.76
+|   |   |   |   |   |--- EcogSPDivatt <= 1.62
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |   |--- EcogSPDivatt >  1.62
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |--- EcogPtMem >  2.76
+|   |   |   |   |   |--- PTAU/ABETA <= 0.05
+|   |   |   |   |   |   |--- THEN class = 3
+|   |   |   |   |   |--- PTAU/ABETA >  0.05
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |--- EcogPtDivatt >  2.58
+|   |   |   |   |--- THEN class = 3
+|   |   |--- MidTemp/ICV >  0.01
+|   |   |   |--- ADAS13 <= 18.50
+|   |   |   |   |--- EcogSPMem <= 1.44
+|   |   |   |   |   |--- THEN class = 0
+|   |   |   |   |--- EcogSPMem >  1.44
+|   |   |   |   |   |--- WholeBrain/ICV <= 0.70
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |   |--- WholeBrain/ICV >  0.70
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |--- ADAS13 >  18.50
+|   |   |   |   |--- FAQ <= 2.50
+|   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |--- FAQ >  2.50
+|   |   |   |   |   |--- THEN class = 3
+|   |--- FAQ >  4.50
+|   |   |--- MMSE <= 23.50
+|   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |   |--- THEN class = 3
+|   |   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |   |--- THEN class = 3
+|   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |--- THEN class = 3
+|   |   |--- MMSE >  23.50
+|   |   |   |--- EcogSPOrgan <= 2.45
+|   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |--- FDG <= 1.24
+|   |   |   |   |   |   |--- THEN class = 3
+|   |   |   |   |   |--- FDG >  1.24
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |--- EcogSPOrgan >  2.45
+|   |   |   |   |--- RAVLT_perc_forgetting <= 46.43
+|   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |--- RAVLT_perc_forgetting >  46.43
+|   |   |   |   |   |--- EcogSPDivatt <= 3.95
+|   |   |   |   |   |   |--- THEN class = 3
+|   |   |   |   |   |--- EcogSPDivatt >  3.95
+|   |   |   |   |   |   |--- THEN class = 3
+IF MMSE >  26.50
+|   |--- FAQ <= 0.50
+|   |   |--- EcogSPMem <= 1.79
+|   |   |   |--- EcogPtMem <= 2.09
+|   |   |   |   |--- RAVLT_immediate <= 33.50
+|   |   |   |   |   |--- FDG <= 1.27
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |   |--- FDG >  1.27
+|   |   |   |   |   |   |--- THEN class = 0
+|   |   |   |   |--- RAVLT_immediate >  33.50
+|   |   |   |   |   |--- EcogSPPlan <= 1.29
+|   |   |   |   |   |   |--- THEN class = 0
+|   |   |   |   |   |--- EcogSPPlan >  1.29
+|   |   |   |   |   |   |--- THEN class = 0
+|   |   |   |--- EcogPtMem >  2.09
+|   |   |   |   |--- AGE <= 71.50
+|   |   |   |   |   |--- EcogSPLang <= 1.07
+|   |   |   |   |   |   |--- THEN class = 0
+|   |   |   |   |   |--- EcogSPLang >  1.07
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |--- AGE >  71.50
+|   |   |   |   |   |--- MMSE <= 29.50
+|   |   |   |   |   |   |--- THEN class = 0
+|   |   |   |   |   |--- MMSE >  29.50
+|   |   |   |   |   |   |--- THEN class = 0
+|   |   |--- EcogSPMem >  1.79
+|   |   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |   |--- MOCA <= 24.50
+|   |   |   |   |   |--- EcogPtLang <= 2.19
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |   |--- EcogPtLang >  2.19
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |--- MOCA >  24.50
+|   |   |   |   |   |--- THEN class = 0
+|   |   |   |--- Fusiform/ICV >  0.01
+|   |   |   |   |--- EcogPtMem <= 1.39
+|   |   |   |   |   |--- THEN class = 0
+|   |   |   |   |--- EcogPtMem >  1.39
+|   |   |   |   |   |--- AGE <= 67.50
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |   |--- AGE >  67.50
+|   |   |   |   |   |   |--- THEN class = 1
+|   |--- FAQ >  0.50
+|   |   |--- Fusiform/ICV <= 0.01
+|   |   |   |--- WholeBrain/ICV <= 0.67
+|   |   |   |   |--- EcogSPOrgan <= 1.18
+|   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |--- EcogSPOrgan >  1.18
+|   |   |   |   |   |--- ADAS13 <= 16.50
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |   |--- ADAS13 >  16.50
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |--- WholeBrain/ICV >  0.67
+|   |   |   |   |--- RAVLT_learning <= 4.50
+|   |   |   |   |   |--- Ventricles/ICV <= 0.02
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |   |--- Ventricles/ICV >  0.02
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |--- RAVLT_learning >  4.50
+|   |   |   |   |   |--- EcogSPOrgan <= 1.34
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |   |--- EcogSPOrgan >  1.34
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |--- Fusiform/ICV >  0.01
+|   |   |   |--- ADAS13 <= 16.50
+|   |   |   |   |--- RAVLT_immediate <= 33.50
+|   |   |   |   |   |--- WholeBrain/ICV <= 0.69
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |   |--- WholeBrain/ICV >  0.69
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |--- RAVLT_immediate >  33.50
+|   |   |   |   |   |--- ADAS13 <= 6.50
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |   |--- ADAS13 >  6.50
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |--- ADAS13 >  16.50
+|   |   |   |   |--- PTEDUCAT <= 15.50
+|   |   |   |   |   |--- EcogPtVisspat <= 1.29
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |   |--- EcogPtVisspat >  1.29
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |--- PTEDUCAT >  15.50
+|   |   |   |   |   |--- RAVLT_immediate <= 35.50
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |   |--- RAVLT_immediate >  35.50
+|   |   |   |   |   |   |--- THEN class = 1

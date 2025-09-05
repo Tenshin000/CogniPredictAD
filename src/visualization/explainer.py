@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import warnings
 
 from lime.lime_tabular import LimeTabularExplainer
-from typing import Optional, List, Sequence, Tuple, Any
+from typing import Union, Optional, List, Sequence, Tuple, Any
 
 class ModelExplainer:
     """Explain one or more classification models with SHAP and LIME.
@@ -14,12 +14,12 @@ class ModelExplainer:
     ----------
     models : Sequence[Tuple[str, Any]]
         Iterable of (name, fitted_model) pairs. Models must implement predict and for LIME predict_proba.
-    X : pd.DataFrame
+    X_train : pd.DataFrame
         Feature data used for explanations (not necessarily the training set, but representative data).
-    y : Optional[pd.Series]
+    y_train : Optional[pd.Series]
         True labels (optional, useful to pick instances).
     feature_names : Optional[List[str]]
-        If None, uses X.columns if X is a DataFrame.
+        If None, uses X_train.columns if X_train is a DataFrame.
     class_names : Optional[List[str]]
         Names of classes for multiclass (optional).
     background_size : int
@@ -28,15 +28,15 @@ class ModelExplainer:
     # ----------------------------#
     #        INITIALIZATION       #
     # ----------------------------# 
-    def __init__(self, models: Sequence[Tuple[str, Any]], X: pd.DataFrame, y: Optional[pd.Series] = None,
+    def __init__(self, models: Sequence[Tuple[str, Any]], X_train: pd.DataFrame, y_train: Optional[pd.Series] = None,
                  feature_names: Optional[List[str]] = None, class_names: Optional[List[str]] = None,
                  background_size: int = 100):
         self.models = list(models)
-        self.X = X.copy()
-        self.y = y
-        self.feature_names = feature_names or list(X.columns)
+        self.X_train = X_train.copy()
+        self.y_train = y_train.copy()
+        self.feature_names = feature_names or list(X_train.columns)
         self.class_names = class_names
-        self.background = self.X.sample(min(background_size, len(self.X)), random_state=0)
+        self.background = self.X_train.sample(min(background_size, len(self.X_train)), random_state=0)
 
     # ----------------------------#
     #         SHAP HELPERS        #
@@ -54,7 +54,7 @@ class ModelExplainer:
         # 2) Try using predict_proba (preferibile per classificatori)
         if hasattr(model, "predict_proba") and callable(getattr(model, "predict_proba")):
             try:
-                predict_proba = lambda x: model.predict_proba(x)
+                predict_proba = lambda X_train: model.predict_proba(X_train)
                 expl = shap.Explainer(predict_proba, self.background, feature_names=self.feature_names)
                 return expl, "model.predict_proba"
             except Exception as e:
@@ -63,7 +63,7 @@ class ModelExplainer:
         # 3) Try using predict (per regressori o classificatori che non espongono predict_proba)
         if hasattr(model, "predict") and callable(getattr(model, "predict")):
             try:
-                predict = lambda x: model.predict(x)
+                predict = lambda X_train: model.predict(X_train)
                 expl = shap.Explainer(predict, self.background, feature_names=self.feature_names)
                 return expl, "model.predict"
             except Exception as e:
@@ -82,13 +82,13 @@ class ModelExplainer:
     # ----------------------------#
     #            SHAP             #
     # ----------------------------# 
-    def shap_all_plots(self, sample_idx: Optional[int] = None, max_models: Optional[int] = None, figsize_per_row=(15, 4), axes=None):
+    def shap_all_plots(self, sample_idx: Union[int, Sequence[int]] = 0, max_models: Optional[int] = None, figsize_per_row=(15, 4), axes=None):
         """Create SHAP summary, waterfall and force plots for each model arranged in a grid.
 
         Parameters
         ----------
         sample_idx : Optional[int]
-            Index of the instance to use for waterfall/force plots. If None, uses 0.
+            Index of the instances to use for waterfall/force plots. If None, uses 0.
         max_models : Optional[int]
             Limit number of models to plot (useful for many models).
         figsize_per_row : tuple
@@ -97,8 +97,8 @@ class ModelExplainer:
             List of Axes objects to plot.
             If None, the function creates a new figure and its axes.
         """
-        if sample_idx is None:
-            sample_idx = 0
+        if isinstance(sample_idx, int):
+            sample_idx = [sample_idx]
 
         models = self.models[:max_models] if max_models else self.models
         n_models = len(models)
@@ -126,9 +126,9 @@ class ModelExplainer:
                 continue
 
             try:
-                shap_vals = explainer(self.X)
+                shap_vals = explainer(self.X_train)
             except Exception as e:
-                warnings.warn(f"[{name}] Explainer(...) on X failed: {e}. Skipping this model.")
+                warnings.warn(f"[{name}] Explainer(...) on X_train failed: {e}. Skipping this model.")
                 for a in (ax_summary, ax_water, ax_force):
                     a.text(0.5, 0.5, f"SHAP failed\n({name})", ha="center", va="center")
                 continue
@@ -136,20 +136,20 @@ class ModelExplainer:
             # summary
             plt.sca(ax_summary)
             try:
-                shap.summary_plot(shap_vals, features=self.X, feature_names=self.feature_names, show=False)
+                shap.summary_plot(shap_vals, features=self.X_train, feature_names=self.feature_names, show=False)
                 ax_summary.set_title(f"{name} — SHAP summary")
             except Exception as e:
                 warnings.warn(f"[{name}] summary_plot failed: {e}")
                 ax_summary.text(0.5, 0.5, "summary_plot failed", ha="center", va="center")
 
             # validate sample_idx
-            if sample_idx < 0 or sample_idx >= len(self.X):
-                warnings.warn(f"sample_idx {sample_idx} out of range for X (len={len(self.X)}). Skipping instance plots.")
+            if sample_idx < 0 or sample_idx >= len(self.X_train):
+                warnings.warn(f"sample_idx {sample_idx} out of range for X_train (len={len(self.X_train)}). Skipping instance plots.")
                 ax_water.text(0.5, 0.5, "invalid sample_idx", ha="center", va="center")
                 ax_force.text(0.5, 0.5, "invalid sample_idx", ha="center", va="center")
                 continue
 
-            x_instance = self.X.iloc[[sample_idx]]
+            x_instance = self.X_train.iloc[[sample_idx]]
             try:
                 shap_single = explainer(x_instance)
             except Exception as e:
@@ -223,9 +223,9 @@ class ModelExplainer:
                 continue
 
             try:
-                shap_vals = explainer(self.X)
+                shap_vals = explainer(self.X_train)
                 plt.sca(ax)
-                shap.summary_plot(shap_vals, features=self.X, feature_names=self.feature_names, show=False)
+                shap.summary_plot(shap_vals, features=self.X_train, feature_names=self.feature_names, show=False)
                 ax.set_title(f"{name} — SHAP summary")
             except Exception as e:
                 warnings.warn(f"[{name}] summary plot generation failed: {e}")
@@ -236,13 +236,13 @@ class ModelExplainer:
             plt.show()
 
 
-    def shap_waterfall_plots(self, sample_idx: int = 0, max_models: Optional[int] = None, figsize_per_row=(8, 5), axes=None):
+    def shap_waterfall_plots(self, sample_idx: Union[int, Sequence[int]] = 0, max_models: Optional[int] = None, figsize_per_row=(8, 5), axes=None):
         """Create SHAP waterfall plots for a specific sample for each model.
         
         Parameters
         ----------
-        sample_idx : Optional[int]
-            Index of the instance to use for waterfall/force plots. If None, uses 0.
+        sample_idx : Union[int, Sequence[int]]
+            Index of the instances to use for waterfall/force plots. If None, uses 0.
         max_models : Optional[int]
             Limit number of models to plot (useful for many models).
         figsize_per_row : tuple
@@ -251,58 +251,59 @@ class ModelExplainer:
             List of Axes objects to plot.
             If None, the function creates a new figure and its axes.
         """
+        if isinstance(sample_idx, int):
+            sample_idx = [sample_idx]
+
         models = self.models[:max_models] if max_models else self.models
         n_models = len(models)
+        n_samples = len(sample_idx)
+
         if n_models == 0:
             warnings.warn("No models supplied.")
             return None
 
-        if sample_idx < 0 or sample_idx >= len(self.X):
-            warnings.warn(f"sample_idx {sample_idx} out of range for X (len={len(self.X)}). Aborting.")
-            return None
-
-        if axes is None:
-            fig, axes = plt.subplots(nrows=1, ncols=n_models,
-                                    figsize=(figsize_per_row[0] * n_models, figsize_per_row[1]))
-            if n_models == 1:
-                axes = [axes]
-        else:
-            fig = None
-            if n_models == 1:
-                axes = [axes]
-
-        x_instance = self.X.iloc[[sample_idx]]
-
-        for i, (name, model) in enumerate(models):
-            ax = axes[i]
-            explainer, used = self._get_shap_explainer(name, model)
-            if explainer is None:
-                warnings.warn(f"[{name}] Could not create SHAP explainer: {used}. Skipping.")
-                ax.text(0.5, 0.5, f"SHAP not available\n({name})", ha="center", va="center")
+        for idx in sample_idx:
+            if idx < 0 or idx >= len(self.X_train):
+                warnings.warn(f"sample_idx {idx} out of range for X_train (len={len(self.X_train)}). Skipping.")
                 continue
 
-            try:
-                shap_single = explainer(x_instance)
-                plt.sca(ax)
-                entry = shap_single[0] if len(shap_single) > 0 else shap_single
-                shap.plots.waterfall(entry, show=False)
-                ax.set_title(f"{name} — Waterfall (idx={sample_idx})")
-            except Exception as e:
-                warnings.warn(f"[{name}] waterfall generation failed: {e}")
-                ax.text(0.5, 0.5, "waterfall failed", ha="center", va="center")
+        fig, axes = plt.subplots(nrows=n_samples, ncols=n_models,
+                                figsize=(figsize_per_row[0] * n_models, figsize_per_row[1] * n_samples))
+        axes = np.array(axes)
+        if axes.ndim == 1:
+            axes = axes.reshape((n_samples, n_models))
 
-        if fig is not None:
-            plt.tight_layout()
-            plt.show()
+        for i, idx in enumerate(sample_idx):
+            x_instance = self.X_train.iloc[[idx]]
+            for j, (name, model) in enumerate(models):
+                ax = axes[i, j]
+                explainer, used = self._get_shap_explainer(name, model)
+                if explainer is None:
+                    warnings.warn(f"[{name}] Could not create SHAP explainer: {used}. Skipping.")
+                    ax.text(0.5, 0.5, f"SHAP not available\n({name})", ha="center", va="center")
+                    continue
+
+                try:
+                    shap_single = explainer(x_instance)
+                    entry = shap_single[0] if len(shap_single) > 0 else shap_single
+                    plt.sca(ax)
+                    shap.plots.waterfall(entry, show=False)
+                    ax.set_title(f"{name} — Waterfall (idx={idx})")
+                except Exception as e:
+                    warnings.warn(f"[{name}] waterfall generation failed: {e}")
+                    ax.text(0.5, 0.5, "waterfall failed", ha="center", va="center")
+
+        plt.tight_layout()
+        plt.show()
     
 
-    def shap_force_plots(self, sample_idx: int = 0, max_models: Optional[int] = None, figsize_per_row=(8, 5), axes=None):
+    def shap_force_plots(self, sample_idx: Union[int, Sequence[int]] = 0, max_models: Optional[int] = None, figsize_per_row=(8, 5), axes=None):
         """Create SHAP force plots for a specific sample for each model.
         
         Parameters
         ----------
-        sample_idx : Optional[int]
-            Index of the instance to use for waterfall/force plots. If None, uses 0.
+        sample_idx : Union[int, Sequence[int]]
+            Index of the instances to use for waterfall/force plots. If None, uses 0.
         max_models : Optional[int]
             Limit number of models to plot (useful for many models).
         figsize_per_row : tuple
@@ -311,62 +312,61 @@ class ModelExplainer:
             List of Axes objects to plot.
             If None, the function creates a new figure and its axes.
         """
+        if isinstance(sample_idx, int):
+            sample_idx = [sample_idx]
+
         models = self.models[:max_models] if max_models else self.models
         n_models = len(models)
+        n_samples = len(sample_idx)
+
         if n_models == 0:
             warnings.warn("No models supplied.")
             return None
 
-        if sample_idx < 0 or sample_idx >= len(self.X):
-            warnings.warn(f"sample_idx {sample_idx} out of range for X (len={len(self.X)}). Aborting.")
-            return None
+        fig, axes = plt.subplots(nrows=n_samples, ncols=n_models,
+                                figsize=(figsize_per_row[0] * n_models, figsize_per_row[1] * n_samples))
+        axes = np.array(axes)
+        if axes.ndim == 1:
+            axes = axes.reshape((n_samples, n_models))
 
-        if axes is None:
-            fig, axes = plt.subplots(nrows=1, ncols=n_models,
-                                    figsize=(figsize_per_row[0] * n_models, figsize_per_row[1]))
-            if n_models == 1:
-                axes = [axes]
-        else:
-            fig = None
-            if n_models == 1:
-                axes = [axes]
-
-        x_instance = self.X.iloc[[sample_idx]]
-
-        for i, (name, model) in enumerate(models):
-            ax = axes[i]
-            explainer, used = self._get_shap_explainer(name, model)
-            if explainer is None:
-                warnings.warn(f"[{name}] Could not create SHAP explainer: {used}. Skipping.")
-                ax.text(0.5, 0.5, f"SHAP not available\n({name})", ha="center", va="center")
+        for i, idx in enumerate(sample_idx):
+            if idx < 0 or idx >= len(self.X_train):
+                warnings.warn(f"sample_idx {idx} out of range for X_train (len={len(self.X_train)}). Skipping.")
                 continue
+            x_instance = self.X_train.iloc[[idx]]
+            for j, (name, model) in enumerate(models):
+                ax = axes[i, j]
+                explainer, used = self._get_shap_explainer(name, model)
+                if explainer is None:
+                    warnings.warn(f"[{name}] Could not create SHAP explainer: {used}. Skipping.")
+                    ax.text(0.5, 0.5, f"SHAP not available\n({name})", ha="center", va="center")
+                    continue
 
-            try:
-                shap_single = explainer(x_instance)
-                plt.sca(ax)
-                entry = shap_single[0] if len(shap_single) > 0 else shap_single
-                shap.plots.force(entry, matplotlib=True, show=False)
-                ax.set_title(f"{name} — Force (idx={sample_idx})")
-            except Exception as e:
-                warnings.warn(f"[{name}] force generation failed: {e}")
-                ax.text(0.5, 0.5, "force failed", ha="center", va="center")
+                try:
+                    shap_single = explainer(x_instance)
+                    entry = shap_single[0] if len(shap_single) > 0 else shap_single
+                    plt.sca(ax)
+                    shap.plots.force(entry, matplotlib=True, show=False)
+                    ax.set_title(f"{name} — Force (idx={idx})")
+                except Exception as e:
+                    warnings.warn(f"[{name}] force generation failed: {e}")
+                    ax.text(0.5, 0.5, "force failed", ha="center", va="center")
 
-        if fig is not None:
-            plt.tight_layout()
-            plt.show()
+        plt.tight_layout()
+        plt.show()
 
 
     # ----------------------------#
     #             LIME            #
     # ----------------------------# 
-    def lime_explain(self, sample_idx: int = 0, num_features: int = 35, num_samples: int = 5000,
-                     discretize_continuous: bool = True, max_models: Optional[int] = None, figsize_per_row=(6, 4)):
+    def lime_explain(self, sample_idx: Union[int, Sequence[int]] = 0, num_features: int = 35, num_samples: int = 5000,
+                 discretize_continuous: bool = True, max_models: Optional[int] = None, figsize_per_row=(6, 4)):
         """Create LIME explanations (explain_instance) for each model and lay them out side-by-side.
 
         Parameters
         ----------
-        sample_idx : int
-            index of the instance to explain (0-based).
+        sample_idx : Union[int, Sequence[int]]
+            index of the istances to explain (0-based).
         num_features : int
             number of features to show in explanation.
         num_samples : int
@@ -376,35 +376,40 @@ class ModelExplainer:
         max_models : Optional[int]
             limit number of models to process.
         """
+        if isinstance(sample_idx, int):
+            sample_idx = [sample_idx]
+
         models = self.models[:max_models] if max_models else self.models
         n_models = len(models)
+        n_samples = len(sample_idx)
 
-        x_row = self.X.iloc[sample_idx]
+        fig, axes = plt.subplots(nrows=n_samples, ncols=n_models,
+                                figsize=(figsize_per_row[0] * n_models, figsize_per_row[1] * n_samples))
+        axes = np.array(axes)
+        if axes.ndim == 1:
+            axes = axes.reshape((n_samples, n_models))
 
-        fig, axes = plt.subplots(1, n_models,
-                                 figsize=(figsize_per_row[0] * n_models, figsize_per_row[1]))
-        if n_models == 1:
-            axes = [axes]
+        explainer = LimeTabularExplainer(self.X_train.values,
+                                        feature_names=self.feature_names,
+                                        class_names=self.class_names,
+                                        discretize_continuous=discretize_continuous)
 
-        explainer = LimeTabularExplainer(self.X.values,
-                                         feature_names=self.feature_names,
-                                         class_names=self.class_names,
-                                         discretize_continuous=discretize_continuous)
+        for i, idx in enumerate(sample_idx):
+            x_row = self.X_train.iloc[idx]
+            for j, (name, model) in enumerate(models):
+                ax = axes[i, j]
+                predict_fn = model.predict_proba
+                exp = explainer.explain_instance(x_row.values, predict_fn,
+                                                num_features=num_features, num_samples=num_samples)
+                items = exp.as_list()
+                feats, weights = zip(*items)
 
-        for i, (name, model) in enumerate(models):
-            ax = axes[i]
-            predict_fn = model.predict_proba
-            exp = explainer.explain_instance(x_row.values, predict_fn,
-                                             num_features=num_features, num_samples=num_samples)
-            items = exp.as_list()
-            feats, weights = zip(*items)
-
-            y_pos = np.arange(len(feats))
-            ax.barh(y_pos, weights)
-            ax.set_yticks(y_pos)
-            ax.set_yticklabels(feats)
-            ax.invert_yaxis()
-            ax.set_title(f"{name} — LIME (idx={sample_idx})")
+                y_pos = np.arange(len(feats))
+                ax.barh(y_pos, weights)
+                ax.set_yticks(y_pos)
+                ax.set_yticklabels(feats)
+                ax.invert_yaxis()
+                ax.set_title(f"{name} — LIME (idx={idx})")
 
         plt.tight_layout()
         plt.show()
