@@ -106,10 +106,10 @@ class ADNICleaner:
         - Otherwise -> leave as 'SMC' 
 
         After direct mapping, any remaining 'SMC' in DX_bl are replaced with 'CN'. 
-
         Prints a summary of replacements. 
 
         :param dataset: Optional external dataset to use. 
+
         :return: The updated DataFrame. 
         """
         if dataset is not None and dataset is not pd.NA:
@@ -185,6 +185,8 @@ class ADNICleaner:
           - If DX == 'Dementia' and DX_bl == 'LMCI' -> set DX_bl = 'AD'
         
         Print a report of how many cases were changed for each rule.
+
+        :return: The modified DataFrame.
         """
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
@@ -259,6 +261,8 @@ class ADNICleaner:
         """
         Removes columns that contain only a single unique value.
         These attributes are not informative and can be safely dropped.
+
+        :return: The modified DataFrame.
         """
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
@@ -281,6 +285,8 @@ class ADNICleaner:
         Remove duplicate rows from the dataset.
         
         :param dataset: Optional external dataset to use.
+
+        :return: The modified DataFrame.
         """
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
@@ -354,6 +360,7 @@ class ADNICleaner:
         :param old_value: The value to be replaced.
         :param new_value: The value to replace with.
         :param dataset: Optional external dataset to use.
+
         :return: DataFrame with replaced values.
         """
         if dataset is not None and dataset is not pd.NA:
@@ -375,6 +382,8 @@ class ADNICleaner:
         Removes columns that have more than a specified percentage of missing values.
         
         :param threshold: The percentage (0-100) above which attributes will be removed. Default is 50%.
+
+        :return: The modified DataFrame.
         """
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
@@ -395,10 +404,11 @@ class ADNICleaner:
         :param column: The column name in which to replace NaN values.
         :param value: The value to use for replacing NaN values.
         :param dataset: Optional external dataset to use.
+
+        :return: The modified DataFrame.
         """
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
-
 
         if column not in self.dataset.columns:
             print(f"Column '{column}' not found. Operation skipped.")
@@ -437,6 +447,8 @@ class ADNICleaner:
         :param method: Rounding method: 'floor', 'ceil', or 'round'.
         :param fillna_value: Value to replace NaNs before converting to int64 (default=0).
         :param dataset: Optional external dataset to use.
+
+        :return: The modified DataFrame.
         """
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
@@ -478,6 +490,16 @@ class ADNICleaner:
     
 
     def impute_mean_by_class(self, columns: List[str], class_col: str, dataset: pd.DataFrame = None) -> pd.DataFrame:
+        """
+        Impute missing values in numeric columns using the mean value within each class of a specified categorical column.  
+        If a class group has all missing values, fall back to the global mean of the column.
+
+        :param columns: List[str] -> List of numeric columns to impute.
+        :param class_col: str ->  Column name representing the class/group used for group-wise mean imputation.
+        :param dataset: pd.DataFrame, optional -> Alternative dataset to apply imputation on. If None, uses self.dataset.
+
+        :return: The DataFrame with missing values imputed per class.
+        """
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
 

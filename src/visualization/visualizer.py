@@ -10,10 +10,9 @@ class Visualizer:
 
     Usage:
         viz = Visualizer(dataset)
-        viz.histogram(x="age", title="Age distribution", xlabel="age", ylabel="count")
+        viz.histogram(x="AGE", title="Age distribution", xlabel="age", ylabel="Patient Count")
         viz.scatter_plot(x="height", y="weight", hue="gender", title="Height vs Weight")
     """
-
     # ----------------------------#
     #        INITIALIZATION       #
     # ----------------------------#
@@ -35,11 +34,6 @@ class Visualizer:
         """
         Validate a single column name. If col is None, attempt to infer a column
         matching dtype ('numeric'|'categorical') or ask the user for input.
-
-        :param col: column name or None
-        :param dtype: 'numeric', 'categorical', or None
-        :param optional: if True, returns None when col not provided
-        :return: validated column name or None
         """
         if col is None:
             if optional:
@@ -101,14 +95,34 @@ class Visualizer:
 
     # ----------------------------#
     #            PLOTS            #
-    # ----------------------------#
+    # ----------------------------# 
     def line_plot(self, x: Optional[str] = None, y: Optional[Union[str, List[str]]] = None,
                   hue: Optional[str] = None, title: Optional[str] = None,
                   xlabel: Optional[str] = None, ylabel: Optional[str] = None,
                   figsize=(8, 5), return_ax: bool = False, **kwargs):
         """
-        Generic line plot. y can be a single column or list of columns (multiple series).
+        Create a line plot for one or multiple numeric series.
+        y can be a single column or list of columns (multiple series).
         If y is None and there are multiple numeric columns, plot them all.
+
+        Parameters
+        ----------
+        x : str, optional
+            Column name for the x-axis. If None, uses the DataFrame index.
+        y : str or list of str, optional
+            One or more numeric columns to plot. If None, all numeric columns are used.
+        hue : str, optional
+            Column name for grouping (different colors per category).
+        title : str, optional
+            Plot title.
+        xlabel, ylabel : str, optional
+            Axis labels.
+        figsize : tuple, default (8, 5)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
+        kwargs : dict
+            Additional arguments passed to seaborn/matplotlib.
         """
         # infer x if appropriate
         if x is None:
@@ -158,7 +172,28 @@ class Visualizer:
                      title: Optional[str] = None, xlabel: Optional[str] = None, ylabel: Optional[str] = None,
                      figsize=(7, 6), return_ax: bool = False, **kwargs):
         """
-        Scatter plot with optional hue, size, style.
+        Create a scatter plot with optional grouping and styling.
+
+        Parameters
+        ----------
+        x, y : str
+            Numeric columns for x- and y-axis.
+        hue : str, optional
+            Column used to color points by category.
+        size : str, optional
+            Column used to scale point sizes.
+        style : str, optional
+            Column used to set marker style.
+        title : str, optional
+            Plot title.
+        xlabel, ylabel : str, optional
+            Axis labels.
+        figsize : tuple, default (7, 6)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
+        kwargs : dict
+            Additional seaborn styling arguments.
         """
         x = self._validate_column(x, dtype='numeric')
         y = self._validate_column(y, dtype='numeric')
@@ -182,7 +217,30 @@ class Visualizer:
                   title: Optional[str] = None, xlabel: Optional[str] = None, ylabel: Optional[str] = None,
                   figsize=(7, 5), stacked: bool = False, by: Optional[str] = None, return_ax: bool = False, **kwargs):
         """
-        Histogram. If 'by' is provided (categorical), draws multiple histograms by category.
+        Create a histogram of a numeric column.
+
+        Parameters
+        ----------
+        x : str
+            Numeric column to plot.
+        bins : int, default 30
+            Number of histogram bins.
+        kde : bool, default False
+            Whether to add a kernel density estimate.
+        rug : bool, default False
+            Whether to add a rug plot.
+        stacked : bool, default False
+            If True, stack histograms by category when using 'by'.
+        by : str, optional
+            Categorical column to group histograms.
+        title, xlabel, ylabel : str, optional
+            Plot title and axis labels.
+        figsize : tuple, default (7, 5)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
+        kwargs : dict
+            Extra seaborn arguments.
         """
         x = self._validate_column(x, dtype='numeric')
         fig, ax = plt.subplots(figsize=figsize)
@@ -211,7 +269,27 @@ class Visualizer:
                  figsize=(8, 5), annotate: bool = False, return_ax: bool = False, **kwargs):
         """
         Bar plot for categorical x vs numerical y. If y is None, draws frequency bars (countplot).
-        annotate: if True and y is None, annotate bars with counts; if y provided, annotates bar heights.
+
+        Parameters
+        ----------
+        x : str
+            Categorical column.
+        y : str, optional
+            Numeric column. If None, plot counts instead of aggregated values.
+        estimator : function, default np.mean
+            Function to aggregate numeric values (e.g., np.mean, np.median).
+        ci : str, default 'sd'
+            Error bar type ('sd', 'ci', or None).
+        annotate : bool, default False
+            If True, annotate bars with values.
+        title, xlabel, ylabel : str, optional
+            Plot title and axis labels.
+        figsize : tuple, default (8, 5)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
+        kwargs : dict
+            Extra seaborn arguments.
         """
         if y is None:
             x = self._validate_column(x, dtype='categorical')
@@ -263,6 +341,23 @@ class Visualizer:
         """
         Box plot. For categorical x and numeric y. If x is None and y provided, x is inferred.
         If both None, draws boxplots for all numeric columns.
+        
+        Parameters
+        ----------
+        x : str, optional
+            Categorical column. If None, draw boxplots for all numeric columns.
+        y : str, optional
+            Numeric column to plot.
+        by : str, optional
+            Additional grouping variable.
+        title, xlabel, ylabel : str, optional
+            Plot title and axis labels.
+        figsize : tuple, default (8, 5)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
+        kwargs : dict
+            Extra seaborn arguments.
         """
         if x is None and y is None:
             numeric_cols = self.dataset.select_dtypes(include=[np.number]).columns.tolist()
@@ -281,7 +376,7 @@ class Visualizer:
             
         else:
             if y is None:
-                # assume the user passed x as numeric and wants per-column boxes
+                # Assume the user passed x as numeric and wants per-column boxes
                 y = x
                 x = None
             x_valid = self._validate_column(x, dtype='categorical', optional=True)
@@ -306,7 +401,24 @@ class Visualizer:
                     title: Optional[str] = None, xlabel: Optional[str] = None, ylabel: Optional[str] = None,
                     figsize=(8, 5), return_ax: bool = False, **kwargs):
         """
-        Violin plot for distribution of numeric y by categorical x.
+        Create a violin plot to show numeric distribution by category.
+
+        Parameters
+        ----------
+        x : str, optional
+            Categorical column.
+        y : str
+            Numeric column.
+        hue : str, optional
+            Column for nested grouping.
+        title, xlabel, ylabel : str, optional
+            Plot title and axis labels.
+        figsize : tuple, default (8, 5)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
+        kwargs : dict
+            Extra seaborn arguments.
         """
         x_valid = self._validate_column(x, dtype='categorical', optional=True)
         y_valid = self._validate_column(y, dtype='numeric')
@@ -324,13 +436,29 @@ class Visualizer:
         fig.tight_layout()
         if return_ax:
             return ax
-        
 
     def kde_plot(self, x: Optional[str] = None, shade: bool = True, bw_method: Optional[float] = None,
                  title: Optional[str] = None, xlabel: Optional[str] = None, ylabel: Optional[str] = None,
                  figsize=(7, 5), return_ax: bool = False, **kwargs):
         """
-        Kernel Density Estimate plot for a single numeric column.
+        Create a kernel density estimate (KDE) plot for a numeric column.
+
+        Parameters
+        ----------
+        x : str
+            Numeric column to plot.
+        shade : bool, default True
+            Whether to fill the area under the curve.
+        bw_method : float, optional
+            Bandwidth for the KDE.
+        title, xlabel, ylabel : str, optional
+            Plot title and axis labels.
+        figsize : tuple, default (7, 5)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
+        kwargs : dict
+            Extra seaborn arguments.
         """
         x = self._validate_column(x, dtype='numeric')
         fig, ax = plt.subplots(figsize=figsize)
@@ -352,8 +480,27 @@ class Visualizer:
     def pair_plot(self, cols: Optional[Sequence[str]] = None, hue: Optional[str] = None,
                   diag_kind: str = 'hist', corner: bool = False, title: Optional[str] = None, **kwargs):
         """
-        Pairplot (pairwise relationships). If cols is None, uses numeric columns.
-        Returns the PairGrid object.
+        Create pairwise plots for multiple numeric variables.
+
+        Parameters
+        ----------
+        cols : list of str, optional
+            Numeric columns to include. If None, use all numeric columns.
+        hue : str, optional
+            Categorical column for color encoding.
+        diag_kind : {'hist', 'kde'}, default 'hist'
+            Type of plot for the diagonal.
+        corner : bool, default False
+            If True, only plot lower triangle.
+        title : str, optional
+            Figure title.
+        kwargs : dict
+            Extra seaborn arguments.
+
+        Returns
+        -------
+        seaborn.axisgrid.PairGrid
+            The seaborn PairGrid object.
         """
         cols_list = list(self._validate_columns(cols, dtype='numeric', min_count=2))
         plot_cols = cols_list + ([hue] if hue and hue not in cols_list else [])
@@ -371,8 +518,28 @@ class Visualizer:
                      xlabel: Optional[str] = None, ylabel: Optional[str] = None,
                      figsize=(8, 6), fmt: str = ".2f", return_ax: bool = False):
         """
-        Correlation heatmap for numeric columns (or subset).
+        Create a correlation heatmap for numeric variables.
+
+        Parameters
+        ----------
+        cols : list of str, optional
+            Numeric columns to include. If None, use all numeric columns.
+        method : {'pearson', 'spearman', 'kendall'}, default 'pearson'
+            Correlation method.
+        annot : bool, default True
+            Whether to display correlation values.
+        cmap : str, optional
+            Colormap for heatmap.
+        fmt : str, default '.2f'
+            Format for annotation values.
+        title, xlabel, ylabel : str, optional
+            Plot title and axis labels.
+        figsize : tuple, default (8, 6)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
         """
+
         cols_list = self._validate_columns(cols, dtype='numeric', min_count=2) if cols is not None else self.dataset.select_dtypes(include=[np.number]).columns.tolist()
         corr = self.dataset[cols_list].corr(method=method)
         fig, ax = plt.subplots(figsize=figsize)
@@ -391,8 +558,25 @@ class Visualizer:
                    title: Optional[str] = None, xlabel: Optional[str] = None, ylabel: Optional[str] = None,
                    figsize=(7, 7), **kwargs):
         """
-        Joint plot for two numeric variables. kind can be 'scatter', 'kde', 'hex', 'reg'.
-        Returns the JointGrid / FacetGrid object.
+        Create a joint plot showing the relationship between two variables.
+
+        Parameters
+        ----------
+        x, y : str
+            Numeric columns.
+        kind : {'scatter', 'kde', 'hex', 'reg'}, default 'scatter'
+            Type of joint plot.
+        title, xlabel, ylabel : str, optional
+            Plot title and axis labels.
+        figsize : tuple, default (7, 7)
+            Size of the figure (height maps to jointplot 'height').
+        kwargs : dict
+            Extra seaborn arguments.
+
+        Returns
+        -------
+        seaborn.axisgrid.JointGrid
+            The seaborn JointGrid object.
         """
         x = self._validate_column(x, dtype='numeric')
         y = self._validate_column(y, dtype='numeric')
@@ -410,10 +594,24 @@ class Visualizer:
                    title: Optional[str] = None, xlabel: Optional[str] = None, ylabel: Optional[str] = None,
                    annotate: bool = False, return_ax: bool = False, **kwargs):
         """
-        Countplot for categorical variable frequencies.
-        If a palette is provided but hue is None, the method sets hue=x and hides the legend by default
-        (avoids seaborn FutureWarning when palette is used without hue).
-        annotate: if True, adds counts above each bar.
+        Create a count plot for categorical frequencies.
+
+        Parameters
+        ----------
+        x : str
+            Categorical column.
+        hue : str, optional
+            Column for grouping counts.
+        annotate : bool, default False
+            If True, add counts above each bar.
+        title, xlabel, ylabel : str, optional
+            Plot title and axis labels.
+        figsize : tuple, default (8, 5)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
+        kwargs : dict
+            Extra seaborn arguments.
         """
         x = self._validate_column(x, dtype='categorical')
         # Extract and manage 'legend' from kwargs (so it is not passed to seaborn)
@@ -455,7 +653,24 @@ class Visualizer:
                          title: Optional[str] = None, xlabel: Optional[str] = None, ylabel: Optional[str] = None,
                          figsize=(8, 5), return_ax: bool = False, **kwargs):
         """
-        Strip or Swarm plot. kind='strip' or 'swarm'.
+        Create a strip plot or swarm plot for categorical vs numeric data.
+
+        Parameters
+        ----------
+        x : str, optional
+            Categorical column.
+        y : str
+            Numeric column.
+        kind : {'strip', 'swarm'}, default 'strip'
+            Type of plot.
+        title, xlabel, ylabel : str, optional
+            Plot title and axis labels.
+        figsize : tuple, default (8, 5)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
+        kwargs : dict
+            Extra seaborn arguments.
         """
         if kind not in ('strip', 'swarm'):
             raise ValueError("kind must be 'strip' or 'swarm'")
@@ -480,8 +695,24 @@ class Visualizer:
                   explode: Optional[Sequence[float]] = None, figsize=(6, 6), autopct: Optional[str] = '%1.1f%%',
                   title: Optional[str] = None, return_ax: bool = False):
         """
-        Pie chart of value counts for a categorical column.
-        Returns the figure (pie charts are not typical Axes-returners).
+        Create a pie chart from categorical frequencies.
+
+        Parameters
+        ----------
+        x : str
+            Categorical column.
+        labels : list of str, optional
+            Labels for the pie slices.
+        explode : list of float, optional
+            Offsets for each slice.
+        autopct : str, default '%1.1f%%'
+            Format string for percentages.
+        figsize : tuple, default (6, 6)
+            Figure size.
+        title : str, optional
+            Chart title.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
         """
         x = self._validate_column(x, dtype='categorical')
         counts = self.dataset[x].value_counts()
@@ -498,7 +729,24 @@ class Visualizer:
                   title: Optional[str] = None, xlabel: Optional[str] = None, ylabel: Optional[str] = None,
                   figsize=(10, 6), return_ax: bool = False, **kwargs):
         """
-        Area plot for time series or numeric series. y can be multiple columns.
+        Create an area plot for one or more numeric series.
+
+        Parameters
+        ----------
+        x : str, optional
+            Column for x-axis (default uses index).
+        y : list of str, optional
+            Numeric columns to plot. If None, use all numeric columns.
+        stacked : bool, default False
+            If True, stack the areas.
+        title, xlabel, ylabel : str, optional
+            Plot title and axis labels.
+        figsize : tuple, default (10, 6)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
+        kwargs : dict
+            Extra pandas/matplotlib arguments.
         """
         if y is None:
             ycols = self.dataset.select_dtypes(include=[np.number]).columns.tolist()
@@ -522,7 +770,22 @@ class Visualizer:
                     title: Optional[str] = None, xlabel: Optional[str] = None, ylabel: Optional[str] = None,
                     figsize=(7, 6), return_ax: bool = False, **kwargs):
         """
-        Hexbin plot for two numeric variables (useful for large scatter density).
+        Create a hexbin plot for two numeric variables.
+
+        Parameters
+        ----------
+        x, y : str
+            Numeric columns.
+        gridsize : int, default 30
+            Number of hexagons across the x-axis.
+        title, xlabel, ylabel : str, optional
+            Plot title and axis labels.
+        figsize : tuple, default (7, 6)
+            Figure size.
+        return_ax : bool, default False
+            If True, return the matplotlib Axes.
+        kwargs : dict
+            Extra matplotlib arguments.
         """
         x = self._validate_column(x, dtype='numeric')
         y = self._validate_column(y, dtype='numeric')
@@ -539,11 +802,22 @@ class Visualizer:
 
     def correlation_scatter_matrix(self, cols: Optional[Sequence[str]] = None, figsize=(8, 8)):
         """
-        Scatter matrix (pairwise scatter) colored by density via KDE shading in the diagonal.
-        Returns the Figure.
+        Create a scatter matrix (pairwise scatter plots with KDE on diagonals).
+
+        Parameters
+        ----------
+        cols : list of str, optional
+            Numeric columns to include. If None, use all numeric columns.
+        figsize : tuple, default (8, 8)
+            Figure size.
+
+        Returns
+        -------
+        matplotlib.figure.Figure
+            The matplotlib Figure object.
         """
         cols_list = self._validate_columns(cols, dtype='numeric', min_count=2) if cols is not None else self.dataset.select_dtypes(include=[np.number]).columns.tolist()
         fig = pd.plotting.scatter_matrix(self.dataset[cols_list], diagonal='kde', figsize=figsize)
         plt.suptitle("Scatter Matrix")
         plt.tight_layout()
-        
+        return fig

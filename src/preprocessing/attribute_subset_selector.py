@@ -22,6 +22,7 @@ class AttributeSubsetSelector:
         param dataset: DataFrame containing the data.
         param columns: List of column names to evaluate.
         param threshold: Minimum variance threshold to keep a feature (default=0.0).
+
         return: List of column names whose variance is above the threshold.
         """
         missing = [col for col in columns if col not in dataset.columns]
@@ -43,6 +44,7 @@ class AttributeSubsetSelector:
         param target_col: Name of the target column.
         param threshold: Minimum absolute correlation threshold (default=0.0).
         param method: Correlation method to use ('pearson', 'spearman', 'kendall').
+
         return: List of column names whose correlation is above the threshold.
         """
         if target_col not in dataset.columns:
@@ -67,6 +69,7 @@ class AttributeSubsetSelector:
         param target_col: Name of the target column.
         param k: Number of top features to select (default=10).
         param random_state: Random state for reproducibility (default=None).
+
         return: List of top-k column names ranked by mutual information.
         """
         X = dataset[columns].fillna(0)
@@ -85,6 +88,7 @@ class AttributeSubsetSelector:
         param columns: List of column names to evaluate.
         param target_col: Name of the target column.
         param k: Number of top features to select (default=10).
+
         return: List of top-k column names according to SelectKBest.
         """
         if target_col not in dataset.columns:
@@ -118,6 +122,7 @@ class AttributeSubsetSelector:
         param target_col: Name of the target column.
         param n_features_to_select: Number of features to select (default=5).
         param estimator: Estimator to use for RFE (default=RandomForestClassifier).
+        
         return: List of selected column names by RFE.
         """
         if target_col not in dataset.columns:

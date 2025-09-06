@@ -26,34 +26,44 @@ def ADNI_run_gridsearch(train, classifiers, param_grids, cv=5, scoring='balanced
     """
     # Target column
     y_train = train['DX']
-
-    # All other columns as features
     X_train = train.drop(columns=['DX'])
-
+    
     best_models = {}
-
+    errors = {}
+    
     for name, clf in classifiers.items():
         print(f"\nRunning GridSearch for {name} ...")
         param_grid = param_grids.get(name, {})
-
+        
+        # Safe n_jobs for XAI models
+        if 'OptimalTree' in str(type(clf)) or 'ExplainableBoosting' in str(type(clf)):
+            n_jobs_grid = 1
+        else:
+            n_jobs_grid = -1
+        
         grid = GridSearchCV(
             estimator=clf,
             param_grid=param_grid,
             cv=cv,
             scoring=scoring,
-            n_jobs=-1,
-            verbose=1
+            n_jobs=n_jobs_grid,
+            verbose=1,
+            error_score='raise'  
         )
-
-        grid.fit(X_train, y_train)
-
-        best_models[name] = {
-            "best_estimator": grid.best_estimator_,
-            "best_params": grid.best_params_,
-            "best_score": grid.best_score_
-        }
-
-        print(f"Best params for {name}: {grid.best_params_}")
-        print(f"Best {scoring}: {grid.best_score_:.4f}")
-
+        
+        try:
+            grid.fit(X_train, y_train)
+            best_models[name] = {
+                "best_estimator": grid.best_estimator_,
+                "best_params": grid.best_params_,
+                "best_score": grid.best_score_
+            }
+            print(f"Best params for {name}: {grid.best_params_}")
+            print(f"Best {scoring}: {grid.best_score_:.4f}")
+        
+        except Exception as e:
+            print(f"Classifier {name} failed: {e}")
+            errors[name] = str(e)
+    
     return best_models
+

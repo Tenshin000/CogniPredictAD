@@ -104,7 +104,6 @@ class ADNITransformator:
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
 
-
         # Check columns
         missing = [col for col in columns if col not in self.dataset.columns]
         if missing:
@@ -198,7 +197,6 @@ class ADNITransformator:
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
 
-
         # Check if all columns exist
         missing = [col for col in columns if col not in self.dataset.columns]
         if missing:
@@ -233,7 +231,6 @@ class ADNITransformator:
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
 
-
         missing = [col for col in columns if col not in self.dataset.columns]
         if missing:
             raise ValueError(f"The dataset must contain the following columns: {missing}")
@@ -267,7 +264,6 @@ class ADNITransformator:
         """
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
-
 
         # Check if all columns exist in the dataset
         missing = [col for col in columns if col not in self.dataset.columns]

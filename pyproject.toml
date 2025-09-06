@@ -19,8 +19,6 @@ dependencies = [
     "xgboost",
     "lightgbm",
     "catboost",
-    "imodels",
-    "interpret",
     "shap",
     "graphviz",
     "lime",

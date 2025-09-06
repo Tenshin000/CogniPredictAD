@@ -1,32 +1,33 @@
 import os
 import joblib
+import math
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pickle
-import matplotlib.pyplot as plt
 import seaborn as sns
 
-from sklearn.base import clone
-from sklearn.pipeline import Pipeline
-from sklearn.model_selection import RepeatedStratifiedKFold
-from sklearn.metrics import (
-    accuracy_score, precision_score, recall_score, f1_score,
-    roc_auc_score, roc_curve, confusion_matrix, classification_report,
-    balanced_accuracy_score
-)
+from IPython.display import display
 from catboost import CatBoostClassifier
 from lightgbm import LGBMClassifier
-from xgboost import XGBClassifier
-from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, BaggingClassifier
-from sklearn.tree import DecisionTreeClassifier
-from sklearn.preprocessing import StandardScaler, label_binarize
+from sklearn.base import clone
+from sklearn.ensemble import BaggingClassifier, ExtraTreesClassifier, RandomForestClassifier
 from sklearn.linear_model import LogisticRegression
-from IPython.display import display
+from sklearn.metrics import (
+    accuracy_score, balanced_accuracy_score, classification_report,
+    confusion_matrix, f1_score, precision_score, recall_score,
+    roc_auc_score, roc_curve
+)
+from sklearn.model_selection import RepeatedStratifiedKFold
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler, label_binarize
+from sklearn.tree import DecisionTreeClassifier
+from xgboost import XGBClassifier
 
 
 class ADNIClassifier:
     """
-    ADNIClassifier: helper class to train/evaluate multiple classifiers on an ADNIMERG dataset.
+    ADNIClassifier: helper class to train and evaluate multiple classifier models on an ADNIMERG dataset.
     """
     # ----------------------------#
     #        INITIALIZATION       #
@@ -39,18 +40,19 @@ class ADNIClassifier:
         if classifier == "Standard1" or classifier == "standard1" or classifier == "STANDARD1" or classifier == "None":
             self.classifiers = self._default_classifiers_1()
         elif classifier == "Standard2" or classifier == "standard2" or classifier == "STANDARD2":
-            self.classifiers = self._default_classifiers_1()
+            self.classifiers = self._default_classifiers_2()
         else:
             self.classifiers = self._default_classifiers_1()
 
     # ----------------------------#
-    #   CLASSIFIERS DEFINITION    #
+    #   CLASSIFIERS DEFINITIONS   #
     # ----------------------------# 
     def _default_classifiers_1(self):
         return {
             "Decision Tree": DecisionTreeClassifier(
-                random_state=42, class_weight="balanced", max_depth=6, splitter="best",
-                max_features=0.8, min_samples_leaf=10, min_samples_split=2
+                random_state=42, class_weight="balanced",
+                criterion="entropy", max_depth=6, max_features=1.0,
+                min_samples_leaf=8, min_samples_split=2
             ),
             "Random Forest": RandomForestClassifier(
                 random_state=42, class_weight="balanced", n_jobs=-1,
@@ -87,18 +89,23 @@ class ADNIClassifier:
                     C=1.0, penalty="l1"
                 ))
             ]),
-            "Bagging": BaggingClassifier(random_state=42, n_jobs=-1, bootstrap=False, max_features=1.0, max_samples=0.6, n_estimators=100)
+            "Bagging": BaggingClassifier(
+                random_state=42, n_jobs=-1,
+                bootstrap=False, max_features=1.0, max_samples=0.6,
+                n_estimators=100
+            )
         }
 
     
-    def _default_classifiers_2(self): 
+    def _default_classifiers_2(self):
         """
         Return a dictionary with tuned classifier instances.
         """
         return {
             "Decision Tree": DecisionTreeClassifier(
-                random_state=42, class_weight="balanced", max_depth=6, splitter="best",
-                max_features=1.0, min_samples_leaf=1, min_samples_split=2
+                random_state=42, class_weight="balanced",
+                criterion="gini", max_depth=4, max_features=1.0,
+                min_samples_leaf=1, min_samples_split=2
             ),
             "Random Forest": RandomForestClassifier(
                 random_state=42, class_weight="balanced", n_jobs=-1,
@@ -135,7 +142,10 @@ class ADNIClassifier:
                     C=1.0, penalty="l1"
                 ))
             ]),
-            "Bagging": BaggingClassifier(random_state=42, n_jobs=-1, bootstrap=False, max_features=0.8, max_samples=0.6, n_estimators=100)
+            "Bagging": BaggingClassifier(
+                random_state=42, n_jobs=-1,
+                bootstrap=False, max_features=0.8, max_samples=0.6, n_estimators=100
+            )
         }
 
     # ----------------------------#
@@ -191,9 +201,6 @@ class ADNIClassifier:
         return name.replace(" ", "_").replace("/", "_")
     
     def _unique_model_path(self, base_dir, clf_name):
-        """
-        Returns a unique path to the model, avoiding overwriting existing files.
-        """
         clean_name = self._clean_name(clf_name)
         i = 0
         while True:
@@ -207,8 +214,8 @@ class ADNIClassifier:
     # ----------------------------# 
     def _run_repeated_cv(self, clf, X, y, cv_splitter):
         """
-        Run repeated stratified CV for a single classifier. Return:
-        true_all (np.array), pred_all (np.array), prob_all (np.ndarray), fold_accuracies (list)
+        Run repeated stratified CV for a single classifier. 
+        Return: true_all (np.array), pred_all (np.array), prob_all (np.ndarray), fold_accuracies (list)
         """
         true_all = []
         pred_all = []
@@ -220,10 +227,10 @@ class ADNIClassifier:
             X_tr, X_val = X.iloc[train_idx], X.iloc[val_idx]
             y_tr, y_val = y.iloc[train_idx], y.iloc[val_idx]
 
-            # clone + fit on fold
+            # Clone and Fit on fold
             fitted = self._safe_clone_and_fit(clf, X_tr, y_tr)
 
-            # Predict and probabilities
+            # Predict and Probabilities
             y_pred = fitted.predict(X_val)
             prob_arr = self._get_probabilities(fitted, X_val, classes)
 
@@ -234,7 +241,7 @@ class ADNIClassifier:
             fold_acc = accuracy_score(y_val, y_pred)
             fold_accuracies.append(fold_acc)
 
-        # stack probabilities and arrays
+        # Stack probabilities and arrays
         prob_all = np.vstack(prob_all_list) if len(prob_all_list) > 0 else np.empty((0, len(classes)))
         return np.array(true_all), np.array(pred_all), prob_all, fold_accuracies
 
@@ -247,8 +254,6 @@ class ADNIClassifier:
         Uses a grid with 2 columns (2 graphs above, 2 below for 4 classes).
         If number of classes != 4, uses ncols=2 and computes nrows = ceil(n_classes/2).
         """
-        import math
-
         n_classes = len(classes)
         if n_classes == 0:
             return
@@ -258,7 +263,7 @@ class ADNIClassifier:
         figsize = (12, 5 * nrows)  # width x height, adjust if you want bigger/smaller
 
         fig, axes = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
-        # ensure axes is a flattened array for simple indexing
+        # Ensure axes is a flattened array for simple indexing
         if isinstance(axes, np.ndarray):
             axes = axes.flatten()
         else:
@@ -266,13 +271,13 @@ class ADNIClassifier:
 
         for idx, cls in enumerate(classes):
             ax = axes[idx]
-            # plot each classifier"s ROC for this class
+            # Plot each classifier"s ROC for this class
             for clf_name, (fpr_dict, tpr_dict, auc_dict) in roc_dict.items():
                 fpr = fpr_dict.get(cls, None)
                 tpr = tpr_dict.get(cls, None)
                 auc_val = auc_dict.get(cls, np.nan)
 
-                # if fpr/tpr missing or length mismatch, fallback to diagonal
+                # If fpr/tpr missing or length mismatch, fallback to diagonal
                 if fpr is None or tpr is None or len(fpr) == 0 or len(tpr) == 0:
                     fpr = np.array([0.0, 1.0])
                     tpr = np.array([0.0, 1.0])
@@ -338,7 +343,7 @@ class ADNIClassifier:
             ax.set_xlabel("Predicted")
             ax.set_ylabel("True")
 
-        # remove unused axes
+        # Remove unused axes
         for idx in range(len(confusion_dict), len(axes)):
             fig.delaxes(axes[idx])
 
@@ -373,18 +378,34 @@ class ADNIClassifier:
                                   output_dir: str = "../results/all_models",
                                   cv_splits: int = 5, cv_repeats: int = 3):
         """
-        Train and evaluate classifiers using repeated stratified CV, save fitted models on full training set,
-        and produce summary metrics and plots.
+        Train, evaluate, and store multiple classifiers using Repeated Stratified CV.  
+        Generates metrics, per-class reports, confusion matrices, ROC curves, and saves trained models.
 
-        Returns a dictionary with:
-            - results_df: DataFrame of global metrics
-            - per_class_df: DataFrame of per-class metrics
-            - saved_model_paths: dict of saved model file paths
+        Parameters
+        ----------
+        X_train : pd.DataFrame
+            Training feature matrix.
+        y_train : pd.Series
+            Training labels.
+        output_dir : str, default="../results/all_models"
+            Directory to save trained models.
+        cv_splits : int, default=5
+            Number of folds in cross-validation.
+        cv_repeats : int, default=3
+            Number of times cross-validation is repeated.
+
+        Returns
+        -------
+        dict
+            {
+                "results_df": pd.DataFrame  # Global metrics per model
+                "per_class_df": pd.DataFrame  # Metrics per class
+            }
         """
-        # ensure output directory exists
+        # Ensure output directory exists
         self._ensure_dir(output_dir)
 
-        # CV splitter
+        # CV Splitter
         cv_splitter = RepeatedStratifiedKFold(n_splits=cv_splits, n_repeats=cv_repeats, random_state=42)
         classes = np.unique(y_train)
 
@@ -399,13 +420,13 @@ class ADNIClassifier:
         for clf_name, clf in self.classifiers.items():
             print(f"Training & Evaluating: {clf_name}")
 
-            # repeated CV
+            # Repeated CV
             true_all, pred_all, prob_all, fold_accuracies = self._run_repeated_cv(clf, X_train, y_train, cv_splitter)
 
-            # store fold accuracies
+            # Store fold accuracies
             accuracies_per_model[clf_name] = fold_accuracies
 
-            # compute global metrics
+            # Compute global metrics
             roc_auc_macro = np.nan
             try:
                 roc_auc_macro = roc_auc_score(label_binarize(true_all, classes=classes), prob_all,
@@ -425,7 +446,7 @@ class ADNIClassifier:
             }
             metrics_list.append(clf_metrics)
 
-            # per-class metrics using classification_report
+            # Per-class metrics using classification_report
             class_report = classification_report(true_all, pred_all, labels=classes, output_dict=True, zero_division=0)
             for cls in classes:
                 rep = class_report.get(str(cls), {})
@@ -438,7 +459,7 @@ class ADNIClassifier:
                     "Support": rep.get("support", 0)
                 })
 
-            # confusion matrix counts and normalized
+            # Confusion matrix counts and normalized
             cm = confusion_matrix(true_all, pred_all, labels=classes)
             confusion_dict[clf_name] = cm
             row_sums = cm.sum(axis=1, keepdims=True)
@@ -469,16 +490,16 @@ class ADNIClassifier:
             # Refit classifier on entire training set and save
             fitted_full = self._safe_clone_and_fit(clf, X_train, y_train)
             model_path = self._unique_model_path(output_dir, clf_name)
-            # save as .pkl using pickle
+            # Save as .pkl using pickle
             try:
                 with open(model_path, "wb") as _f:
                     pickle.dump(fitted_full, _f, protocol=pickle.HIGHEST_PROTOCOL)
             except Exception:
-                # fallback to joblib (keeps backward compatibility)
+                # Fallback to joblib
                 joblib.dump(fitted_full, model_path)
             saved_model_paths[clf_name] = model_path
 
-        # assemble result DataFrames
+        # Assemble result DataFrames
         results_df = pd.DataFrame(metrics_list).sort_values("ROC AUC (macro)", ascending=False)
         per_class_df = pd.DataFrame(per_class_metrics_list)
 
@@ -495,6 +516,7 @@ class ADNIClassifier:
             "results_df": results_df,
             "per_class_df": per_class_df
         }
+    
 
     def evaluate_models_from_dir(self, models_dir: str,
                                 X_train: pd.DataFrame, y_train: pd.Series,
@@ -508,7 +530,6 @@ class ADNIClassifier:
         - Testing set
 
         For each model this function prints (via `display`) a small table with the same
-        global metrics used in `fit_evaluate_store_models` where rows are ["Train", "CrossVal", "Test"].
 
         Parameters
         ----------
@@ -529,7 +550,7 @@ class ADNIClassifier:
         - confusion_matrices_norm: dict mapping model_name -> normalized confusion array (test)
         - test_comparison: DataFrame summarizing scores on test set
         """
-        # collect pkl files
+        # Collect pkl files
         all_files = [f for f in os.listdir(models_dir) if f.lower().endswith('.pkl')]
         all_files = sorted(all_files)
         if len(all_files) == 0:
@@ -541,10 +562,10 @@ class ADNIClassifier:
         per_model_tables = {}
         per_class_test = {}
 
-        # for bar plot
+        # For bar plot
         bar_rows = []
 
-        # store confusion matrices per model (raw and normalized)
+        # Store confusion matrices per model (raw and normalized)
         confusion_dict = {}
         confusion_norm_dict = {}
 
@@ -564,7 +585,7 @@ class ADNIClassifier:
             model_name = os.path.splitext(fname)[0]
             print(f"Evaluating model: {model_name}")
 
-            # --- TRAIN evaluation (use loaded model directly, assuming it's fitted) ---
+            # TRAIN EVALUATION
             try:
                 y_train_pred = loaded.predict(X_train)
             except Exception as e:
@@ -592,7 +613,7 @@ class ADNIClassifier:
                 "ROC AUC (macro)": roc_auc_train
             }
 
-            # --- CROSS-VALIDATION evaluation (clone model and run repeated CV) ---
+            # CROSS-VALIDATION EVALUATION (clone model and run repeated CV)
             true_cv, pred_cv, prob_cv, fold_accuracies = self._run_repeated_cv(loaded, X_train, y_train, cv_splitter)
             roc_auc_cv = np.nan
             try:
@@ -612,7 +633,7 @@ class ADNIClassifier:
                 "ROC AUC (macro)": roc_auc_cv
             }
 
-            # --- TEST evaluation ---
+            # TEST EVALUATION
             try:
                 y_test_pred = loaded.predict(X_test)
             except Exception as e:
@@ -620,7 +641,7 @@ class ADNIClassifier:
                 fitted_full = self._safe_clone_and_fit(loaded, X_train, y_train)
                 y_test_pred = fitted_full.predict(X_test)
                 prob_test = self._get_probabilities(fitted_full, X_test, classes)
-                # ensure loaded points to a fitted estimator for consistency below
+                # Ensure loaded points to a fitted estimator for consistency below
                 loaded = fitted_full
             else:
                 prob_test = self._get_probabilities(loaded, X_test, classes)
@@ -643,7 +664,7 @@ class ADNIClassifier:
                 "ROC AUC (macro)": roc_auc_test
             }
 
-            # assemble per-model table
+            # Assemble per-model table
             model_table = pd.DataFrame([train_metrics, cv_metrics, test_metrics])
             model_table = model_table.set_index('Split')
             per_model_tables[model_name] = model_table
@@ -651,7 +672,7 @@ class ADNIClassifier:
             if display_individual_tables:
                 display(model_table)
 
-            # per-class metrics ONLY for test set (same style as fit_evaluate_store_models)
+            # Per-class metrics ONLY for test set (same style as fit_evaluate_store_models)
             class_report = classification_report(y_test, y_test_pred, labels=classes, output_dict=True, zero_division=0)
             per_class_rows = []
             for cls in classes:
@@ -666,13 +687,14 @@ class ADNIClassifier:
                 })
             per_class_df = pd.DataFrame(per_class_rows)
             per_class_test[model_name] = per_class_df
-            display(per_class_df)
+            if display_individual_tables:
+                display(per_class_df)
 
-            # --- CONFUSION MATRICES (TEST SET) ---
+            # CONFUSION MATRICES (TEST SET)
             cm = confusion_matrix(y_test, y_test_pred, labels=classes)
             confusion_dict[model_name] = cm
 
-            # normalized per-row (true) -> percentages
+            # Normalized per-row (true) -> percentages
             row_sums = cm.sum(axis=1, keepdims=True)
             with np.errstate(divide="ignore", invalid="ignore"):
                 cm_norm = np.divide(cm.astype(float), row_sums, where=row_sums != 0)
@@ -690,30 +712,27 @@ class ADNIClassifier:
             models = bar_df['Model'].unique()
             splits = ['Train', 'CrossVal', 'Test']
 
-            x = np.arange(len(models))  # the label locations
-            width = 0.2
+            y = np.arange(len(models))  # label locations (asse y)
+            height = 0.2  # spessore barre
 
-            fig, ax = plt.subplots(figsize=(max(8, len(models) * 1.2), 6))
+            fig, ax = plt.subplots(figsize=(8, max(6, len(models) * 0.5)))  # altezza aumentata per leggibilità
 
             for i, split in enumerate(splits):
                 vals = [bar_df[(bar_df['Model'] == m) & (bar_df['Split'] == split)]['Balanced Accuracy'].values
                         for m in models]
-                # extract scalars (if missing -> 0)
                 vals = [v[0] if len(v) > 0 else 0.0 for v in vals]
-                ax.bar(x + (i - 1) * width, vals, width, label=split)
+                ax.barh(y + (i - 1) * height, vals, height, label=split)
 
-            ax.set_ylabel('Balanced Accuracy')
+            ax.set_xlabel('Balanced Accuracy')
+            ax.set_yticks(y)
+            ax.set_yticklabels(models)
             ax.set_title('Balanced Accuracy by Model and Split')
-            ax.set_xticks(x)
-            ax.set_xticklabels(models, rotation=45, ha='right')
             ax.legend()
-            ax.set_ylim(0, 1)
+            ax.set_xlim(0, 1)  # range Balanced Accuracy
             plt.tight_layout()
             plt.show()
-
-        # ----------------------------
-        #  print confusion matrices (raw) as tables for each model (TEST SET)
-        # ----------------------------
+        
+        # Print confusion matrices (raw) as tables for each model (TEST SET)
         if confusion_dict:
             print("\nConfusion matrices (raw counts) - TEST SET:")
             for mname, cm in confusion_dict.items():
@@ -721,12 +740,10 @@ class ADNIClassifier:
                 df_cm.index.name = "True"
                 df_cm.columns.name = "Pred"
 
-            # plot all raw confusion matrices as heatmaps using the class helper
+            # Plot all raw confusion matrices as heatmaps using the class helper
             self._plot_confusion_matrices(confusion_dict, title_prefix="Confusion Matrix (Test)")
 
-        # ----------------------------
-        #  print confusion matrices (normalized) as tables for each model (TEST SET)
-        # ----------------------------
+        #  Print confusion matrices (normalized) as tables for each model (TEST SET)
         if confusion_norm_dict:
             print("\nConfusion matrices (normalized by true-row) - TEST SET:")
             for mname, cmn in confusion_norm_dict.items():
@@ -734,13 +751,10 @@ class ADNIClassifier:
                 df_cmn.index.name = "True"
                 df_cmn.columns.name = "Pred"
             
-            # plot all normalized confusion matrices as heatmaps using the class helper
+            # Plot all normalized confusion matrices as heatmaps using the class helper
             self._plot_confusion_matrices(confusion_norm_dict, title_prefix="Normalized Confusion Matrix (Test)")
 
-        # ----------------------------
-        #  comparison table for TEST SET only
-        # ----------------------------
-        # Gather test-rows from each model_table into a single DataFrame
+        # Comparison table for TEST SET only. Gather test-rows from each model_table into a single DataFrame.
         test_rows = []
         for mname, table in per_model_tables.items():
             if 'Test' in table.index:
@@ -748,7 +762,7 @@ class ADNIClassifier:
                 tr['Model'] = mname
                 test_rows.append(tr)
             else:
-                # if unexpectedly missing, create NaN row
+                # If unexpectedly missing, create NaN row
                 test_rows.append({
                     "Model": mname,
                     "Accuracy": np.nan,
@@ -762,12 +776,12 @@ class ADNIClassifier:
 
         if test_rows:
             test_comparison_df = pd.DataFrame(test_rows)
-            # set Model as index and reorder columns for readability
+            # Set Model as index and reorder columns for readability
             test_comparison_df = test_comparison_df.set_index('Model')[
                 ["Accuracy", "Balanced Accuracy", "Precision (weighted)", "Recall (weighted)",
                 "F1 Score (weighted)", "F1 Score (macro)", "ROC AUC (macro)"]
             ]
-            # sort by Balanced Accuracy descending
+            # Sort by Balanced Accuracy descending
             test_comparison_df = test_comparison_df.sort_values("Balanced Accuracy", ascending=False)
             print("\nOverall comparison on TEST SET (sorted by Balanced Accuracy):")
             display(test_comparison_df)

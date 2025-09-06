@@ -1,6 +1,6 @@
 conda create --name CogniPredictAD python=3.11
 conda activate CogniPredictAD
 pip install jupyter
-pip install pandas openpyxl seaborn folium matplotlib imbalanced-learn scikit-learn plotly mlxtend xgboost lightgbm catboost imodels interpret shap graphviz lime
+pip install pandas openpyxl seaborn folium matplotlib imbalanced-learn scikit-learn plotly mlxtend xgboost lightgbm catboost shap graphviz lime
 python -m pip install --upgrade pip setuptools
 pip install -e .

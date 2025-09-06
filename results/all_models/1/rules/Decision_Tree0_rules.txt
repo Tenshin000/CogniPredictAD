@@ -1,62 +1,68 @@
 IF CDRSB <= 0.25
-|   |--- RAVLT_immediate <= 27.50
+|   |--- MOCA <= 23.50
 |   |   |--- PTAU/ABETA <= 0.02
 |   |   |   |--- THEN class = 0
 |   |   |--- PTAU/ABETA >  0.02
+|   |   |   |--- PTAU/ABETA <= 0.03
+|   |   |   |   |--- MidTemp/ICV <= 0.01
+|   |   |   |   |   |--- THEN class = 0
+|   |   |   |   |--- MidTemp/ICV >  0.01
+|   |   |   |   |   |--- THEN class = 1
+|   |   |   |--- PTAU/ABETA >  0.03
+|   |   |   |   |--- mPACCdigit <= -2.23
+|   |   |   |   |   |--- THEN class = 0
+|   |   |   |   |--- mPACCdigit >  -2.23
+|   |   |   |   |   |--- THEN class = 0
+|   |--- MOCA >  23.50
+|   |   |--- mPACCdigit <= 4.88
 |   |   |   |--- THEN class = 0
-|   |--- RAVLT_immediate >  27.50
-|   |   |--- MOCA <= 23.50
-|   |   |   |--- PTAU/ABETA <= 0.02
-|   |   |   |   |--- THEN class = 0
-|   |   |   |--- PTAU/ABETA >  0.02
-|   |   |   |   |--- mPACCdigit <= -1.13
-|   |   |   |   |   |--- THEN class = 0
-|   |   |   |   |--- mPACCdigit >  -1.13
-|   |   |   |   |   |--- THEN class = 0
-|   |   |--- MOCA >  23.50
-|   |   |   |--- mPACCdigit <= 4.71
-|   |   |   |   |--- THEN class = 0
-|   |   |   |--- mPACCdigit >  4.71
-|   |   |   |   |--- THEN class = 0
+|   |   |--- mPACCdigit >  4.88
+|   |   |   |--- THEN class = 0
 IF CDRSB >  0.25
 |   |--- LDELTOTAL <= 4.50
 |   |   |--- CDRSB <= 3.25
 |   |   |   |--- mPACCdigit <= -10.75
-|   |   |   |   |--- FAQ <= 2.50
-|   |   |   |   |   |--- mPACCdigit <= -13.99
+|   |   |   |   |--- MMSE <= 23.50
+|   |   |   |   |   |--- EcogPtDivatt <= 2.18
 |   |   |   |   |   |   |--- THEN class = 3
-|   |   |   |   |   |--- mPACCdigit >  -13.99
+|   |   |   |   |   |--- EcogPtDivatt >  2.18
+|   |   |   |   |   |   |--- THEN class = 3
+|   |   |   |   |--- MMSE >  23.50
+|   |   |   |   |   |--- FAQ <= 2.50
 |   |   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |--- FAQ >  2.50
-|   |   |   |   |   |--- MMSE <= 23.50
-|   |   |   |   |   |   |--- THEN class = 3
-|   |   |   |   |   |--- MMSE >  23.50
+|   |   |   |   |   |--- FAQ >  2.50
 |   |   |   |   |   |   |--- THEN class = 3
 |   |   |   |--- mPACCdigit >  -10.75
 |   |   |   |   |--- FAQ <= 4.50
-|   |   |   |   |   |--- ADAS13 <= 9.50
+|   |   |   |   |   |--- APOE4 <= 0.50
 |   |   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |   |--- ADAS13 >  9.50
+|   |   |   |   |   |--- APOE4 >  0.50
 |   |   |   |   |   |   |--- THEN class = 2
 |   |   |   |   |--- FAQ >  4.50
-|   |   |   |   |   |--- MMSE <= 26.50
+|   |   |   |   |   |--- RAVLT_learning <= 3.50
 |   |   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |   |--- MMSE >  26.50
+|   |   |   |   |   |--- RAVLT_learning >  3.50
 |   |   |   |   |   |   |--- THEN class = 2
 |   |   |--- CDRSB >  3.25
-|   |   |   |--- MMSE <= 26.50
-|   |   |   |   |--- EcogSPPlan <= 1.76
-|   |   |   |   |   |--- MMSE <= 24.50
+|   |   |   |--- MMSE <= 25.50
+|   |   |   |   |--- MMSE <= 23.50
+|   |   |   |   |   |--- THEN class = 3
+|   |   |   |   |--- MMSE >  23.50
+|   |   |   |   |   |--- TRABSCOR <= 215.00
 |   |   |   |   |   |   |--- THEN class = 3
-|   |   |   |   |   |--- MMSE >  24.50
+|   |   |   |   |   |--- TRABSCOR >  215.00
+|   |   |   |   |   |   |--- THEN class = 3
+|   |   |   |--- MMSE >  25.50
+|   |   |   |   |--- EcogSPVisspat <= 2.20
+|   |   |   |   |   |--- EcogSPMem <= 2.80
 |   |   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |--- EcogSPPlan >  1.76
-|   |   |   |   |   |--- mPACCdigit <= -10.72
+|   |   |   |   |   |--- EcogSPMem >  2.80
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |--- EcogSPVisspat >  2.20
+|   |   |   |   |   |--- EcogPtPlan <= 1.50
 |   |   |   |   |   |   |--- THEN class = 3
-|   |   |   |   |   |--- mPACCdigit >  -10.72
+|   |   |   |   |   |--- EcogPtPlan >  1.50
 |   |   |   |   |   |   |--- THEN class = 3
-|   |   |   |--- MMSE >  26.50
-|   |   |   |   |--- THEN class = 2
 |   |--- LDELTOTAL >  4.50
 |   |   |--- LDELTOTAL <= 8.50
 |   |   |   |--- PTEDUCAT <= 15.50
@@ -68,30 +74,36 @@ IF CDRSB >  0.25
 |   |   |   |   |--- EcogSPOrgan >  2.45
 |   |   |   |   |   |--- THEN class = 1
 |   |   |   |--- PTEDUCAT >  15.50
-|   |   |   |   |--- mPACCdigit <= -8.41
+|   |   |   |   |--- MMSE <= 26.50
 |   |   |   |   |   |--- CDRSB <= 2.75
 |   |   |   |   |   |   |--- THEN class = 2
 |   |   |   |   |   |--- CDRSB >  2.75
 |   |   |   |   |   |   |--- THEN class = 3
-|   |   |   |   |--- mPACCdigit >  -8.41
-|   |   |   |   |   |--- EcogSPDivatt <= 2.80
+|   |   |   |   |--- MMSE >  26.50
+|   |   |   |   |   |--- Fusiform/ICV <= 0.01
 |   |   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |   |--- EcogSPDivatt >  2.80
+|   |   |   |   |   |--- Fusiform/ICV >  0.01
 |   |   |   |   |   |   |--- THEN class = 2
 |   |   |--- LDELTOTAL >  8.50
-|   |   |   |--- LDELTOTAL <= 11.50
-|   |   |   |   |--- Fusiform/ICV <= 0.01
-|   |   |   |   |   |--- THEN class = 1
-|   |   |   |   |--- Fusiform/ICV >  0.01
-|   |   |   |   |   |--- RAVLT_learning <= 1.50
+|   |   |   |--- CDRSB <= 0.75
+|   |   |   |   |--- LDELTOTAL <= 11.50
+|   |   |   |   |   |--- PTEDUCAT <= 14.50
+|   |   |   |   |   |   |--- THEN class = 0
+|   |   |   |   |   |--- PTEDUCAT >  14.50
 |   |   |   |   |   |   |--- THEN class = 1
-|   |   |   |   |   |--- RAVLT_learning >  1.50
-|   |   |   |   |   |   |--- THEN class = 1
-|   |   |   |--- LDELTOTAL >  11.50
-|   |   |   |   |--- CDRSB <= 0.75
+|   |   |   |   |--- LDELTOTAL >  11.50
 |   |   |   |   |   |--- RAVLT_immediate <= 46.50
 |   |   |   |   |   |   |--- THEN class = 0
 |   |   |   |   |   |--- RAVLT_immediate >  46.50
 |   |   |   |   |   |   |--- THEN class = 0
-|   |   |   |   |--- CDRSB >  0.75
-|   |   |   |   |   |--- THEN class = 1
+|   |   |   |--- CDRSB >  0.75
+|   |   |   |   |--- RAVLT_immediate <= 27.50
+|   |   |   |   |   |--- AGE <= 74.00
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |   |--- AGE >  74.00
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |--- RAVLT_immediate >  27.50
+|   |   |   |   |   |--- AGE <= 81.50
+|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |   |--- AGE >  81.50
+|   |   |   |   |   |   |--- THEN class = 1

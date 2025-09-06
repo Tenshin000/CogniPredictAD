@@ -1,19 +1,18 @@
-import pandas as pd
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
 import seaborn as sns
 
 from scipy.stats import zscore
-from sklearn.neighbors import LocalOutlierFactor
 from sklearn.cluster import DBSCAN
-from typing import Optional, List, Dict
+from sklearn.neighbors import LocalOutlierFactor
+from typing import Dict, List, Optional
 
 
 class OutlierDetector:
     """
     A class to perform outlier detection on a dataset.
     """
-
     def __init__(self):
         """
         Initialization.
@@ -27,6 +26,7 @@ class OutlierDetector:
 
         param dataset: The input DataFrame.
         param columns: List of column names or None.
+
         return: List of numeric column names.
         """
         if columns is None:
@@ -49,6 +49,7 @@ class OutlierDetector:
         param method: 'iqr', 'zscore', or 'both' (default='iqr')
         param iqr_factor: Multiplicative factor for the IQR (default=1.5)
         param z_threshold: Z-score threshold (default=3.0)
+
         return: plausible minimum value
         """
         if column not in dataset.columns:
@@ -84,6 +85,17 @@ class OutlierDetector:
 
     def detect_by_iqr(self, dataset: pd.DataFrame, columns: Optional[List[str]] = None,
                   factor: float = 1.5, verbose: bool = True) -> Dict[str, Dict[str, List]]:
+        """
+        Detect outliers in numeric columns using the Interquartile Range (IQR) method.
+        Also displays boxplots for each analyzed column.
+
+        param dataset: DataFrame containing the data.
+        param columns: List of column names to analyze. If None, all numeric columns are used.
+        param factor: Multiplicative factor for IQR to determine bounds (default=1.5).
+        param verbose: If True, prints detailed information about detected outliers.
+
+        return: Dictionary with column names as keys and dictionaries containing indices and values of outliers.
+        """
         cols = self._get_columns(dataset, columns)
         results = {}
 
@@ -122,6 +134,16 @@ class OutlierDetector:
 
     def detect_by_zscore(self, dataset: pd.DataFrame, columns: Optional[List[str]] = None,
                      threshold: float = 3.0, verbose: bool = True) -> Dict[str, Dict[str, List]]:
+        """
+        Detect outliers in numeric columns using the Z-score method.
+
+        param dataset: DataFrame containing the data.
+        param columns: List of column names to analyze. If None, all numeric columns are used.
+        param threshold: Z-score threshold above which values are considered outliers (default=3.0).
+        param verbose: If True, prints detailed information about detected outliers.
+
+        return: Dictionary with column names as keys and dictionaries containing indices and values of outliers.
+        """
         cols = self._get_columns(dataset, columns)
         results = {}
         z_scores = np.abs(zscore(dataset[cols], nan_policy='omit'))
@@ -148,6 +170,17 @@ class OutlierDetector:
 
     def detect_by_lof(self, dataset: pd.DataFrame, columns: Optional[List[str]] = None,
                   n_neighbors_list: List[int] = [20], verbose: bool = True) -> Dict[int, Dict[str, List]]:
+        """
+        Detect outliers using the Local Outlier Factor (LOF) method.
+        Produces scatter plots of LOF scores and highlights detected outliers.
+
+        param dataset: DataFrame containing the data.
+        param columns: List of column names to analyze. If None, all numeric columns are used.
+        param n_neighbors_list: List of neighbor sizes to try for LOF (default=[20]).
+        param verbose: If True, prints detailed information about detected outliers.
+
+        return: Dictionary with n_neighbors as keys and dictionaries containing indices, values, and scores of outliers.
+        """
         cols = self._get_columns(dataset, columns)
         X = dataset[cols].fillna(0)
         results = {}
@@ -185,6 +218,22 @@ class OutlierDetector:
 
     def detect_by_dbscan(self, dataset: pd.DataFrame, columns: Optional[List[str]] = None,
                      eps: float = 0.5, min_samples: Optional[int] = None, verbose: bool = True) -> Dict[str, List]:
+        """
+        Detect outliers using the DBSCAN clustering algorithm.
+        Points assigned to cluster -1 are considered outliers.
+        Produces a 2D scatter plot if exactly two numeric columns are analyzed.
+
+        param dataset: DataFrame containing the data.
+        param columns: List of column names to analyze. If None, all numeric columns are used.
+        param eps: Maximum distance between two samples for them to be considered neighbors (default=0.5).
+        param min_samples: Minimum number of points to form a cluster. If None, defaults to 2 × number of features.
+        param verbose: If True, prints detailed information about detected outliers.
+
+        return: Dictionary with keys:
+            - "indices": List of indices of detected outliers.
+            - "values": List of corresponding outlier values.
+            - "labels": List of cluster labels for all points (-1 = outlier).
+        """
         cols = self._get_columns(dataset, columns)
         X = dataset[cols].fillna(0)
 
