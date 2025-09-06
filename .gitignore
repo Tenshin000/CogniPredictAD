@@ -88,7 +88,6 @@ docs/_build/
 *.sublime-project
 
 # Pickle files for machine learning models
-*.pkl
 *.pickle
 
 # Ignore virtual environments
