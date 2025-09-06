@@ -1,0 +1,16 @@
+\section{Introduction}
+Early and accurate diagnosis of \textbf{Alzheimer's disease} (AD) is a clinical and social priority: intervening before cognitive impairment becomes severe allows for the planning of therapies, treatments, and support strategies, and the testing of interventions that slow decline. However, the disease is complex and multifactorial: clinical signs, cognitive tests, Cerebrospinal Fluid (CSF) biomarkers, genetics (e.g., APOE4), and neuroimaging measures interact in a nontrivial way. For this reason, \textbf{Machine Learning} (ML) techniques are particularly well-suited: they can integrate multimodal information, model nonlinear relationships, and identify combinations of features that improve the discrimination between \textbf{cognitively normal} (CN), \textbf{mild cognitive impairment} (MCI), and full-blown \textbf{Alzheimer's subjects}.
+
+A dataset widely used in the literature for these purposes is \textbf{ADNI}\footnote{The Alzheimer's Disease Neuroimaging Initiative is a longitudinal, multicenter, observational study involving over 60 clinical sites in the United States and Canada. Launched in 2004 by the National Institute on Aging (NIA) in collaboration with the pharmaceutical industry, the initiative aims to develop and validate biomarkers to improve the diagnosis and monitoring of Alzheimer's disease.} (\textbf{Alzheimer's Disease Neuroimaging Initiative}), a multicenter longitudinal study that collects clinical, cognitive, genetic, CSF, and imaging data from USA and Canada. In this project, I worked with the \textbf{ADNIMERGE.csv} tabular file, which is the merged version of the ADNI data and contains repeated visits over time, many clinical variables/biomarkers, and metadata; the notebook shows the direct import of this file as a starting point. 
+
+In this project notebooks, baseline visits were selected, extensive cleaning and imputation of missing features was performed, MRI volumes were normalized for ICV, and derived features (biological ratios and cognitive scores) were constructed. Variable selection methods were then applied to create two distinct sets (with and without the three dominant cognitive features).
+
+The modeling compared trees and ensembles (including LightGBM/XGBoost/CatBoost), using hyperparameter optimization and sampling strategies. The CatBoost1 model was chosen as Model1. The LightGBM model, chosen as Model2, maintained good performance even when excluding the dominant features. 
+
+\newpage
+
+Furthermore, XAIModel1 and XAIModel2 represent the explainable decision trees for the dataset with and without the dominant features.
+
+
+
+

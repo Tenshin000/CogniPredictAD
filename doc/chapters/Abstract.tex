@@ -1,0 +1,11 @@
+\begin{abstract}
+	This report introduces CogniPredictAD, a data mining and machine learning project designed to analyze clinical and biological parameters from the ADNI dataset, with the goal of predicting final clinical diagnoses (CN, EMCI, LMCI, AD) based on baseline data.
+	
+	The analysis includes a detailed examination of preprocessing techniques: advanced missing data management, normalizations, and feature engineering and feature vectorization using TF-IDF. We assess the models based on their accuracy and present the results through various evaluations.
+	
+	Due to the ambiguity of the high predictivity of three values (CDRSB, LDELTOTAL, mPACCdigit), I build two families of models: with and without these features to reduce the risk of overfitting on ADNI. 
+	
+	The modeling phase includes Decision Tree, Random Forest, Extra Trees, XGBoost, LightGBM, CatBoost, Multinomial Logistic Regression, and Bagging; hybrid sampling techniques, Grid Search for hyperparameter optimization, and cross-validation are applied. With the full set, the models achieve very high metrics (e.g., accuracy $\approx$ 0.93, ROC-AUC $\approx$ 0.989), while by removing the three dominant features, the LightGBM with hybrid sampling retains the best balanced performance (balanced accuracy $\approx$ 0.7299, ROC-AUC $\approx$ 0.913). For transparency, an optimized Decision Tree was also selected, and the trees and explanatory rules were saved. 
+	
+	The conclusions highlight good predictive performance on the ADNIMERGE dataset, but caution against possible sample bias and the need for external validation (by adding additional patients to the dataset or through data integration with similar datasets) before any clinical use.
+\end{abstract}

@@ -1,0 +1,41 @@
+\documentclass[11pt]{article}
+\usepackage[english]{babel} 
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{hypcap}
+\usepackage{makecell}
+\usepackage[a4paper, margin=1in]{geometry}
+\usepackage{float}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{caption}
+
+\hypersetup{
+	colorlinks=true,
+	linkcolor=cyan,
+	filecolor=magenta,      
+	urlcolor=cyan,
+	citecolor=cyan
+}
+
+\hyphenation{analy-sis}
+
+\author{Francesco Panattoni}
+\title{CogniPredictAD}
+
+
+\begin{document}
+	\input{chapters/Frontespizio}
+
+	\tableofcontents
+	\newpage
+	\input{chapters/Abstract}
+	\begin{multicols}{2}
+		\input{chapters/Chapter1}
+		\input{chapters/Chapter2}
+		\input{chapters/Chapter3}
+		\input{chapters/Chapter4}
+	\end{multicols}	
+	
+\end{document}

@@ -1,0 +1,13 @@
+\section{Dataset}
+\textbf{ADNIMERGE.csv} is the \textbf{ADNI} merged table used as the main input in the notebook: the copy used by the project contains 16,421 rows (representing visits) and 116 columns before any cleaning and selection, and incorporates repeat visits for each subject (VISCODE, EXAMDATE), identifiers (RID, PTID), and both the initial screening diagnosis (DX\_bl) and the more complete diagnosis assigned at the baseline visit (DX).
+
+The structure is mixed but rich: there are demographics (AGE, PTGENDER, PTEDUCAT, PTETHCAT, PTRACCAT, PTMARRY), genetics (APOE4), numerous cognitive and clinical scores (MMSE, CDRSB, ADAS11/13, LDELTOTAL, FAQ, MOCA, TRABSCOR, RAVLT\_…, mPACC*), CSF and PET biomarkers (ABETA, TAU, PTAU, FDG, also columns such as PIB and AV45), and MRI volumetric measures (Ventricles, Hippocampus, Entorhinal, Fusiform, MidTemp, WholeBrain, ICV).
+
+\textit{ADNIMERGE.csv}, however, isn't simply a concatenation: many variables are derived from source files. For example, the variable Hippocampus is derived from the sum of the left/right components (ST29SV + ST88SV) taken from the original \textit{FreeSurfer}\footnote{FreeSurfer is an open-source software designed for the analysis and visualization of neuroimaging data, in particular structural (but also functional or diffusion) MRI scans, and provides a complete processing workflow.} files. Therefore, to understand exactly how a measure was calculated, it's good practice to examine the merge script and the data dictionaries of the source tables. 
+
+
+
+
+...
+
+

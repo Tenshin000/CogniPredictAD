@@ -31,8 +31,8 @@ class ModelExplainer:
     #        INITIALIZATION       #
     # ----------------------------#
     def __init__(self, models: Sequence[Tuple[str, Any]], X_train: pd.DataFrame, y_train: Optional[pd.Series] = None,
-                 feature_names: Optional[List[str]] = None, class_names: Optional[List[str]] = None,
-                 background_size: int = 100):
+             feature_names: Optional[List[str]] = None, class_names: Optional[List[str]] = None,
+             background_size: int = 100, random_state: Optional[Union[int, np.random.Generator]] = None):
         # Store models as list of (name, model) pairs
         self.models = list(models)
         # Copy of training data (used for explanations)
@@ -42,8 +42,13 @@ class ModelExplainer:
         self.feature_names = feature_names or list(X_train.columns)
         # Optional class names (useful for multiclass problems)
         self.class_names = class_names
+        # Create background with controlled seed
+        if isinstance(random_state, np.random.Generator):
+            rng = random_state
+        else:
+            rng = np.random.default_rng(random_state)
         # Background sample for SHAP explanations
-        self.background = self.X_train.sample(min(background_size, len(self.X_train)), random_state=0)
+        self.background = self.X_train.sample(min(background_size, len(self.X_train)), random_state=rng)    
 
     # ----------------------------#
     #         SHAP HELPER         #
@@ -51,7 +56,6 @@ class ModelExplainer:
     def _get_shap_explainer(self, name: str, model: Any):
         """Try multiple ways to create a shap.Explainer. 
         Returns (explainer, used_method) or (None, reason)."""
-
         # 1) If model is callable directly
         if callable(model):
             try:
@@ -106,32 +110,33 @@ class ModelExplainer:
             List of Axes objects to plot.
             If None, the function creates a new figure and its axes.
         """
-        # Ensure sample_idx is a list
-        if isinstance(sample_idx, int):
-            sample_idx = [sample_idx]
+        if isinstance(sample_idx, (list, tuple, np.ndarray)):
+            if len(sample_idx) == 0:
+                raise ValueError("sample_idx list empty")
+            sample_idx0 = int(sample_idx[0])
+        else:
+            sample_idx0 = int(sample_idx)
 
-        # Select models (limit if max_models provided)
         models = self.models[:max_models] if max_models else self.models
         n_models = len(models)
         if n_models == 0:
             warnings.warn("No models supplied.")
             return None
 
-        # Create subplots (3 plots per model: summary, waterfall, force)
+        # create grid reliably: n_models rows, 3 cols
         fig, axes = plt.subplots(nrows=n_models, ncols=3,
-                                 figsize=(figsize_per_row[0], figsize_per_row[1] * n_models))
-        # Normalize axes to shape (n_models, 3)
+                                figsize=(figsize_per_row[0] * 3 if n_models == 1 else figsize_per_row[0] * 3,
+                                        figsize_per_row[1] * n_models))
+        # normalize to 2D array shape (n_models, 3)
         axes = np.array(axes)
-        if axes.ndim == 1 and axes.shape[0] == 3 and n_models == 1:
-            axes = axes.reshape((1, 3))
-        elif axes.ndim == 2 and axes.shape[0] != n_models:
+        if axes.ndim == 1:
+            axes = axes.reshape((1, -1))  # (1,3)
+        if axes.shape != (n_models, 3):
             axes = axes.reshape((n_models, 3))
 
-        # Loop over models
         for i, (name, model) in enumerate(models):
-            ax_summary, ax_water, ax_force = axes[i]
+            ax_summary, ax_water, ax_force = axes[i, 0], axes[i, 1], axes[i, 2]
 
-            # Try to create SHAP explainer
             explainer, used = self._get_shap_explainer(name, model)
             if explainer is None:
                 warnings.warn(f"[{name}] Could not create SHAP explainer: {used}. Skipping SHAP plots.")
@@ -139,7 +144,7 @@ class ModelExplainer:
                     a.text(0.5, 0.5, f"SHAP not available\n({name})", ha="center", va="center")
                 continue
 
-            # Compute SHAP values on full training set
+            # compute shap values
             try:
                 shap_vals = explainer(self.X_train)
             except Exception as e:
@@ -148,24 +153,30 @@ class ModelExplainer:
                     a.text(0.5, 0.5, f"SHAP failed\n({name})", ha="center", va="center")
                 continue
 
-            # SUMMARY PLOT
-            plt.sca(ax_summary)
+            # --- SUMMARY (beeswarm / summary) ---
             try:
-                shap.summary_plot(shap_vals, features=self.X_train, feature_names=self.feature_names, show=False)
+                plt.sca(ax_summary)   # set current axis
+                # try to use the SHAP matplotlib backend (many versions respect current axis with matplotlib=True)
+                # prefer shap.plots.beeswarm or summary_plot with show=False; try both defensively
+                try:
+                    # shap.plots.beeswarm accepts an Explanation or array; matplotlib backend usually honors current ax
+                    shap.plots.beeswarm(shap_vals, show=False)
+                except Exception:
+                    # fallback to summary_plot (older API)
+                    shap.summary_plot(shap_vals, features=self.X_train, feature_names=self.feature_names, show=False)
                 ax_summary.set_title(f"{name} — SHAP summary")
             except Exception as e:
                 warnings.warn(f"[{name}] summary_plot failed: {e}")
                 ax_summary.text(0.5, 0.5, "summary_plot failed", ha="center", va="center")
 
-            # Validate sample index
-            if sample_idx < 0 or sample_idx >= len(self.X_train):
-                warnings.warn(f"sample_idx {sample_idx} out of range for X_train (len={len(self.X_train)}). Skipping instance plots.")
+            # validate sample index
+            if sample_idx0 < 0 or sample_idx0 >= len(self.X_train):
+                warnings.warn(f"sample_idx {sample_idx0} out of range (len={len(self.X_train)}). Skipping instance plots.")
                 ax_water.text(0.5, 0.5, "invalid sample_idx", ha="center", va="center")
                 ax_force.text(0.5, 0.5, "invalid sample_idx", ha="center", va="center")
                 continue
 
-            # Extract instance
-            x_instance = self.X_train.iloc[[sample_idx]]
+            x_instance = self.X_train.iloc[[sample_idx0]]
             try:
                 shap_single = explainer(x_instance)
             except Exception as e:
@@ -174,22 +185,23 @@ class ModelExplainer:
                 ax_force.text(0.5, 0.5, "force failed", ha="center", va="center")
                 continue
 
-            # WATERFALL PLOT
-            plt.sca(ax_water)
+            # WATERFALL
             try:
+                plt.sca(ax_water)
                 entry = shap_single[0] if len(shap_single) > 0 else shap_single
+                # prefer matplotlib backend when available
                 shap.plots.waterfall(entry, show=False)
-                ax_water.set_title(f"{name} — Waterfall (idx={sample_idx})")
+                ax_water.set_title(f"{name} — Waterfall (idx={sample_idx0})")
             except Exception as e:
                 warnings.warn(f"[{name}] waterfall plot failed: {e}")
                 ax_water.text(0.5, 0.5, "waterfall failed", ha="center", va="center")
 
-            # FORCE PLOT
-            plt.sca(ax_force)
+            # FORCE
             try:
+                plt.sca(ax_force)
                 entry = shap_single[0] if len(shap_single) > 0 else shap_single
                 shap.plots.force(entry, matplotlib=True, show=False)
-                ax_force.set_title(f"{name} — Force (idx={sample_idx})")
+                ax_force.set_title(f"{name} — Force (idx={sample_idx0})")
             except Exception as e:
                 warnings.warn(f"[{name}] force plot failed: {e}")
                 ax_force.text(0.5, 0.5, "force failed", ha="center", va="center")
@@ -198,7 +210,7 @@ class ModelExplainer:
         plt.show()
 
 
-    def shap_summary_plots(self, max_models: Optional[int] = None, figsize_per_row=(8, 5), axes=None):
+    def shap_summary_plots(self, max_models: Optional[int] = None, figsize=(8, 5), axes=None):
         """Create SHAP summary plots for each model arranged in a grid.
         
         Parameters
@@ -214,41 +226,36 @@ class ModelExplainer:
             If None, the function creates a new figure and its axes.
         """
         models = self.models[:max_models] if max_models else self.models
-        n_models = len(models)
-        if n_models == 0:
+        if not models:
             warnings.warn("No models supplied.")
-            return None
+            return
 
-        # Create figure only if axes are not provided
-        if axes is None:
-            fig, axes = plt.subplots(nrows=1, ncols=n_models,
-                                    figsize=(figsize_per_row[0] * n_models, figsize_per_row[1]))
-            if n_models == 1:
-                axes = [axes]
-        else:
-            fig = None
-            if n_models == 1:
-                axes = [axes]
-
-        # Loop through models
-        for i, (name, model) in enumerate(models):
-            ax = axes[i]
+        for name, model in models:
             explainer, used = self._get_shap_explainer(name, model)
             if explainer is None:
                 warnings.warn(f"[{name}] Could not create SHAP explainer: {used}. Skipping.")
-                ax.text(0.5, 0.5, f"SHAP not available\n({name})", ha="center", va="center")
                 continue
 
             try:
                 shap_vals = explainer(self.X_train)
-                plt.sca(ax)
-                shap.summary_plot(shap_vals, features=self.X_train, feature_names=self.feature_names, show=False)
-                ax.set_title(f"{name} — SHAP summary")
+            except Exception as e:
+                warnings.warn(f"[{name}] Explainer(...) failed: {e}. Skipping.")
+                continue
+
+            # crea una nuova figura per ogni modello
+            plt.figure(figsize=figsize)
+            try:
+                # prova a usare beeswarm (matplotlib backend)
+                try:
+                    shap.plots.beeswarm(shap_vals, show=False)
+                except Exception:
+                    # fallback a summary_plot
+                    shap.summary_plot(shap_vals, features=self.X_train, feature_names=self.feature_names, show=False)
+                plt.title(f"{name} — SHAP summary")
             except Exception as e:
                 warnings.warn(f"[{name}] summary plot generation failed: {e}")
-                ax.text(0.5, 0.5, "summary_plot failed", ha="center", va="center")
-
-        if fig is not None:
+                plt.text(0.5, 0.5, "summary_plot failed", ha="center", va="center")
+            
             plt.tight_layout()
             plt.show()
 
@@ -404,38 +411,52 @@ class ModelExplainer:
         n_models = len(models)
         n_samples = len(sample_idx)
 
-        # Create subplot grid
+        if n_models == 0:
+            warnings.warn("No models supplied.")
+            return None
+
         fig, axes = plt.subplots(nrows=n_samples, ncols=n_models,
-                                figsize=(figsize_per_row[0] * n_models, figsize_per_row[1] * n_samples))
+                                figsize=(figsize_per_row[0] * max(1, n_models), figsize_per_row[1] * max(1, n_samples)))
         axes = np.array(axes)
         if axes.ndim == 1:
             axes = axes.reshape((n_samples, n_models))
 
-        # Initialize LIME explainer
         explainer = LimeTabularExplainer(self.X_train.values,
                                         feature_names=self.feature_names,
                                         class_names=self.class_names,
                                         discretize_continuous=discretize_continuous)
 
-        # Loop through instances and models
         for i, idx in enumerate(sample_idx):
+            if idx < 0 or idx >= len(self.X_train):
+                warnings.warn(f"sample_idx {idx} out of range. Skipping.")
+                for j in range(n_models):
+                    ax = axes[i, j]
+                    ax.text(0.5, 0.5, "invalid sample_idx", ha="center", va="center")
+                continue
+
             x_row = self.X_train.iloc[idx]
             for j, (name, model) in enumerate(models):
                 ax = axes[i, j]
-                predict_fn = model.predict_proba
-                exp = explainer.explain_instance(x_row.values, predict_fn,
-                                                num_features=num_features, num_samples=num_samples)
-                # Extract features and weights
-                items = exp.as_list()
-                feats, weights = zip(*items)
+                if not hasattr(model, "predict_proba"):
+                    warnings.warn(f"[{name}] model has no predict_proba. Skipping LIME for this model.")
+                    ax.text(0.5, 0.5, f"No predict_proba\n({name})", ha="center", va="center")
+                    continue
 
-                # Plot horizontal bar chart
-                y_pos = np.arange(len(feats))
-                ax.barh(y_pos, weights)
-                ax.set_yticks(y_pos)
-                ax.set_yticklabels(feats)
-                ax.invert_yaxis()
-                ax.set_title(f"{name} — LIME (idx={idx})")
+                predict_fn = model.predict_proba
+                try:
+                    exp = explainer.explain_instance(x_row.values, predict_fn,
+                                                    num_features=num_features, num_samples=num_samples)
+                    items = exp.as_list()
+                    feats, weights = zip(*items) if items else ([], [])
+                    y_pos = np.arange(len(feats))
+                    ax.barh(y_pos, weights)
+                    ax.set_yticks(y_pos)
+                    ax.set_yticklabels(feats)
+                    ax.invert_yaxis()
+                    ax.set_title(f"{name} — LIME (idx={idx})")
+                except Exception as e:
+                    warnings.warn(f"[{name}] LIME explain failed: {e}")
+                    ax.text(0.5, 0.5, "LIME failed", ha="center", va="center")
 
         plt.tight_layout()
         plt.show()
