@@ -1,45 +1,33 @@
 IF MMSE <= 26.50
 |   |--- FAQ <= 4.50
 |   |   |--- MidTemp/ICV <= 0.01
-|   |   |   |--- MMSE <= 23.50
+|   |   |   |--- EcogPtDivatt <= 2.55
+|   |   |   |   |--- THEN class = 2
+|   |   |   |--- EcogPtDivatt >  2.55
 |   |   |   |   |--- THEN class = 3
-|   |   |   |--- MMSE >  23.50
-|   |   |   |   |--- THEN class = 2
 |   |   |--- MidTemp/ICV >  0.01
-|   |   |   |--- ADAS13 <= 18.50
-|   |   |   |   |--- THEN class = 1
-|   |   |   |--- ADAS13 >  18.50
-|   |   |   |   |--- THEN class = 2
+|   |   |   |--- THEN class = 1
 |   |--- FAQ >  4.50
 |   |   |--- MMSE <= 23.50
-|   |   |   |--- Fusiform/ICV <= 0.01
-|   |   |   |   |--- THEN class = 3
-|   |   |   |--- Fusiform/ICV >  0.01
-|   |   |   |   |--- THEN class = 1
+|   |   |   |--- THEN class = 3
 |   |   |--- MMSE >  23.50
 |   |   |   |--- EcogSPOrgan <= 2.45
 |   |   |   |   |--- THEN class = 3
 |   |   |   |--- EcogSPOrgan >  2.45
 |   |   |   |   |--- THEN class = 3
 IF MMSE >  26.50
-|   |--- EcogSPMem <= 1.66
-|   |   |--- EcogPtMem <= 2.23
-|   |   |   |--- MOCA <= 24.50
+|   |--- FAQ <= 0.50
+|   |   |--- EcogPtMem <= 2.05
+|   |   |   |--- ADAS13 <= 15.50
 |   |   |   |   |--- THEN class = 0
-|   |   |   |--- MOCA >  24.50
-|   |   |   |   |--- THEN class = 0
-|   |   |--- EcogPtMem >  2.23
-|   |   |   |--- MMSE <= 29.50
-|   |   |   |   |--- THEN class = 1
-|   |   |   |--- MMSE >  29.50
-|   |   |   |   |--- THEN class = 0
-|   |--- EcogSPMem >  1.66
-|   |   |--- WholeBrain/ICV <= 0.65
-|   |   |   |--- EcogPtLang <= 1.06
-|   |   |   |   |--- THEN class = 1
-|   |   |   |--- EcogPtLang >  1.06
+|   |   |   |--- ADAS13 >  15.50
 |   |   |   |   |--- THEN class = 2
-|   |   |--- WholeBrain/ICV >  0.65
+|   |   |--- EcogPtMem >  2.05
+|   |   |   |--- THEN class = 1
+|   |--- FAQ >  0.50
+|   |   |--- WholeBrain/ICV <= 0.66
+|   |   |   |--- THEN class = 2
+|   |   |--- WholeBrain/ICV >  0.66
 |   |   |   |--- ADAS13 <= 16.50
 |   |   |   |   |--- THEN class = 1
 |   |   |   |--- ADAS13 >  16.50

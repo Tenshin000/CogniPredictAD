@@ -16,14 +16,17 @@ dependencies = [
     "imbalanced-learn",
     "scikit-learn",
     "mlxtend",
+    "joblib",
     "xgboost",
     "lightgbm",
     "catboost",
+    "statsmodels",
     "shap",
     "graphviz",
     "lime",
+    "PySimpleGUI",
     "openpyxl",
-    "jupyter",
+    "jupyter"
 ]
 
 [tool.setuptools]

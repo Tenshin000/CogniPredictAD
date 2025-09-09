@@ -1,0 +1,36 @@
+\section{Hyperparameter Selection and Hybrid Sampling}
+\subsection{Grid Search}
+To optimize the performance of the classifiers, a \textbf{Grid Search} procedure with layered cross-validation was adopted. Grid Search was chosen because it allows for a systematic and controlled exploration of the most relevant hyperparameters for each model, ensuring reproducibility and the ability to transparently compare the tested configurations.
+
+\subsection{Hybrid Sampling}
+The dataset also presented a slight imbalance in diagnostic classes, as already discussed in the "Multiclass Problem" chapter. 
+
+
+To address this problem, a \textbf{Hybrid Sampling strategy} was applied, combining:
+\begin{enumerate}
+	\item \textbf{RUS}\footnote{Random Under-Sampling} to reduce the number of instances in the majority classes, preventing the dataset from becoming excessively biased toward synthetic examples;
+	\item \textbf{SMOTENC}\footnote{Synthetic Minority Over-sampling Technique for Nominal and Continuous features} to generate new synthetic examples of the minority classes, taking into account the mixed nature of the variables (continuous and categorical).
+\end{enumerate}
+We kept the "old" dataset (the one obtained with Preprocessing) and the "new" one (the resampled one) and tried Hyperparameter Tuning on both. 
+
+\subsection{The problem with CDRSB, LDELTOTAL, and mPACCdigit}
+The cognitive scores \textit{CDRSB}\footnote{Clinical Dementia Rating - Sum of Boxes}, \textit{LDELTOTAL}\footnote{Logical Memory II delayed recall total score} and \textit{mPACCdigit}\footnote{Modified Preclinical Alzheimer’s Cognitive Composite – Digit Symbol test} show exceptionally high predictive power compared to the rest. While this may be advantageous in terms of model accuracy, it also raises the concern of feature dominance: \textbf{a small number of variables may disproportionately drive the predictions, while many others contribute minimally}. This imbalance can lead to a form of local overfitting, where \textbf{models appear highly effective on the ADNI dataset but lose performance when applied to more heterogeneous clinical populations or external data.}
+
+\textbf{However, this assumption cannot be verified, as it is equally possible that these three variables are genuine strong predictors of Alzheimer’s diagnosis.}
+
+So the issue does not reflect a weakness of the cognitive measures themselves, but rather the possibility of dataset bias: the strength of these predictors may be tied to the specific characteristics of ADNI rather than to generalizable diagnostic patterns. 
+
+To address this, the modeling strategy should consider two complementary approaches:
+\begin{enumerate}
+	\item building a predictive model that leverages these dominant variables;
+	\item building an alternative model that excludes them.
+\end{enumerate}
+
+Hybrid Sampling will be applied to both datasets and then we'll compare whether the standard model or the resampled model performs better on the test set. 
+
+\subsection{Hyperparameter Optimization}
+In practice, we'll end up with two models: one that can also use CDRSB, LDELTOTAL, and mPACCdigit, chosen from the standard and resampled models, and one that doesn't use CDRSB, LDELTOTAL, and mPACCdigit, chosen from the standard and resampled models.
+
+Therefore, we need to run four Grid Searches.
+
+...

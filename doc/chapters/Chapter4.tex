@@ -1,10 +1,16 @@
-\section{Data Preprocessing}
-The first clinical-operational choice for \textit{Data Preprocessing} was to work only on baseline visits (VISCODE == "bl"), because the goal is to predict the diagnosis based on the information collected at the first visit; this filter reduced the dataset from 16,421 to 2,419 rows. 
+\section{Data Exploration}
+Explorations reveal that the dataset has 16,421 rows and 116 columns. However, these records represent the various visits, and we are only interested in the baseline ones. The dataset contains 2,419 useful patients (using "useful" means those who did not have a NULL baseline diagnosis) for the proposed problem.
 
-I discover that the acronym \textbf{SMC} stands for "\textit{Subjective Memory Concern}", and refers to \textit{cognitively normal} (CN) subjects who perceive memory difficulties. Introduced in ADNI2 to increase variability in the CN and MCI groups, this category does not correspond to an objective deficit. Therefore, it would be inappropriate to train machine learning models to predict a phenomenon based solely on the patient's subjective perception from objective data. Therefore, observations with \linebreak DX\_bl = "SMC" were realigned using the DX variable, but ultimately all were classified as CN.
+Many columns contain significant percentages of missing cases. The diagnostic classes of the baseline sample are unbalanced, but not extremely unbalanced.
 
+Demographic and risk analyses show bias in the ADNI sample. Ethnicity is heavily skewed toward white subjects, with high average levels of education (peaks at 16–18 years of schooling), and many married individuals. There are more men than women, but overall the number is not disproportionate. This, however, implies that models may perform worse on more heterogeneous clinical populations. 
 
-...
+The \textit{Data Exploration} was then divided into three parts: 
+\begin{enumerate}
+	\item the preliminary data exploration of the raw dataset;
+	\item the data exploration after splitting and preparing the actual dataset;
+	\item the data exploration after Preprocessing to select the classification models.
+\end{enumerate}
 
 
 

@@ -1,10 +1,14 @@
+import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import shap
 import warnings
 
+from IPython.display import Image, display
 from lime.lime_tabular import LimeTabularExplainer
+from sklearn import tree
+from sklearn.tree import export_graphviz
 from typing import Union, Optional, List, Sequence, Tuple, Any
 
 
@@ -460,3 +464,33 @@ class ModelExplainer:
 
         plt.tight_layout()
         plt.show()
+
+    def plot_decision_trees(self, max_depth: Optional[int] = None, fontsize: int = 10):
+        """
+        Display decision tree models (whose name starts with 'Decision_Tree') 
+        using matplotlib (does not require Graphviz).
+        """
+        found = False
+        for name, model in self.models:
+            if not name.startswith("Decision_Tree"):
+                continue
+            found = True
+            if not hasattr(model, "tree_"):
+                print(f"[{name}] does not look like a DecisionTreeClassifier (missing 'tree_' attribute).")
+                continue
+            try:
+                plt.figure(figsize=(40, 40))
+                tree.plot_tree(
+                    model,
+                    feature_names=[str(f) for f in self.feature_names],
+                    class_names=[str(c) for c in self.class_names] if self.class_names is not None else None,
+                    filled=True,
+                    fontsize=fontsize,
+                    max_depth=max_depth,
+                )
+                plt.title(f"Decision Tree visualization — {name}")
+                plt.show()
+            except Exception as e:
+                print(f"[{name}] Error while generating the decision tree: {e}")
+        if not found:
+            print("No models found with a name starting with 'Decision_Tree'.")

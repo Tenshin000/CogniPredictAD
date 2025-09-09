@@ -41,6 +41,10 @@ class ADNIClassifier:
             self.classifiers = self._default_classifiers_1()
         elif classifier == "Standard2" or classifier == "standard2" or classifier == "STANDARD2":
             self.classifiers = self._default_classifiers_2()
+        elif classifier == "Standard3" or classifier == "standard3" or classifier == "STANDARD3":
+            self.classifiers = self._default_classifiers_3()
+        elif classifier == "Standard4" or classifier == "standard4" or classifier == "STANDARD4":
+            self.classifiers = self._default_classifiers_4()
         else:
             self.classifiers = self._default_classifiers_1()
 
@@ -51,8 +55,8 @@ class ADNIClassifier:
         return {
             "Decision Tree": DecisionTreeClassifier(
                 random_state=42, class_weight="balanced",
-                criterion="entropy", max_depth=6, max_features=1.0,
-                min_samples_leaf=8, min_samples_split=2
+                ccp_alpha=0.005, criterion="entropy", max_depth=6,
+                max_features=0.8, min_samples_leaf=4, min_samples_split=2
             ),
             "Random Forest": RandomForestClassifier(
                 random_state=42, class_weight="balanced", n_jobs=-1,
@@ -66,72 +70,19 @@ class ADNIClassifier:
             ),
             "XGBoost": XGBClassifier(
                 random_state=42, use_label_encoder=False, eval_metric="mlogloss", verbosity=0,
-                colsample_bytree=0.7, gamma=1.0, learning_rate=0.1,
-                max_depth=6, n_estimators=50, reg_alpha=1, reg_lambda=0,
+                colsample_bytree=0.7, gamma=0.5, learning_rate=0.1,
+                max_depth=8, n_estimators=100, reg_alpha=1, reg_lambda=1,
                 subsample=1.0
             ),
             "LightGBM": LGBMClassifier(
                 random_state=42, verbose=-1,
                 colsample_bytree=1.0, learning_rate=0.01, max_depth=8,
                 min_child_samples=20, n_estimators=100, num_leaves=15,
-                reg_alpha=0, reg_lambda=1, subsample=0.8
+                reg_alpha=0, reg_lambda=0, subsample=0.8
             ),
             "CatBoost": CatBoostClassifier(
                 random_state=42, verbose=False, loss_function="MultiClass",
-                bagging_temperature=0.0, border_count=64, depth=8,
-                iterations=75, l2_leaf_reg=3, learning_rate=0.1,
-                random_strength=0.5
-            ),
-            "Multinomial Logistic Regression": Pipeline([
-                ("scaler", StandardScaler()),
-                ("logreg", LogisticRegression(
-                    random_state=42, solver="saga", max_iter=2000, class_weight="balanced",
-                    C=1.0, penalty="l1"
-                ))
-            ]),
-            "Bagging": BaggingClassifier(
-                random_state=42, n_jobs=-1,
-                bootstrap=False, max_features=1.0, max_samples=0.6,
-                n_estimators=100
-            )
-        }
-
-    
-    def _default_classifiers_2(self):
-        """
-        Return a dictionary with tuned classifier instances.
-        """
-        return {
-            "Decision Tree": DecisionTreeClassifier(
-                random_state=42, class_weight="balanced",
-                criterion="gini", max_depth=4, max_features=1.0,
-                min_samples_leaf=1, min_samples_split=2
-            ),
-            "Random Forest": RandomForestClassifier(
-                random_state=42, class_weight="balanced", n_jobs=-1,
-                criterion="entropy", max_depth=6, max_features=0.5,
-                min_samples_leaf=2, n_estimators=50
-            ),
-            "Extra Trees": ExtraTreesClassifier(
-                random_state=42, class_weight="balanced", n_jobs=-1,
-                criterion="entropy", max_depth=None, max_features=1.0,
-                min_samples_leaf=8, n_estimators=50
-            ),
-            "XGBoost": XGBClassifier(
-                random_state=42, use_label_encoder=False, eval_metric="mlogloss", verbosity=0,
-                colsample_bytree=1.0, gamma=1.0, learning_rate=0.1,
-                max_depth=8, n_estimators=100, reg_alpha=0, reg_lambda=1,
-                subsample=0.8
-            ),
-            "LightGBM": LGBMClassifier(
-                random_state=42, verbose=-1,
-                colsample_bytree=0.7, learning_rate=0.1, max_depth=8,
-                min_child_samples=5, n_estimators=100, num_leaves=15,
-                reg_alpha=1, reg_lambda=1, subsample=0.8
-            ),
-            "CatBoost": CatBoostClassifier(
-                random_state=42, verbose=False, loss_function="MultiClass",
-                bagging_temperature=0.0, border_count=32, depth=6,
+                bagging_temperature=0.5, border_count=128, depth=6,
                 iterations=100, l2_leaf_reg=1, learning_rate=0.1,
                 random_strength=0.5
             ),
@@ -144,9 +95,161 @@ class ADNIClassifier:
             ]),
             "Bagging": BaggingClassifier(
                 random_state=42, n_jobs=-1,
-                bootstrap=False, max_features=0.8, max_samples=0.6, n_estimators=100
+                bootstrap=True, max_features=0.8, max_samples=0.8,
+                n_estimators=50
             )
         }
+
+
+    def _default_classifiers_2(self):
+        return {
+            "Decision Tree": DecisionTreeClassifier(
+                random_state=42, class_weight="balanced",
+                ccp_alpha=0.005, criterion="entropy", max_depth=6,
+                max_features=0.8, min_samples_leaf=4, min_samples_split=2
+            ),
+            "Random Forest": RandomForestClassifier(
+                random_state=42, class_weight="balanced", n_jobs=-1,
+                criterion="entropy", max_depth=None, max_features=0.5,
+                min_samples_leaf=2, n_estimators=100
+            ),
+            "Extra Trees": ExtraTreesClassifier(
+                random_state=42, class_weight="balanced", n_jobs=-1,
+                criterion="entropy", max_depth=None, max_features=1.0,
+                min_samples_leaf=2, n_estimators=100
+            ),
+            "XGBoost": XGBClassifier(
+                random_state=42, use_label_encoder=False, eval_metric="mlogloss", verbosity=0,
+                colsample_bytree=0.7, gamma=0.5, learning_rate=0.05,
+                max_depth=6, n_estimators=75, reg_alpha=0, reg_lambda=1,
+                subsample=1.0
+            ),
+            "LightGBM": LGBMClassifier(
+                random_state=42, verbose=-1,
+                colsample_bytree=0.7, learning_rate=0.05, max_depth=8,
+                min_child_samples=20, n_estimators=75, num_leaves=31,
+                reg_alpha=0, reg_lambda=0, subsample=0.8
+            ),
+            "CatBoost": CatBoostClassifier(
+                random_state=42, verbose=False, loss_function="MultiClass",
+                bagging_temperature=0.2, border_count=128, depth=8,
+                iterations=100, l2_leaf_reg=1, learning_rate=0.1,
+                random_strength=0.5
+            ),
+            "Multinomial Logistic Regression": Pipeline([
+                ("scaler", StandardScaler()),
+                ("logreg", LogisticRegression(
+                    random_state=42, solver="saga", max_iter=2000, class_weight="balanced",
+                    C=1.0, penalty="l1"
+                ))
+            ]),
+            "Bagging": BaggingClassifier(
+                random_state=42, n_jobs=-1,
+                bootstrap=True, max_features=0.8, max_samples=1.0,
+                n_estimators=100
+            )
+        }
+
+
+    def _default_classifiers_3(self):
+        return {
+            "Decision Tree": DecisionTreeClassifier(
+                random_state=42, class_weight="balanced",
+                ccp_alpha=0.005, criterion="gini", max_depth=6,
+                max_features=0.8, min_samples_leaf=1, min_samples_split=8
+            ),
+            "Random Forest": RandomForestClassifier(
+                random_state=42, class_weight="balanced", n_jobs=-1,
+                criterion="entropy", max_depth=6, max_features=0.5,
+                min_samples_leaf=8, n_estimators=50
+            ),
+            "Extra Trees": ExtraTreesClassifier(
+                random_state=42, class_weight="balanced", n_jobs=-1,
+                criterion="gini", max_depth=None, max_features=1.0,
+                min_samples_leaf=8, n_estimators=75
+            ),
+            "XGBoost": XGBClassifier(
+                random_state=42, use_label_encoder=False, eval_metric="mlogloss", verbosity=0,
+                colsample_bytree=1.0, gamma=0.1, learning_rate=0.1,
+                max_depth=8, n_estimators=75, reg_alpha=1, reg_lambda=1,
+                subsample=0.8
+            ),
+            "LightGBM": LGBMClassifier(
+                random_state=42, verbose=-1,
+                colsample_bytree=0.7, learning_rate=0.1, max_depth=3,
+                min_child_samples=5, n_estimators=100, num_leaves=31,
+                reg_alpha=1, reg_lambda=1, subsample=0.8
+            ),
+            "CatBoost": CatBoostClassifier(
+                random_state=42, verbose=False, loss_function="MultiClass",
+                bagging_temperature=0.5, border_count=32, depth=6,
+                iterations=100, l2_leaf_reg=1, learning_rate=0.1,
+                random_strength=0.5
+            ),
+            "Multinomial Logistic Regression": Pipeline([
+                ("scaler", StandardScaler()),
+                ("logreg", LogisticRegression(
+                    random_state=42, solver="saga", max_iter=2000, class_weight="balanced",
+                    C=0.1, penalty="l1"
+                ))
+            ]),
+            "Bagging": BaggingClassifier(
+                random_state=42, n_jobs=-1,
+                bootstrap=False, max_features=0.8, max_samples=0.6,
+                n_estimators=100
+            )
+        }
+
+
+    def _default_classifiers_4(self):
+        return {
+            "Decision Tree": DecisionTreeClassifier(
+                random_state=42, class_weight="balanced",
+                ccp_alpha=0.005, criterion="entropy", max_depth=5,
+                max_features=0.8, min_samples_leaf=1, min_samples_split=8
+            ),
+            "Random Forest": RandomForestClassifier(
+                random_state=42, class_weight="balanced", n_jobs=-1,
+                criterion="entropy", max_depth=None, max_features=0.5,
+                min_samples_leaf=2, n_estimators=100
+            ),
+            "Extra Trees": ExtraTreesClassifier(
+                random_state=42, class_weight="balanced", n_jobs=-1,
+                criterion="entropy", max_depth=None, max_features=0.5,
+                min_samples_leaf=2, n_estimators=100
+            ),
+            "XGBoost": XGBClassifier(
+                random_state=42, use_label_encoder=False, eval_metric="mlogloss", verbosity=0,
+                colsample_bytree=1.0, gamma=0, learning_rate=0.1,
+                max_depth=8, n_estimators=100, reg_alpha=1, reg_lambda=1,
+                subsample=0.8
+            ),
+            "LightGBM": LGBMClassifier(
+                random_state=42, verbose=-1,
+                colsample_bytree=1.0, learning_rate=0.1, max_depth=8,
+                min_child_samples=10, n_estimators=75, num_leaves=31,
+                reg_alpha=1, reg_lambda=1, subsample=0.8
+            ),
+            "CatBoost": CatBoostClassifier(
+                random_state=42, verbose=False, loss_function="MultiClass",
+                bagging_temperature=0.2, border_count=32, depth=8,
+                iterations=100, l2_leaf_reg=1, learning_rate=0.1,
+                random_strength=0.5
+            ),
+            "Multinomial Logistic Regression": Pipeline([
+                ("scaler", StandardScaler()),
+                ("logreg", LogisticRegression(
+                    random_state=42, solver="saga", max_iter=2000, class_weight="balanced",
+                    C=1.0, penalty="l1"
+                ))
+            ]),
+            "Bagging": BaggingClassifier(
+                random_state=42, n_jobs=-1,
+                bootstrap=False, max_features=0.5, max_samples=1.0,
+                n_estimators=100
+            )
+        }
+
 
     # ----------------------------#
     #          UTILITY            #

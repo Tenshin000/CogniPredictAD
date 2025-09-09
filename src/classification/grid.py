@@ -35,18 +35,12 @@ def ADNI_run_gridsearch(train, classifiers, param_grids, cv=5, scoring='balanced
         print(f"\nRunning GridSearch for {name} ...")
         param_grid = param_grids.get(name, {})
         
-        # Safe n_jobs for XAI models
-        if 'OptimalTree' in str(type(clf)) or 'ExplainableBoosting' in str(type(clf)):
-            n_jobs_grid = 1
-        else:
-            n_jobs_grid = -1
-        
         grid = GridSearchCV(
             estimator=clf,
             param_grid=param_grid,
             cv=cv,
             scoring=scoring,
-            n_jobs=n_jobs_grid,
+            n_jobs=-1,
             verbose=1,
             error_score='raise'  
         )

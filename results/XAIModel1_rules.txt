@@ -1,103 +1,61 @@
-IF CDRSB <= 0.11
-|   |--- MOCA <= 23.50
-|   |   |--- PTAU/ABETA <= 0.02
-|   |   |   |--- THEN class = 0
-|   |   |--- PTAU/ABETA >  0.02
-|   |   |   |--- MidTemp/ICV <= 0.01
-|   |   |   |   |--- EcogPtLang <= 1.50
-|   |   |   |   |   |--- THEN class = 0
-|   |   |   |   |--- EcogPtLang >  1.50
-|   |   |   |   |   |--- THEN class = 0
-|   |   |   |--- MidTemp/ICV >  0.01
-|   |   |   |   |--- THEN class = 0
-|   |--- MOCA >  23.50
-|   |   |--- EcogPtOrgan <= 2.27
-|   |   |   |--- THEN class = 0
-|   |   |--- EcogPtOrgan >  2.27
-|   |   |   |--- THEN class = 0
-IF CDRSB >  0.11
+IF CDRSB <= 0.15
+|   |--- THEN class = 0
+IF CDRSB >  0.15
 |   |--- LDELTOTAL <= 4.50
 |   |   |--- CDRSB <= 3.02
 |   |   |   |--- mPACCdigit <= -10.75
 |   |   |   |   |--- MMSE <= 23.50
-|   |   |   |   |   |--- FDG <= 1.14
-|   |   |   |   |   |   |--- THEN class = 3
-|   |   |   |   |   |--- FDG >  1.14
-|   |   |   |   |   |   |--- THEN class = 3
+|   |   |   |   |   |--- THEN class = 3
 |   |   |   |   |--- MMSE >  23.50
-|   |   |   |   |   |--- CDRSB <= 2.05
+|   |   |   |   |   |--- FAQ <= 2.50
 |   |   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |   |--- CDRSB >  2.05
+|   |   |   |   |   |--- FAQ >  2.50
 |   |   |   |   |   |   |--- THEN class = 3
 |   |   |   |--- mPACCdigit >  -10.75
-|   |   |   |   |--- FAQ <= 4.50
+|   |   |   |   |--- FAQ <= 6.50
 |   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |--- FAQ >  4.50
-|   |   |   |   |   |--- MMSE <= 26.50
-|   |   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |   |--- MMSE >  26.50
-|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |--- FAQ >  6.50
+|   |   |   |   |   |--- THEN class = 2
 |   |   |--- CDRSB >  3.02
-|   |   |   |--- MMSE <= 25.50
+|   |   |   |--- MMSE <= 26.50
 |   |   |   |   |--- MMSE <= 23.50
 |   |   |   |   |   |--- THEN class = 3
 |   |   |   |   |--- MMSE >  23.50
-|   |   |   |   |   |--- EcogSPLang <= 1.63
-|   |   |   |   |   |   |--- THEN class = 3
-|   |   |   |   |   |--- EcogSPLang >  1.63
-|   |   |   |   |   |   |--- THEN class = 3
-|   |   |   |--- MMSE >  25.50
-|   |   |   |   |--- EcogSPMem <= 2.59
-|   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |--- EcogSPMem >  2.59
-|   |   |   |   |   |--- CDRSB <= 4.25
+|   |   |   |   |   |--- EcogSPPlan <= 1.66
 |   |   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |   |--- CDRSB >  4.25
+|   |   |   |   |   |--- EcogSPPlan >  1.66
 |   |   |   |   |   |   |--- THEN class = 3
+|   |   |   |--- MMSE >  26.50
+|   |   |   |   |--- THEN class = 2
 |   |--- LDELTOTAL >  4.50
-|   |   |--- LDELTOTAL <= 8.50
-|   |   |   |--- PTEDUCAT <= 15.50
-|   |   |   |   |--- EcogSPOrgan <= 2.24
-|   |   |   |   |   |--- CDRSB <= 0.50
-|   |   |   |   |   |   |--- THEN class = 1
-|   |   |   |   |   |--- CDRSB >  0.50
-|   |   |   |   |   |   |--- THEN class = 1
-|   |   |   |   |--- EcogSPOrgan >  2.24
-|   |   |   |   |   |--- MMSE <= 26.50
+|   |   |--- PTEDUCAT <= 15.50
+|   |   |   |--- EcogSPDivatt <= 1.90
+|   |   |   |   |--- CDRSB <= 0.50
+|   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |--- CDRSB >  0.50
+|   |   |   |   |   |--- THEN class = 1
+|   |   |   |--- EcogSPDivatt >  1.90
+|   |   |   |   |--- RAVLT_immediate <= 24.50
+|   |   |   |   |   |--- THEN class = 3
+|   |   |   |   |--- RAVLT_immediate >  24.50
+|   |   |   |   |   |--- THEN class = 1
+|   |   |--- PTEDUCAT >  15.50
+|   |   |   |--- LDELTOTAL <= 8.50
+|   |   |   |   |--- mPACCdigit <= -8.41
+|   |   |   |   |   |--- CDRSB <= 2.75
+|   |   |   |   |   |   |--- THEN class = 2
+|   |   |   |   |   |--- CDRSB >  2.75
 |   |   |   |   |   |   |--- THEN class = 3
-|   |   |   |   |   |--- MMSE >  26.50
-|   |   |   |   |   |   |--- THEN class = 1
-|   |   |   |--- PTEDUCAT >  15.50
-|   |   |   |   |--- MMSE <= 26.50
-|   |   |   |   |   |--- CDRSB <= 2.67
+|   |   |   |   |--- mPACCdigit >  -8.41
+|   |   |   |   |   |--- WholeBrain/ICV <= 0.70
 |   |   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |   |--- CDRSB >  2.67
-|   |   |   |   |   |   |--- THEN class = 3
-|   |   |   |   |--- MMSE >  26.50
-|   |   |   |   |   |--- WholeBrain/ICV <= 0.68
+|   |   |   |   |   |--- WholeBrain/ICV >  0.70
 |   |   |   |   |   |   |--- THEN class = 2
-|   |   |   |   |   |--- WholeBrain/ICV >  0.68
-|   |   |   |   |   |   |--- THEN class = 2
-|   |   |--- LDELTOTAL >  8.50
-|   |   |   |--- CDRSB <= 0.55
+|   |   |   |--- LDELTOTAL >  8.50
 |   |   |   |   |--- LDELTOTAL <= 11.50
-|   |   |   |   |   |--- PTEDUCAT <= 15.50
-|   |   |   |   |   |   |--- THEN class = 0
-|   |   |   |   |   |--- PTEDUCAT >  15.50
-|   |   |   |   |   |   |--- THEN class = 1
+|   |   |   |   |   |--- THEN class = 1
 |   |   |   |   |--- LDELTOTAL >  11.50
-|   |   |   |   |   |--- PTEDUCAT <= 17.50
+|   |   |   |   |   |--- CDRSB <= 0.61
 |   |   |   |   |   |   |--- THEN class = 0
-|   |   |   |   |   |--- PTEDUCAT >  17.50
-|   |   |   |   |   |   |--- THEN class = 0
-|   |   |   |--- CDRSB >  0.55
-|   |   |   |   |--- RAVLT_immediate <= 27.50
-|   |   |   |   |   |--- PTAU/ABETA <= 0.04
-|   |   |   |   |   |   |--- THEN class = 1
-|   |   |   |   |   |--- PTAU/ABETA >  0.04
-|   |   |   |   |   |   |--- THEN class = 1
-|   |   |   |   |--- RAVLT_immediate >  27.50
-|   |   |   |   |   |--- AGE <= 81.50
-|   |   |   |   |   |   |--- THEN class = 1
-|   |   |   |   |   |--- AGE >  81.50
+|   |   |   |   |   |--- CDRSB >  0.61
 |   |   |   |   |   |   |--- THEN class = 1
