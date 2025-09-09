@@ -483,7 +483,6 @@ class ADNICleaner:
 
         # Handle NaNs before converting to int64
         col_data = pd.Series(col_data).fillna(fillna_value).astype(np.int64)
-
         self.dataset[column] = col_data
 
         return self.dataset

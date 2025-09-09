@@ -1,7 +1,7 @@
 [project]
 name = "CogniPredictAD"
 version = "0.1.0"
-description = "Cognitive prediction pipeline with ML models"
+description = "Cognitive prediction pipeline with Machine Learning models"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
@@ -24,7 +24,7 @@ dependencies = [
     "shap",
     "graphviz",
     "lime",
-    "PySimpleGUI",
+    "customtkinter",
     "openpyxl",
     "jupyter"
 ]
