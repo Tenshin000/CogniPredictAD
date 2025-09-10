@@ -16,6 +16,7 @@ The conclusions highlight good predictive performance on the ADNIMERGE dataset, 
 
 ## Data Acquisition
 All data required are available through [ADNI](https://adni.loni.usc.edu/) and the Image and Data Archive provided by the [Laboratory of Neuro Imaging](https://www.loni.usc.edu/) at the University of Southern California. To obtain access to data from ADNI, see this link: http://adni.loni.usc.edu/data-samples/access-data/
+
 After getting Data access from the Alzheimer's Disease Neuroimaging Initiative (ADNI), place the ADNIMERGE.csv file in the *data* folder.
 
 
@@ -47,6 +48,18 @@ cd CogniPredictAD
 pip install --upgrade pip
 pip install -e .
 ```
+
+## Folder Structure
+- **data**: Contains the datasets used and generated. ADNIMERGE.csv (raw ADNI merge), ADNIMERGE_DICT.csv (variable dictionary), splits used in the experiment (train.csv, test.csv, pretrain.csv, pretest.csv, sampled.csv), and NEWADNIMERGE.csv (aggregated file with predictions/imputations produced by the pipeline). The notebook explicitly documents the creation and use of NEWADNIMERGE.csv;
+- **doc**: LaTeX sources of the final report;
+- **notebooks:** Collection of Jupyter notebooks that implement the entire flow. **The heart of the project is located in the *notebooks* folder. Most of the explanations and code are there, and I recommend reading them carefully to get a clear understanding of the project.** These include preliminary exploration (01), dataset preparation (02), data exploration (03), preprocessing (04), data exploration for classification (05), tuning (06), classifier training (07), explainability (08), model evaluation (09), and creation of operational models (10);
+- **results**: Contains all the models produced. In particular, it contains the final models Model1.pkl and Model2.pkl and the interpretable models XAIModel1.pkl and XAIModel2.pkl;
+- **src**: Reusable source code:
+- - **classification** contains classifier.py and grid.py (ADNIClassifier class, functions for training, repeated CV, model saving, and evaluation);
+- - **preprocessing** contains cleaner, transformer, KNN imputer, outlier handling, and attribute selection (all routines used to build train/test and fill missing values);
+- - **visualization** contains explainer.py and visualizer.py (SHAP wrappers, permutation explainer, plotting, and tree/rule export). The rule export and tree rendering functions are implemented here.
+- Root file (CogniPredictAD): Contains the main documents and the physician app in main.py.
+
 
 ## Introduction
 Early and accurate diagnosis of **Alzheimer’s disease** (AD) is a clinical and social priority: intervening before cognitive impairment becomes severe and allows for the planning of therapies, treatments, and support strategies, and the testing of interventions that slow decline. However, the disease is complex and multifactorial: clinical signs, cognitive tests, Cerebrospinal Fluid (CSF) biomarkers, genetics (e.g. APOE4), and neuroimaging measures interact in a nontrivial way. For this reason, **Machine Learning** (ML) techniques are particularly well-suited: they can integrate multimodal information, model nonlinear relationships, and identify combinations of features that improve the discrimination between **cognitively normal** (CN), **mild cognitive impairment** (MCI), and full-blown **Alzheimer’s subjects** (AD).
