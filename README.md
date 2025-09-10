@@ -275,46 +275,47 @@ The following pages contain the graphs and tables that led to the final evaluati
 *M_L_R is for Multinomial_Logistic_Regression.*
 
 **With CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/1)**
+| Model           | Accuracy | Balanced Accuracy | Precision (weighted) | Recall (weighted) | F1 Score (weighted) | F1 Score (macro) | ROC AUC (macro) |
+| --------------- | -------- | ----------------- | -------------------- | ----------------- | ------------------- | ---------------- | --------------- |
+| Random\_Forest1 | 0.9256   | 0.9198            | 0.9271               | 0.9256            | 0.9258              | 0.9169           | 0.9865          |
+| Extra\_Trees1   | 0.9236   | 0.9188            | 0.9250               | 0.9236            | 0.9240              | 0.9143           | 0.9862          |
+| XGBoost0        | 0.9277   | 0.9168            | 0.9284               | 0.9277            | 0.9275              | 0.9180           | 0.9876          |
+| Random\_Forest0 | 0.9298   | 0.9163            | 0.9310               | 0.9298            | 0.9294              | 0.9205           | 0.9839          |
+| XGBoost1        | 0.9236   | 0.9153            | 0.9244               | 0.9236            | 0.9237              | 0.9138           | 0.9868          |
+| Extra\_Trees0   | 0.9236   | 0.9132            | 0.9240               | 0.9236            | 0.9236              | 0.9136           | 0.9884          |
+| CatBoost1       | 0.9194   | 0.9128            | 0.9205               | 0.9194            | 0.9197              | 0.9102           | 0.9875          |
+| LightGBM1       | 0.9194   | 0.9116            | 0.9202               | 0.9194            | 0.9195              | 0.9095           | 0.9871          |
+| CatBoost0       | 0.9215   | 0.9090            | 0.9219               | 0.9215            | 0.9212              | 0.9108           | 0.9887          |
+| LightGBM0       | 0.9194   | 0.9048            | 0.9207               | 0.9194            | 0.9189              | 0.9075           | 0.9843          |
+| Bagging0        | 0.9194   | 0.9041            | 0.9224               | 0.9194            | 0.9192              | 0.9079           | 0.9844          |
+| Bagging1        | 0.9050   | 0.8953            | 0.9062               | 0.9050            | 0.9053              | 0.8930           | 0.9835          |
+| Decision\_Tree1 | 0.8988   | 0.8930            | 0.9015               | 0.8988            | 0.8995              | 0.8862           | 0.9803          |
+| M\_L\_R1        | 0.8781   | 0.8731            | 0.8831               | 0.8781            | 0.8785              | 0.8629           | 0.9806          |
+| Decision\_Tree0 | 0.8760   | 0.8722            | 0.8813               | 0.8760            | 0.8771              | 0.8615           | 0.9746          |
+| M\_L\_R0        | 0.8740   | 0.8720            | 0.8811               | 0.8740            | 0.8748              | 0.8598           | 0.9815          |
 
-| Model | Accuracy | Balanced Accuracy | Precision (weighted) | Recall (weighted) | F1 Score (weighted) | F1 Score (macro) | ROC AUC (macro) |
-|:---|:---|:---|:---|:---|:---|:---|:---|
-| Random_Forest1 |  |  |  |  |  |  |  |
-| Extra_Trees1 |  |  |  |  |  |  |  |
-| XGBoost0 |  |  |  |  |  |  |  |
-| Random_Forest0 |  |  |  |  |  |  |  |
-| XGBoost1 |  |  |  |  |  |  |  |
-| Extra_Trees0 |  |  |  |  |  |  |  |
-| CatBoost1 |  |  |  |  |  |  |  |
-| LightGBM1 |  |  |  |  |  |  |  |
-| CatBoost0 |  |  |  |  |  |  |  |
-| LightGBM0 |  |  |  |  |  |  |  |
-| Bagging0 |  |  |  |  |  |  |  |
-| Bagging1 |  |  |  |  |  |  |  |
-| Decision_Tree1 |  |  |  |  |  |  |  |
-| M_L_R1 |  |  |  |  |  |  |  |
-| Decision_Tree0 |  |  |  |  |  |  |  |
-| M_L_R0 |  |  |  |  |  |  |  |
 
 **Without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/2)**
+| Model           | Accuracy | Balanced Accuracy | Precision (weighted) | Recall (weighted) | F1 Score (weighted) | F1 Score (macro) | ROC AUC (macro) |
+| --------------- | -------- | ----------------- | -------------------- | ----------------- | ------------------- | ---------------- | --------------- |
+| XGBoost1        | 0.7355   | 0.7210            | 0.7458               | 0.7355            | 0.7392              | 0.7172           | 0.9071          |
+| Extra\_Trees0   | 0.7376   | 0.7172            | 0.7383               | 0.7376            | 0.7368              | 0.7140           | 0.9093          |
+| LightGBM1       | 0.7252   | 0.7163            | 0.7400               | 0.7252            | 0.7301              | 0.7098           | 0.9081          |
+| Extra\_Trees1   | 0.7190   | 0.7064            | 0.7285               | 0.7190            | 0.7211              | 0.6988           | 0.9068          |
+| Bagging1        | 0.7252   | 0.7059            | 0.7282               | 0.7252            | 0.7258              | 0.7043           | 0.9038          |
+| M\_L\_R0        | 0.7190   | 0.6999            | 0.7188               | 0.7190            | 0.7172              | 0.6970           | 0.9071          |
+| XGBoost0        | 0.7397   | 0.6990            | 0.7287               | 0.7397            | 0.7314              | 0.7033           | 0.9126          |
+| Random\_Forest0 | 0.7169   | 0.6972            | 0.7173               | 0.7169            | 0.7159              | 0.6919           | 0.9053          |
+| M\_L\_R1        | 0.7087   | 0.6959            | 0.7160               | 0.7087            | 0.7093              | 0.6900           | 0.9037          |
+| CatBoost1       | 0.7066   | 0.6930            | 0.7180               | 0.7066            | 0.7106              | 0.6894           | 0.9092          |
+| Random\_Forest1 | 0.7025   | 0.6869            | 0.7116               | 0.7025            | 0.7045              | 0.6809           | 0.9040          |
+| LightGBM0       | 0.7293   | 0.6821            | 0.7127               | 0.7293            | 0.7152              | 0.6827           | 0.9123          |
+| Bagging0        | 0.7231   | 0.6738            | 0.7138               | 0.7231            | 0.7131              | 0.6824           | 0.9040          |
+| CatBoost0       | 0.7231   | 0.6734            | 0.7089               | 0.7231            | 0.7101              | 0.6786           | 0.9093          |
+| Decision\_Tree1 | 0.6405   | 0.6521            | 0.6881               | 0.6405            | 0.6522              | 0.6357           | 0.8567          |
+| Decision\_Tree0 | 0.6612   | 0.6464            | 0.6904               | 0.6612            | 0.6726              | 0.6547           | 0.8380          |
 
-| Model | Accuracy | Balanced Accuracy | Precision (weighted) | Recall (weighted) | F1 Score (weighted) | F1 Score (macro) | ROC AUC (macro) |
-|:---|:---|:---|:---|:---|:---|:---|:---|
-| XGBoost1 |  |  |  |  |  |  |  |
-| Extra_Trees0 |  |  |  |  |  |  |  |
-| LightGBM1 |  |  |  |  |  |  |  |
-| Extra_Trees1 |  |  |  |  |  |  |  |
-| Bagging1 |  |  |  |  |  |  |  |
-| M_L_R0 |  |  |  |  |  |  |  |
-| XGBoost0 |  |  |  |  |  |  |  |
-| Random_Forest0 |  |  |  |  |  |  |  |
-| M_L_R1 |  |  |  |  |  |  |  |
-| CatBoost1 |  |  |  |  |  |  |  |
-| Random_Forest1 |  |  |  |  |  |  |  |
-| LightGBM0 |  |  |  |  |  |  |  |
-| Bagging0 |  |  |  |  |  |  |  |
-| CatBoost0 |  |  |  |  |  |  |  |
-| Decision_Tree1 |  |  |  |  |  |  |  |
-| Decision_Tree0 |  |  |  |  |  |  |  |
+
 
 ### Final Decision
 For the dataset containing the three highly predictive cognitive scores (CDRSB, LDELTOTAL, mPACCdigit), ***Random_Forest1*** (**the RF trained with the hybrid sampling strategy**) was chosen as the main model, and ***Decision_Tree1*** (**the version with sampling**) was chosen as the reference XAI model. This choice is motivated by very high test metrics (balanced accuracy, F1, ROC-AUC) that show the best sensitive tradeoff between classes.
