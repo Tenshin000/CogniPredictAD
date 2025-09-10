@@ -55,9 +55,9 @@ pip install -e .
 - **notebooks:** Collection of Jupyter notebooks that implement the entire flow. **The heart of the project is located in the *notebooks* folder. Most of the explanations and code are there, and I recommend reading them carefully to get a clear understanding of the project.** These include preliminary exploration (01), dataset preparation (02), data exploration (03), preprocessing (04), data exploration for classification (05), tuning (06), classifier training (07), explainability (08), model evaluation (09), and creation of operational models (10);
 - **results**: Contains all the models produced. In particular, it contains the final models Model1.pkl and Model2.pkl and the interpretable models XAIModel1.pkl and XAIModel2.pkl;
 - **src**: Reusable source code:
-- - **classification** contains classifier.py and grid.py (ADNIClassifier class, functions for training, repeated CV, model saving, and evaluation);
-- - **preprocessing** contains cleaner, transformer, KNN imputer, outlier handling, and attribute selection (all routines used to build train/test and fill missing values);
-- - **visualization** contains explainer.py and visualizer.py (SHAP wrappers, permutation explainer, plotting, and tree/rule export). The rule export and tree rendering functions are implemented here.
+  - **classification** contains classifier.py and grid.py (ADNIClassifier class, functions for training, repeated CV, model saving, and evaluation);
+  - **preprocessing** contains cleaner, transformer, KNN imputer, outlier handling, and attribute selection (all routines used to build train/test and fill missing values);
+  - **visualization** contains explainer.py and visualizer.py (SHAP wrappers, permutation explainer, plotting, and tree/rule export). The rule export and tree rendering functions are implemented here.
 - Root file (CogniPredictAD): Contains the main documents and the physician app in main.py.
 
 
