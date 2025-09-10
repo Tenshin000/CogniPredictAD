@@ -143,7 +143,7 @@ In the second phase, however, we applied the transformations that could introduc
 - **MRI normalization to ICV (Intracranial Volume):** Necessary to correct for differences due to gender and cranial size.
 
 ### Outlier Detection
-- **Univariate Analysis:** use IQR and Z-score for each column to find outliers;
+- **Univariate Analysis:** use *IQR* and *Z-score threshold* for each column to find outliers;
 - **Multivariate Analysis:** Constructs groups (EcogPt, EcogSP, Neuropsych, MRI, MRI/ICV, CSF, CSF/ABETA, mPACC), applies *LOF* and *DBSCAN* to normalized data (*RobustScaler*). Only data points reported by both techniques and with a *LOF_score* greater than 2 are kept to flag them as "extreme";
 - **Cleaning up problematic outliers:** Outliers with values that were clearly out of range and therefore deemed highly unlikely were replaced with the mean by class.
 
