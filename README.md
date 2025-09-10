@@ -3,7 +3,7 @@
 
 *Univeristy of Pisa,*
 *Department of Information Engineering,*
-*m.sc. Computer Engineering / m.sc. Artificial Intelligence and Data Engineering*
+*m.sc. Artificial Intelligence and Data Engineering*
 
 *Project by Francesco Panattoni*
 
