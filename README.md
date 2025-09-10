@@ -19,6 +19,28 @@ All data required are available through [ADNI](https://adni.loni.usc.edu/) and t
 After getting Data access from the Alzheimer's Disease Neuroimaging Initiative (ADNI), place the ADNIMERGE.csv file in the *data* folder.
 
 
+## Installation
+### With venv
+```bash
+cd CogniPredictAD
+python -m venv CogniPredictAD
+# On Linux/macOS:
+source CogniPredictAD/bin/activate
+# On Windows (PowerShell):
+CogniPredictAD\Scripts\Activate.ps1
+pip install --upgrade pip
+pip install -e .
+```
+
+### With conda
+```bash
+cd CogniPredictAD
+conda create --name CogniPredictAD python=3.11
+conda activate CogniPredictAD
+pip install --upgrade pip
+pip install -e .
+```
+
 ## Introduction
 Early and accurate diagnosis of **Alzheimer’s disease** (AD) is a clinical and social priority: intervening before cognitive impairment becomes severe and allows for the planning of therapies, treatments, and support strategies, and the testing of interventions that slow decline. However, the disease is complex and multifactorial: clinical signs, cognitive tests, Cerebrospinal Fluid (CSF) biomarkers, genetics (e.g. APOE4), and neuroimaging measures interact in a nontrivial way. For this reason, **Machine Learning** (ML) techniques are particularly well-suited: they can integrate multimodal information, model nonlinear relationships, and identify combinations of features that improve the discrimination between **cognitively normal** (CN), **mild cognitive impairment** (MCI), and full-blown **Alzheimer’s subjects** (AD).
 
