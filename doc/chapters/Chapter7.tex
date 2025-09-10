@@ -6,9 +6,6 @@ To optimize the performance of the classifiers, a \textbf{Grid Search} procedure
 The dataset also presented a slight imbalance in diagnostic classes, as already discussed in the "Multiclass Problem" chapter. 
 
 To address this problem, a \textbf{Hybrid Sampling strategy} was applied, combining:
-
-\newpage
-
 \begin{enumerate}
 	\item \textbf{RUS}\footnote{Random Under-Sampling} to reduce the number of instances in the majority classes, preventing the dataset from becoming excessively biased toward synthetic examples;
 	\item \textbf{SMOTENC}\footnote{Synthetic Minority Over-sampling Technique for Nominal and Continuous features} to generate new synthetic examples of the minority classes, taking into account the mixed nature of the variables (continuous and categorical).
@@ -48,6 +45,4 @@ Therefore, I need to run four Grid Searches. For each model, a large set of hype
 \vspace{2mm}
 
 At the end of the Grid Search, the optimal parameters found for each model were used to instantiate the “final” versions of the classifiers and produce subsequent evaluations. 
-
-\newpage
 

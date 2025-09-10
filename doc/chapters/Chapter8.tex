@@ -21,8 +21,6 @@ In the graphs produced on the version without those three scores, the feature ra
 
 The tree diagrams and exported rule files highlight that Decision Trees separate classes using thresholds on a few features (often one of the three clinical scores when present, otherwise a combination of biomarkers and cognitive tests). 
 
-\columnbreak
-
 The rules are therefore easily interpretable and useful for communicating "if $\to$ then" statements to clinical staff.
 
 \vspace{2mm}
@@ -38,6 +36,18 @@ The following pages contain the graphs and tables that led to the final evaluati
 \textbf{The models ending with 1 were trained on the dataset with Hybrid Sampling, while those ending with 0 were not.}
 
 \textbf{Although the models with CDRSB, LDELTOTAL, and mPACCdigit and those without CDRSB, LDELTOTAL, and mPACCdigit have the same names (e.g., XGBoost0, XGBoost1, ExtraTrees0, RandomForest1, and so on), they are actually distinct models born from distinct classifiers. Models with CDRSB, LDELTOTAL, and mPACCdigit are in the "results/all\_models/1" folder, and those without are in the \linebreak "results/all\_models/2" folder.}
+
+\subsection{Final Decision}
+For the dataset containing the three highly predictive cognitive scores (CDRSB, LDELTOTAL, mPACCdigit), \textbf{\textit{Random\_Forest1}} (\textbf{the RF trained with the hybrid sampling strategy}) was chosen as the main model, and \textbf{\textit{Decision\_Tree1}} (\textbf{the version with sampling}) was chosen as the reference XAI model. This choice is motivated by very high test metrics (balanced accuracy, F1, ROC-AUC) that show the best sensitive tradeoff between classes.
+
+\textbf{Model1.pkl and XAIModel1.pkl are respectively Random\_Forest1 and Decision\_Tree1.}
+
+\vspace{4mm}
+
+For the dataset where those three cognitive scores were removed, the model that maintained the best performance was \textbf{\textit{XGBoost1}} (XGBoost with hybrid sampling), and, again, \textbf{\textit{Decision\_Tree1}} was chosen as the XAIModel (the version built on the dataset without the three scores). This selection also comes from comparing the metrics on the test set. 
+
+\textbf{Model2.pkl and XAIModel2.pkl are respectively XGBoost1 and Decision\_Tree1.} 
+
 
 \newpage
 
@@ -153,15 +163,5 @@ The following pages contain the graphs and tables that led to the final evaluati
 
 \newpage
 \begin{multicols}{2}
-\subsection{Final Decision}
-For the dataset containing the three highly predictive cognitive scores (CDRSB, LDELTOTAL, mPACCdigit), \textbf{\textit{Random\_Forest1}} (\textbf{the RF trained with the hybrid sampling strategy}) was chosen as the main model, and \textbf{\textit{Decision\_Tree1}} (\textbf{the version with sampling}) was chosen as the reference XAI model. This choice is motivated by very high test metrics (balanced accuracy, F1, ROC-AUC) that show the best sensitive tradeoff between classes.
-
-\textbf{Model1.pkl and XAIModel1.pkl are respectively Random\_Forest1 and Decision\_Tree1.}
-
-\vspace{4mm}
-
-For the dataset where those three cognitive scores were removed, the model that maintained the best performance was \textbf{\textit{XGBoost1}} (XGBoost with hybrid sampling), and, again, \textbf{\textit{Decision\_Tree1}} was chosen as the XAIModel (the version built on the dataset without the three scores). This selection also comes from comparing the metrics on the test set. 
-
-\textbf{Model2.pkl and XAIModel2.pkl are respectively XGBoost1 and Decision\_Tree1.} 
 
 

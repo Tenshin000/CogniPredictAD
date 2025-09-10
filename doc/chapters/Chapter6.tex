@@ -11,4 +11,57 @@ The following classification algorithms were chosen:
 	\item \textbf{Bagging}\footnote{Bootstrap Aggregating}\textbf{:} An ensemble approach that trains several models on different bootstrap samples drawn from the dataset, and then combines their outputs by averaging. The main effect is a reduction in model variance, leading to more stable predictions. It was selected because, in clinical datasets where variability and noise are substantial, bagging provides a straightforward way to assess how much predictive stability can be gained simply by aggregating multiple weak learners.
 \end{enumerate}
 
-\vspace{2mm}
+\newpage
+
+\begin{table}[H]
+	\small
+	\centering
+	\caption{Description of the final dataset attributes}
+	\label{tab:dataset-attributes}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3cm}}
+			\toprule
+			\textbf{Attribute} & \textbf{Description} & \textbf{Category} \\
+			\midrule
+			DX                    & Clinical diagnosis at the time of visit: CN, SMC, EMCI, LMCI, AD                   & Diagnosis             \\
+			AGE                   & Participant’s age at time of visit                                                 & Demographics          \\
+			PTGENDER              & Participant's gender (Male/Female)                                                 & Demographics          \\
+			PTEDUCAT              & Years of formal education completed                                                & Demographics          \\
+			APOE4                 & Number of APOE $\varepsilon$4 alleles (0, 1, or 2), a genetic risk factor for Alzheimer’s      & Demographics          \\
+			MMSE                  & Mini-Mental State Examination score (0–30, higher = better)                        & Clinical Scores       \\
+			CDRSB                 & Clinical Dementia Rating - Sum of Boxes (0–18, higher = worse)                     & Clinical Scores       \\
+			ADAS13                & ADAS-Cog 13-item total score (higher = worse)                                      & Clinical Scores       \\
+			LDELTOTAL             & Logical Memory II delayed recall total score                                       & Clinical Scores       \\
+			FAQ                   & Functional Activities Questionnaire – functional impairment score                  & Clinical Scores       \\
+			MOCA                  & Montreal Cognitive Assessment – global cognitive function (0–30)                   & Clinical Scores       \\
+			TRABSCOR              & Trail Making Test Part B – time in seconds (higher = worse)                        & Clinical Scores       \\
+			RAVLT\_immediate       & RAVLT total immediate recall score (sum over 5 trials)                             & Clinical Scores       \\
+			RAVLT\_learning        & Learning score (Trial 5 minus Trial 1 of RAVLT)                                    & Clinical Scores       \\
+			RAVLT\_perc\_forgetting & ~~Percent forgetting from RAVLT (higher = worse)                                     & Clinical Scores       \\
+			mPACCdigit            & Modified Preclinical Alzheimer’s Cognitive Composite – Digit Symbol test           & Composite Scores      \\
+			EcogPtMem             & Subject self-reported memory complaints (ECog)                                     & ECogPT                \\
+			EcogPtLang            & Subject self-reported language difficulties (ECog)                                 & ECogPT                \\
+			EcogPtVisspat         & Subject self-reported visuospatial difficulties (ECog)                             & ECogPT                \\
+			EcogPtPlan            & Subject self-reported planning difficulties (ECog)                                 & ECogPT                \\
+			EcogPtOrgan           & Subject self-reported organizational issues (ECog)                                 & ECogPT                \\
+			EcogPtDivatt          & Subject self-reported divided attention issues (ECog)                              & ECogPT                \\
+			EcogSPMem             & Informant-reported memory complaints (ECog)                                        & ECogSP                \\
+			EcogSPLang            & Informant-reported language issues (ECog)                                          & ECogSP                \\
+			EcogSPVisspat         & Informant-reported visuospatial issues (ECog)                                      & ECogSP                \\
+			EcogSPPlan            & Informant-reported planning problems (ECog)                                        & ECogSP                \\
+			EcogSPOrgan           & Informant-reported organization issues (ECog)                                      & ECogSP                \\
+			EcogSPDivatt          & Informant-reported divided attention issues (ECog)                                 & ECogSP                \\
+			FDG                   & FDG PET SUVR – brain glucose metabolism                                            & Biomarkers            \\
+			PTAU/ABETA            & CSF phosphorylated tau protein/A$\beta$42 ratio                                     & Biomarkers            \\
+			Hippocampus/ICV       & Volume of hippocampus/Intracranial volume ratio from MRI                           & MRI                   \\
+			Entorhinal/ICV        & Volume of the entorhinal cortex/Intracranial volume ratio from MRI                 & MRI                   \\
+			Fusiform/ICV          & Fusiform gyrus volume/Intracranial volume ratio from MRI                           & MRI                   \\
+			MidTemp/ICV           & Middle temporal gyrus volume/Intracranial volume ratio from MRI                    & MRI                   \\
+			Ventricles/ICV        & Volume of ventricles/Intracranial volume ratio from MRI                            & MRI                   \\
+			WholeBrain/ICV        & Whole brain volume/Intracranial volume ratio from MRI                              & MRI                   \\
+			\bottomrule
+		\end{tabularx}
+	\end{adjustbox}
+\end{table}
+
+\newpage

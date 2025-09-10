@@ -35,52 +35,6 @@ class OutlierDetector:
         if missing:
             raise ValueError(f"Dataset does not contain columns: {missing}")
         return columns
-    
-
-    def plausible_min(self, dataset: pd.DataFrame, column: str, 
-                    method: str = 'iqr', 
-                    iqr_factor: float = 1.5, 
-                    z_threshold: float = 3.0) -> float:
-        """
-        Calculate the plausible minimum of a numeric column using IQR, Z-score, or both.
-
-        param dataset: DataFrame containing the data.
-        param column: Name of the column to analyze.
-        param method: 'iqr', 'zscore', or 'both' (default='iqr')
-        param iqr_factor: Multiplicative factor for the IQR (default=1.5)
-        param z_threshold: Z-score threshold (default=3.0)
-
-        return: plausible minimum value
-        """
-        if column not in dataset.columns:
-            raise ValueError(f"Column '{column}' not found in dataset.")
-        
-        col_data = dataset[column].dropna()
-        min_vals = {}
-
-        # IQR-based plausible minimum
-        if method in ('iqr', 'both'):
-            Q1 = col_data.quantile(0.25)
-            Q3 = col_data.quantile(0.75)
-            IQR = Q3 - Q1
-            min_vals['iqr'] = Q1 - iqr_factor * IQR
-        
-        # Z-score-based plausible minimum
-        if method in ('zscore', 'both'):
-            mean = col_data.mean()
-            std = col_data.std()
-            min_vals['zscore'] = mean - z_threshold * std
-        
-        # Select the most conservative value if both methods are used
-        plausible_min_value = max(min_vals.values())
-
-        # Output which minima were estimated and which one is returned
-        print(f"[Plausible Minimum] Column: {column}")
-        for k, v in min_vals.items():
-            print(f"  Estimated minimum by {k.upper()}: {v:.6f}")
-        print(f"  Returned plausible minimum: {plausible_min_value:.6f}")
-
-        return plausible_min_value
 
 
     def detect_by_iqr(self, dataset: pd.DataFrame, columns: Optional[List[str]] = None,

@@ -32,10 +32,12 @@ In the second phase, however, we applied the transformations that could introduc
 
 \subsection{Outlier Detection}
 \begin{itemize}
-	\item \textbf{Univariate Analysis:} use IQR and Z-score for each column to find outliers;
-	\item \textbf{Multivariate Analysis:} Constructs groups (EcogPt, EcogSP, Neuropsych, MRI, MRI/ICV, CSF, CSF/ABETA, mPACC), applies \textit{LOF} and \textit{DBSCAN} to normalized data (\textit{RobustScaler}\footnote{$x'_i = \frac{x_i - \text{median}(X)}{Q_3(X)-Q_1(X)}$}). Only data points reported by both techniques and with a \textit{LOF\_score} greater than 2 are kept to flag them as "extreme";
+	\item \textbf{Univariate Analysis:} use \textit{IQR}\footnote{Interquartile Range is a statistical method to identify and handle outliers, which are extreme values that can negatively impact model accuracy. Outliers are then detected as data points falling outside a range defined by $Q1 – 1.5 \cdot IQR$ and $Q3 + 1.5 \cdot IQR$.} and \textit{Z-score threshold}\footnote{Z-score: identifies data points that are a certain number of standard deviations away from the mean, typically flagging values with a Z-score greater than 3 or less than -3 as potential outliers.} for each column to find outliers;
+	\item \textbf{Multivariate Analysis:} Constructs groups (EcogPt, EcogSP, Neuropsych, MRI, MRI/ICV, CSF, CSF/ABETA, mPACC), applies \textit{LOF}\footnote{Local Outlier Factor is based on a concept of a local density, where locality is given by k nearest neighbors, whose distance is used to estimate the density.} and \textit{DBSCAN}\footnote{Density-Based Spatial Clustering of Applications with Noise identifies outliers as data points that do not belong to any dense cluster. These are points in low-density regions that are surrounded by empty space rather than other points, making them significantly different from the majority of the data.} to normalized data (\textit{RobustScaler}\footnote{$x'_i = \frac{x_i - \text{median}(X)}{Q_3(X)-Q_1(X)}$}). Only data points reported by both techniques and with a \textit{LOF\_score} greater than 2 are kept to flag them as "extreme";
 	\item \textbf{Cleaning up problematic outliers:} Outliers with values that were clearly out of range and therefore deemed highly unlikely were replaced with the mean by class.
 \end{itemize}
+
+\columnbreak
 
 \subsection{Data Reduction}
 \begin{itemize}
@@ -60,57 +62,3 @@ This choice was driven by one reason: I wanted to \textbf{preserve the clinical 
 \subsubsection{Binning}
 Binning was not applied because it would have reduced the useful information and discriminatory power of continuous variables. The models used already capture nonlinearities and thresholds, so prior discretization is unnecessary and could introduce artifacts.
 
-\newpage
-
-\begin{table}[H]
-	\small
-	\centering
-	\caption{Description of the final dataset attributes}
-	\label{tab:dataset-attributes}
-	\begin{adjustbox}{max width=\textwidth}
-		\begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{3cm} >{\raggedright\arraybackslash}X >{\raggedright\arraybackslash}p{3cm}}
-			\toprule
-			\textbf{Attribute} & \textbf{Description} & \textbf{Category} \\
-			\midrule
-			DX                    & Clinical diagnosis at the time of visit: CN, SMC, EMCI, LMCI, AD                   & Diagnosis             \\
-			AGE                   & Participant’s age at time of visit                                                 & Demographics          \\
-			PTGENDER              & Participant's gender (Male/Female)                                                 & Demographics          \\
-			PTEDUCAT              & Years of formal education completed                                                & Demographics          \\
-			APOE4                 & Number of APOE $\varepsilon$4 alleles (0, 1, or 2), a genetic risk factor for Alzheimer’s      & Demographics          \\
-			MMSE                  & Mini-Mental State Examination score (0–30, higher = better)                        & Clinical Scores       \\
-			CDRSB                 & Clinical Dementia Rating - Sum of Boxes (0–18, higher = worse)                     & Clinical Scores       \\
-			ADAS13                & ADAS-Cog 13-item total score (higher = worse)                                      & Clinical Scores       \\
-			LDELTOTAL             & Logical Memory II delayed recall total score                                       & Clinical Scores       \\
-			FAQ                   & Functional Activities Questionnaire – functional impairment score                  & Clinical Scores       \\
-			MOCA                  & Montreal Cognitive Assessment – global cognitive function (0–30)                   & Clinical Scores       \\
-			TRABSCOR              & Trail Making Test Part B – time in seconds (higher = worse)                        & Clinical Scores       \\
-			RAVLT\_immediate       & RAVLT total immediate recall score (sum over 5 trials)                             & Clinical Scores       \\
-			RAVLT\_learning        & Learning score (Trial 5 minus Trial 1 of RAVLT)                                    & Clinical Scores       \\
-			RAVLT\_perc\_forgetting & ~~Percent forgetting from RAVLT (higher = worse)                                     & Clinical Scores       \\
-			mPACCdigit            & Modified Preclinical Alzheimer’s Cognitive Composite – Digit Symbol test           & Composite Scores      \\
-			EcogPtMem             & Subject self-reported memory complaints (ECog)                                     & ECogPT                \\
-			EcogPtLang            & Subject self-reported language difficulties (ECog)                                 & ECogPT                \\
-			EcogPtVisspat         & Subject self-reported visuospatial difficulties (ECog)                             & ECogPT                \\
-			EcogPtPlan            & Subject self-reported planning difficulties (ECog)                                 & ECogPT                \\
-			EcogPtOrgan           & Subject self-reported organizational issues (ECog)                                 & ECogPT                \\
-			EcogPtDivatt          & Subject self-reported divided attention issues (ECog)                              & ECogPT                \\
-			EcogSPMem             & Informant-reported memory complaints (ECog)                                        & ECogSP                \\
-			EcogSPLang            & Informant-reported language issues (ECog)                                          & ECogSP                \\
-			EcogSPVisspat         & Informant-reported visuospatial issues (ECog)                                      & ECogSP                \\
-			EcogSPPlan            & Informant-reported planning problems (ECog)                                        & ECogSP                \\
-			EcogSPOrgan           & Informant-reported organization issues (ECog)                                      & ECogSP                \\
-			EcogSPDivatt          & Informant-reported divided attention issues (ECog)                                 & ECogSP                \\
-			FDG                   & FDG PET SUVR – brain glucose metabolism                                            & Biomarkers            \\
-			PTAU/ABETA            & CSF phosphorylated tau protein/A$\beta$42 ratio                                     & Biomarkers            \\
-			Hippocampus/ICV       & Volume of hippocampus/Intracranial volume ratio from MRI                           & MRI                   \\
-			Entorhinal/ICV        & Volume of the entorhinal cortex/Intracranial volume ratio from MRI                 & MRI                   \\
-			Fusiform/ICV          & Fusiform gyrus volume/Intracranial volume ratio from MRI                           & MRI                   \\
-			MidTemp/ICV           & Middle temporal gyrus volume/Intracranial volume ratio from MRI                    & MRI                   \\
-			Ventricles/ICV        & Volume of ventricles/Intracranial volume ratio from MRI                            & MRI                   \\
-			WholeBrain/ICV        & Whole brain volume/Intracranial volume ratio from MRI                              & MRI                   \\
-			\bottomrule
-		\end{tabularx}
-	\end{adjustbox}
-\end{table}
-
-\newpage

@@ -11,20 +11,20 @@
 \contentsline {subsection}{\numberline {5.5}Data Reduction}{5}{subsection.5.5}%
 \contentsline {subsection}{\numberline {5.6}Some Considerations}{5}{subsection.5.6}%
 \contentsline {subsubsection}{\numberline {5.6.1}Correlation}{5}{subsubsection.5.6.1}%
-\contentsline {subsubsection}{\numberline {5.6.2}Normalization}{5}{subsubsection.5.6.2}%
-\contentsline {subsubsection}{\numberline {5.6.3}Binning}{5}{subsubsection.5.6.3}%
-\contentsline {section}{\numberline {6}Model Selection}{7}{section.6}%
-\contentsline {section}{\numberline {7}Hyperparameter Selection and Hybrid Sampling}{7}{section.7}%
-\contentsline {subsection}{\numberline {7.1}Grid Search}{7}{subsection.7.1}%
-\contentsline {subsection}{\numberline {7.2}Hybrid Sampling}{7}{subsection.7.2}%
+\contentsline {subsubsection}{\numberline {5.6.2}Normalization}{6}{subsubsection.5.6.2}%
+\contentsline {subsubsection}{\numberline {5.6.3}Binning}{6}{subsubsection.5.6.3}%
+\contentsline {section}{\numberline {6}Model Selection}{6}{section.6}%
+\contentsline {section}{\numberline {7}Hyperparameter Selection and Hybrid Sampling}{8}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Grid Search}{8}{subsection.7.1}%
+\contentsline {subsection}{\numberline {7.2}Hybrid Sampling}{8}{subsection.7.2}%
 \contentsline {subsection}{\numberline {7.3}The problem with CDRSB, LDELTOTAL, and mPACCdigit}{8}{subsection.7.3}%
 \contentsline {subsection}{\numberline {7.4}Hyperparameter Optimization}{8}{subsection.7.4}%
 \contentsline {section}{\numberline {8}Classification}{9}{section.8}%
 \contentsline {subsection}{\numberline {8.1}Building Models}{9}{subsection.8.1}%
 \contentsline {subsection}{\numberline {8.2}Explainability}{9}{subsection.8.2}%
 \contentsline {subsection}{\numberline {8.3}Results}{9}{subsection.8.3}%
-\contentsline {subsection}{\numberline {8.4}Final Decision}{16}{subsection.8.4}%
-\contentsline {section}{\numberline {9}Conclusions}{16}{section.9}%
-\contentsline {subsection}{\numberline {9.1}Real World Applications}{16}{subsection.9.1}%
-\contentsline {subsection}{\numberline {9.2}Final Considerations}{16}{subsection.9.2}%
+\contentsline {subsection}{\numberline {8.4}Final Decision}{10}{subsection.8.4}%
+\contentsline {section}{\numberline {9}Conclusions}{17}{section.9}%
+\contentsline {subsection}{\numberline {9.1}Real World Applications}{17}{subsection.9.1}%
+\contentsline {subsection}{\numberline {9.2}Final Considerations}{17}{subsection.9.2}%
 \contentsline {subsection}{\numberline {9.3}Improvements for Future Works}{17}{subsection.9.3}%
