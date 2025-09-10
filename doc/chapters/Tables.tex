@@ -1,0 +1,548 @@
+\newpage
+\section{Score Tables}
+\subsection{Score Tables for Dataset with CDRSB, LDELTOTAL, and mPACCdigit}
+% Bagging
+\begin{table}[H]
+	\centering
+	\caption{Bagging}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.997415 & 0.996561 & 0.997421 & 0.997415 & 0.997413 & 0.997150 & 0.999996 \\
+			CrossVal & 0.926577 & 0.915836 & 0.926875 & 0.926577 & 0.926458 & 0.915541 & 0.984266 \\
+			Test & 0.919421 & 0.904077 & 0.922416 & 0.919421 & 0.919240 & 0.907923 & 0.984449 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Bagging_Sampled
+\begin{table}[H]
+	\centering
+	\caption{Bagging\_Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.988625 & 0.991361 & 0.989056 & 0.988625 & 0.988685 & 0.987597 & 0.999630 \\
+			CrossVal & 0.925715 & 0.914908 & 0.926083 & 0.925715 & 0.925584 & 0.914468 & 0.984754 \\
+			Test & 0.904959 & 0.895301 & 0.906196 & 0.904959 & 0.905261 & 0.892969 & 0.983476 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% CatBoost
+\begin{table}[H]
+	\centering
+	\caption{CatBoost}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.971562 & 0.968535 & 0.971744 & 0.971562 & 0.971595 & 0.968335 & 0.998832 \\
+			CrossVal & 0.927611 & 0.916916 & 0.927960 & 0.927611 & 0.927530 & 0.917021 & 0.987638 \\
+			Test & 0.921488 & 0.908992 & 0.921941 & 0.921488 & 0.921237 & 0.910847 & 0.988699 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% CatBoost_Sampled
+\begin{table}[H]
+	\centering
+	\caption{CatBoost\_Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.981903 & 0.984522 & 0.982583 & 0.981903 & 0.982029 & 0.980248 & 0.999452 \\
+			CrossVal & 0.926232 & 0.916336 & 0.926653 & 0.926232 & 0.926200 & 0.915666 & 0.987231 \\
+			Test & 0.919421 & 0.912752 & 0.920484 & 0.919421 & 0.919728 & 0.910155 & 0.987497 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Decision_Tree
+\begin{table}[H]
+	\centering
+	\caption{Decision Tree}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.914168 & 0.919835 & 0.921975 & 0.914168 & 0.915396 & 0.905423 & 0.991807 \\
+			CrossVal & 0.912444 & 0.903204 & 0.913460 & 0.912444 & 0.912799 & 0.899884 & 0.975940 \\
+			Test & 0.876033 & 0.872226 & 0.881332 & 0.876033 & 0.877111 & 0.861493 & 0.974606 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Decision_Tree_Sampled
+\begin{table}[H]
+	\centering
+	\caption{Decision Tree Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.924509 & 0.925369 & 0.928967 & 0.924509 & 0.925268 & 0.915464 & 0.988937 \\
+			CrossVal & 0.912444 & 0.903204 & 0.913460 & 0.912444 & 0.912799 & 0.899884 & 0.975940 \\
+			Test & 0.898760 & 0.893037 & 0.901509 & 0.898760 & 0.899541 & 0.886243 & 0.980261 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Extra_Trees
+\begin{table}[H]
+	\centering
+	\caption{Extra Trees}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.999483 & 0.999651 & 0.999484 & 0.999483 & 0.999483 & 0.999454 & 1.000000 \\
+			CrossVal & 0.928473 & 0.918757 & 0.928995 & 0.928473 & 0.928506 & 0.918453 & 0.986397 \\
+			Test & 0.923554 & 0.913191 & 0.924021 & 0.923554 & 0.923567 & 0.913565 & 0.988441 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+
+% Extra_Trees_Sampled
+\begin{table}[H]
+	\centering
+	\caption{Extra Trees Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.989659 & 0.991878 & 0.989914 & 0.989659 & 0.989695 & 0.988955 & 0.999753 \\
+			CrossVal & 0.928128 & 0.918743 & 0.928600 & 0.928128 & 0.928168 & 0.918113 & 0.986707 \\
+			Test & 0.923554 & 0.918812 & 0.924969 & 0.923554 & 0.924003 & 0.914303 & 0.986232 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% LightGBM
+\begin{table}[H]
+	\centering
+	\caption{LightGBM}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.957084 & 0.950387 & 0.957466 & 0.957084 & 0.957020 & 0.950970 & 0.996905 \\
+			CrossVal & 0.929852 & 0.919113 & 0.930243 & 0.929852 & 0.929558 & 0.918821 & 0.985663 \\
+			Test & 0.919421 & 0.904757 & 0.920713 & 0.919421 & 0.918885 & 0.907530 & 0.984300 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% LightGBM_Sampled
+\begin{table}[H]
+	\centering
+	\caption{LightGBM Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.957084 & 0.950387 & 0.957466 & 0.957084 & 0.957020 & 0.950970 & 0.996905 \\
+			CrossVal & 0.929852 & 0.919113 & 0.930243 & 0.929852 & 0.929558 & 0.918821 & 0.985663 \\
+			Test & 0.919421 & 0.904757 & 0.920713 & 0.919421 & 0.918885 & 0.907530 & 0.984300 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Multinomial_Logistic_Regression
+\begin{table}[H]
+	\centering
+	\caption{Multinomial Logistic Regression}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.902792 & 0.898629 & 0.905914 & 0.902792 & 0.903361 & 0.890713 & 0.986298 \\
+			CrossVal & 0.887280 & 0.880620 & 0.890513 & 0.887280 & 0.887962 & 0.873217 & 0.979737 \\
+			Test & 0.873967 & 0.871962 & 0.881084 & 0.873967 & 0.874781 & 0.859787 & 0.981506 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Multinomial_Logistic_Regression_Sampled
+\begin{table}[H]
+	\centering
+	\caption{Multinomial Logistic Regression Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.904860 & 0.900513 & 0.907694 & 0.904860 & 0.905354 & 0.893066 & 0.985301 \\
+			CrossVal & 0.887280 & 0.880620 & 0.890513 & 0.887280 & 0.887962 & 0.873217 & 0.979737 \\
+			Test & 0.878099 & 0.873117 & 0.883112 & 0.878099 & 0.878508 & 0.862857 & 0.980601 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Random_Forest
+\begin{table}[H]
+	\centering
+	\caption{Random Forest}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.995863 & 0.996091 & 0.995908 & 0.995863 & 0.995873 & 0.995481 & 0.999956 \\
+			CrossVal & 0.927266 & 0.917165 & 0.927540 & 0.927266 & 0.927076 & 0.915964 & 0.984684 \\
+			Test & 0.929752 & 0.916327 & 0.930994 & 0.929752 & 0.929415 & 0.920545 & 0.983876 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Random_Forest_Sampled
+\begin{table}[H]
+	\centering
+	\caption{Random Forest Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.985005 & 0.987218 & 0.985519 & 0.985005 & 0.985099 & 0.983719 & 0.999542 \\
+			CrossVal & 0.927266 & 0.917880 & 0.927830 & 0.927266 & 0.927173 & 0.916533 & 0.987326 \\
+			Test & 0.925620 & 0.919814 & 0.927101 & 0.925620 & 0.925820 & 0.916918 & 0.986475 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% XGBoost
+\begin{table}[H]
+	\centering
+	\caption{XGBoost}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.982937 & 0.980837 & 0.982935 & 0.982937 & 0.982929 & 0.980841 & 0.999437 \\
+			CrossVal & 0.927266 & 0.916557 & 0.927252 & 0.927266 & 0.927142 & 0.916219 & 0.988286 \\
+			Test & 0.927686 & 0.916805 & 0.928391 & 0.927686 & 0.927514 & 0.918030 & 0.987596 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% XGBoost_Sampled
+\begin{table}[H]
+	\centering
+	\caption{XGBoostSampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.978283 & 0.979044 & 0.978692 & 0.978283 & 0.978361 & 0.975936 & 0.999064 \\
+			CrossVal & 0.929507 & 0.918954 & 0.929586 & 0.929507 & 0.929359 & 0.918756 & 0.987515 \\
+			Test & 0.923554 & 0.915250 & 	0.924380 & 0.923554 & 0.923706 & 0.913798 & 0.986799 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+\subsection{Score Tables for Dataset with CDRSB, LDELTOTAL, and mPACCdigit}
+% Bagging
+\begin{table}[H]
+	\centering
+	\caption{Bagging}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.999483 & 0.999256 & 0.999484 & 0.999483 & 0.999483 & 0.999453 & 1.000000 \\
+			CrossVal & 0.717684 & 0.678476 & 0.707114 & 0.717684 & 0.708061 & 0.684041 & 0.903876 \\
+			Test & 0.723140 & 0.673841 & 0.713842 & 0.723140 & 0.713053 & 0.682405 & 0.903966 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Bagging Sampled
+\begin{table}[H]
+	\centering
+	\caption{Bagging Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.967425 & 0.975775 & 0.969396 & 0.967425 & 0.967625 & 0.967919 & 0.996964 \\
+			CrossVal & 0.717684 & 0.678476 & 0.707114 & 0.717684 & 0.708061 & 0.684041 & 0.903876 \\
+			Test & 0.725207 & 0.705921 & 0.728153 & 0.725207 & 0.725832 & 0.704301 & 0.903807 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% CatBoost
+\begin{table}[H]
+	\centering
+	\caption{CatBoost}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.902792 & 0.885141 & 0.905456 & 0.902792 & 0.901429 & 0.896445 & 0.987299 \\
+			CrossVal & 0.729748 & 0.690407 & 0.718334 & 0.729748 & 0.719773 & 0.694993 & 0.913194 \\
+			Test & 0.723140 & 0.673356 & 0.708919 & 0.723140 & 0.710123 & 0.678616 & 0.909338 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% CatBoost Sampled
+\begin{table}[H]
+	\centering
+	\caption{CatBoost Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.876939 & 0.878812 & 0.880618 & 0.876939 & 0.877144 & 0.870445 & 0.981037 \\
+			CrossVal & 0.729748 & 0.690407 & 0.718334 & 0.729748 & 0.719773 & 0.694993 & 0.913194 \\
+			Test & 0.706612 & 0.692950 & 0.717981 & 0.706612 & 0.710555 & 0.689426 & 0.909166 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Decision Tree
+\begin{table}[H]
+	\centering
+	\caption{Decision Tree}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.685626 & 0.687711 & 0.716206 & 0.685626 & 0.693054 & 0.684704 & 0.878268 \\
+			CrossVal & 0.640469 & 0.652180 & 0.676588 & 0.640469 & 0.647944 & 0.636371 & 0.855546 \\
+			Test & 0.661157 & 0.646413 & 0.690373 & 0.661157 & 0.672628 & 0.654678 & 0.837981 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Decision Tree Sampled
+\begin{table}[H]
+	\centering
+	\caption{Decision Tree Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.678904 & 0.691042 & 0.713599 & 0.678904 & 0.686781 & 0.673408 & 0.877973 \\
+			CrossVal & 0.640469 & 0.652180 & 0.676588 & 0.640469 & 0.647944 & 0.636371 & 0.855546 \\
+			Test & 0.640496 & 0.652118 & 0.688104 & 0.640496 & 0.652207 & 0.635709 & 0.856708 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Extra Trees
+\begin{table}[H]
+	\centering
+	\caption{Extra Trees}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.893485 & 0.900686 & 0.898172 & 0.893485 & 0.893522 & 0.889374 & 0.988008 \\
+			CrossVal & 0.718373 & 0.700349 & 0.715318 & 0.718373 & 0.716078 & 0.697437 & 0.908163 \\
+			Test & 0.737603 & 0.717186 & 0.738250 & 0.737603 & 0.736785 & 0.714046 & 0.909280 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Extra Trees Sampled
+\begin{table}[H]
+	\centering
+	\caption{Extra Trees Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.873837 & 0.877719 & 0.880004 & 0.873837 & 0.874929 & 0.868318 & 0.980602 \\
+			CrossVal & 0.718373 & 0.700349 & 0.715318 & 0.718373 & 0.716078 & 0.697437 & 0.908163 \\
+			Test & 0.719008 & 0.706432 & 0.728482 & 0.719008 & 0.721057 & 0.698828 & 0.906806 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% LightGBM
+\begin{table}[H]
+	\centering
+	\caption{LightGBM}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.902792 & 0.888751 & 0.903597 & 0.902792 & 0.901310 & 0.896959 & 0.985999 \\
+			CrossVal & 0.725095 & 0.689566 & 0.714618 & 0.725095 & 0.717033 & 0.693205 & 0.911768 \\
+			Test & 0.729339 & 0.682113 & 0.712688 & 0.729339 & 0.715176 & 0.682723 & 0.912346 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% LightGBM Sampled
+\begin{table}[H]
+	\centering
+	\caption{LightGBM Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.884695 & 0.889586 & 0.890314 & 0.884695 & 0.885430 & 0.880672 & 0.980711 \\
+			CrossVal & 0.725095 & 0.689566 & 0.714618 & 0.725095 & 0.717033 & 0.693205 & 0.911768 \\
+			Test & 0.725207 & 0.716317 & 0.740019 & 0.725207 & 0.730068 & 0.709832 & 0.908058 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Multinomial Logistic Regression
+\begin{table}[H]
+	\centering
+	\caption{Multinomial Logistic Regression}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.729576 & 0.717929 & 0.732311 & 0.729576 & 0.728927 & 0.712863 & 0.914738 \\
+			CrossVal & 0.712513 & 0.700249 & 0.714320 & 0.712513 & 0.711124 & 0.694472 & 0.904174 \\
+			Test & 0.719008 & 0.699875 & 0.718814 & 0.719008 & 0.717156 & 0.697048 & 0.907081 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Multinomial Logistic Regression Sampled
+\begin{table}[H]
+	\centering
+	\caption{Multinomial Logistic Regression Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.721820 & 0.714158 & 0.725903 & 0.721820 & 0.721479 & 0.706425 & 0.912172 \\
+			CrossVal & 0.712513 & 0.700249 & 0.714320 & 0.712513 & 0.711124 & 0.694472 & 0.904174 \\
+			Test & 0.708678 & 0.695913 & 0.715986 & 0.708678 & 0.709280 & 0.689989 & 0.903669 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Random Forest
+\begin{table}[H]
+	\centering
+	\caption{Random Forest}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.805584 & 0.800827 & 0.808194 & 0.805584 & 0.804154 & 0.793272 & 0.958919 \\
+			CrossVal & 0.709755 & 0.693399 & 0.706201 & 0.709755 & 0.706676 & 0.688057 & 0.903066 \\
+			Test & 0.716942 & 0.697227 & 0.717294 & 0.716942 & 0.715909 & 0.691878 & 0.905293 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% Random Forest Sampled
+\begin{table}[H]
+	\centering
+	\caption{Random Forest Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.789555 & 0.790403 & 0.799468 & 0.789555 & 0.789794 & 0.778418 & 0.952468 \\
+			CrossVal & 0.709755 & 0.693399 & 0.706201 & 0.709755 & 0.706676 & 0.688057 & 0.903066 \\
+			Test & 0.702479 & 0.686877 & 0.711632 & 0.702479 & 0.704450 & 0.680898 & 0.904030 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% XGBoost
+\begin{table}[H]
+	\centering
+	\caption{XGBoost (continuazione)}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.997415 & 0.996849 & 0.997420 & 0.997415 & 0.997414 & 0.997296 & 0.999996 \\
+			CrossVal & 0.728714 & 0.693377 & 0.718238 & 0.728714 & 0.720581 & 0.697064 & 0.911666 \\
+			Test & 0.739669 & 0.699017 & 0.728271 & 0.739669 & 0.729769 & 0.699274 & 0.913230 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}
+
+% XGBoost Sampled
+\begin{table}[H]
+	\centering
+	\caption{XGBoost Sampled}
+	\begin{adjustbox}{max width=\textwidth}
+		\begin{tabular}{lccccccc}
+			\toprule
+			Split & Accuracy & Balanced Acc. & Precision (w) & Recall (w) & F1 (w) & F1 (macro) & ROC AUC (macro) \\
+			\midrule
+			Train & 0.933249 & 0.935989 & 0.935820 & 0.933249 & 0.933765 & 0.929111 & 0.990589 \\
+			CrossVal & 0.728714 & 0.693377 & 0.718238 & 0.728714 & 0.720581 & 0.697064 & 0.911666 \\
+			Test & 0.719008 & 0.701156 & 0.727179 & 0.719008 & 0.720340 & 0.699096 & 0.908604 \\
+			\bottomrule
+		\end{tabular}
+	\end{adjustbox}
+\end{table}

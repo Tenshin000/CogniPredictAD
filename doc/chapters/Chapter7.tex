@@ -5,13 +5,15 @@ To optimize the performance of the classifiers, a \textbf{Grid Search} procedure
 \subsection{Hybrid Sampling}
 The dataset also presented a slight imbalance in diagnostic classes, as already discussed in the "Multiclass Problem" chapter. 
 
-
 To address this problem, a \textbf{Hybrid Sampling strategy} was applied, combining:
+
+\newpage
+
 \begin{enumerate}
 	\item \textbf{RUS}\footnote{Random Under-Sampling} to reduce the number of instances in the majority classes, preventing the dataset from becoming excessively biased toward synthetic examples;
 	\item \textbf{SMOTENC}\footnote{Synthetic Minority Over-sampling Technique for Nominal and Continuous features} to generate new synthetic examples of the minority classes, taking into account the mixed nature of the variables (continuous and categorical).
 \end{enumerate}
-We kept the "old" dataset (the one obtained with Preprocessing) and the "new" one (the resampled one) and tried Hyperparameter Tuning on both. 
+I kept the "old" dataset (the one obtained with Preprocessing) and the "new" one (the resampled one) and tried Hyperparameter Tuning on both. 
 
 \subsection{The problem with CDRSB, LDELTOTAL, and mPACCdigit}
 The cognitive scores \textit{CDRSB}\footnote{Clinical Dementia Rating - Sum of Boxes}, \textit{LDELTOTAL}\footnote{Logical Memory II delayed recall total score} and \textit{mPACCdigit}\footnote{Modified Preclinical Alzheimer’s Cognitive Composite – Digit Symbol test} show exceptionally high predictive power compared to the rest. While this may be advantageous in terms of model accuracy, it also raises the concern of feature dominance: \textbf{a small number of variables may disproportionately drive the predictions, while many others contribute minimally}. This imbalance can lead to a form of local overfitting, where \textbf{models appear highly effective on the ADNI dataset but lose performance when applied to more heterogeneous clinical populations or external data.}
@@ -26,11 +28,26 @@ To address this, the modeling strategy should consider two complementary approac
 	\item building an alternative model that excludes them.
 \end{enumerate}
 
-Hybrid Sampling will be applied to both datasets and then we'll compare whether the standard model or the resampled model performs better on the test set. 
+Hybrid Sampling will be applied to both datasets and then I will compare whether the standard models or the resampled models performs better on the test set. 
 
 \subsection{Hyperparameter Optimization}
-In practice, we'll end up with two models: one that can also use CDRSB, LDELTOTAL, and mPACCdigit, chosen from the standard and resampled models, and one that doesn't use CDRSB, LDELTOTAL, and mPACCdigit, chosen from the standard and resampled models.
+In practice, I will end up with two models: one that can also use CDRSB, LDELTOTAL, and mPACCdigit, chosen from the standard and resampled models, and one that doesn't use CDRSB, LDELTOTAL, and mPACCdigit, chosen from the standard and resampled models.
 
-Therefore, we need to run four Grid Searches.
+\vspace{2mm}
 
-...
+Therefore, I need to run four Grid Searches. For each model, a large set of hyperparameter configurations was defined to explore, often with thousands of possible combinations. Optimization was conducted through five-fold cross-validation, with different metrics depending on the scenario: \textit{F1 Macro} when the most predictive variables were present, \textit{Balanced Accuracy} in the most restrictive experiments, and \textit{F1 Macro}.
+
+\vspace{2mm} 
+
+\textit{F1 Macro}\footnote{$F1_{\text{macro}} = \frac{1}{K} \sum_{k=1}^{K} \frac{2 \cdot \text{Precision}_k \cdot \text{Recall}_k} {\text{Precision}_k + \text{Recall}_k}$} assigns equal weight to each class and simultaneously punishes low precision or low recall. It is therefore suitable when a few strong features can "inflate" the accuracy without ensuring fairness between classes.
+
+\vspace{2mm}
+
+\textit{Balanced Accuracy}\footnote{$BA = \frac{1}{K} \sum_{k=1}^{K} \text{Recall}_k$} is insensitive to prevalence and less dependent on precision. In the absence of dominant features, it directs the optimization to correctly retrieve all classes.
+
+\vspace{2mm}
+
+At the end of the Grid Search, the optimal parameters found for each model were used to instantiate the “final” versions of the classifiers and produce subsequent evaluations. 
+
+\newpage
+

@@ -1,9 +1,37 @@
 \section{Conclusions}
 \subsection{Real World Applications}
-...  
-
-\subsection{Improvements for Future Works}
-...  
+A CogniPredictAD application (in main.py) has been developed with customtkinter that allows you to select one of four previously saved models (Model1.pkl, Model2.pkl, XAIModel1.pkl, and XAIModel2.pkl), manually enter a set of clinical and cognitive measures, obtain a diagnostic prediction (labels 0, 1, 2, or 3 for CN, EMCI, LMCI, and AD, respectively), and display it. The user can confirm or dispute the diagnosis: both actions add a line to the data/NEWADNIMERGE.csv file (creating a folder/file if necessary), while an “Undo Last” command cancels the last saved entry. This application can be used by clinicians to collect data, evaluate prediction models, and ultimately help establish a diagnosis.
 
 \subsection{Final Considerations}
-...
+One of the main limitations of the dataset is that, after filtering for baseline visits with non-zero diagnoses, only 2,419 patients remain, a size that limits the ability to generalize the results to external populations. While these metrics showed very high performance on the test set (for Model 1: Balanced Accuracy = 0.9198, F1 macro = 0.9169, ROC AUC (macro) = 0.9865), these metrics should be interpreted with caution.
+
+\vspace{2mm}
+
+Furthermore, three cognitive scores (CDRSB, LDELTOTAL, and mPACCdigit) provide a very strong diagnostic signal in this dataset: their presence largely explains the high effectiveness of Model 1 (Random Forest), while their removal leads to significantly lower metrics and a different distribution of important features, with XGBoost proving to be the best classifier in the pipeline without these variables. For these reasons, interpretable models (XAIModel1 and XAIModel2) and an alternative pipeline (Model2 and XAIModel2) that exclude the three scores were developed to assess the robustness and clinical plausibility of the predictions.
+
+\vspace{2mm}
+
+Furthermore, many columns have missing values, and the missingness pattern is often not \textit{MCAR}\footnote{Missing Completely At Random}. In fact, CSF and PET values are more often missing in healthy subjects or at certain visits. For example, \textit{ABETA}, \textit{TAU}, and \textit{PTAU} have many missing values and are not so irrelevant in the diagnosis of Alzheimer's disease. This forces us to impute \textit{NULL} values and potentially increase noise in the dataset.
+
+\vspace{2mm}
+
+Despite size limitations, the reliance on a few highly predictive cognitive scores, and the large amount of \textit{NULL} values, the study retains methodological value and potential for application. The models can be useful as support tools (for example, risk stratification, imputation of missing diagnoses, or prioritized screening), not as a substitute for clinical assessment. Their use must be subject to external validation, calibration of the operating thresholds and post-deploy monitoring.
+
+\newpage
+
+\subsection{Improvements for Future Works}
+To improve the study, increasing the size and variability of the data is a priority: integrating future ADNI4\footnote{ADNI4 is the most recent phase of the ADNI study and was initiated in 2022. Previous phases were ADNI1 (2004–2009), ADNIGO (2009–2010), ADNI2 (2011–2016), and ADNI3 (2016–2022).} entries into ADNIMERGE and, if possible, compatible external cohorts would increase statistical power and generalizability.
+
+\vspace{2mm}
+
+In this context, we could also introduce a new feature that identifies patients based on their geographic area of origin. Since ADNI participants are from the United States and Canada, their area would be classified as North America. If, for example, we were able to integrate a European dataset compatible with ADNI for predicting Alzheimer's disease, we could analyze whether geographic area affects the likelihood of developing the disease. This approach could open the way to new and interesting lines of research.
+
+\vspace{2mm}
+
+It is also essential to harmonize the variables (mapping and units for imaging) and enrich the database with complementary modalities (genetics, PET, blood biomarkers) and longitudinal information, thus reducing reliance on a few cognitive scores.
+
+However, CogniPredictAD is already a good support tool for doctors in helping with the diagnosis of Alzheimer's.
+
+\columnbreak
+\vspace*{\fill} % fills the right column with white space
+

@@ -132,16 +132,16 @@ class PageManager:
     """Class to manage customtkinter pages and flows."""
     def __init__(self, root: ctk.CTk):
         self.root = root
-        self.root.title("Medical Classifier")
+        self.root.title("CogniPredictAD: Medical Classifier for Alzheimer")
         self.root.geometry("1000x760")
         # State variables
         self.model_choice = None
         self.model_loader = None
         self.model_descs = {
-            "Model1.pkl": "Description for Model1 (edit later).",
-            "Model2.pkl": "Description for Model2 (edit later).",
-            "XAIModel1.pkl": "Description for XAIModel1 (edit later).",
-            "XAIModel2.pkl": "Description for XAIModel2 (edit later)."
+            "Model1.pkl": "This model is based on a Random Forest, a method that combines many decision trees to make a more reliable prediction. It uses several clinical and cognitive test scores, including CDRSB, LDELTOTAL, and mPACCdigit, to estimate the patient’s cognitive status. The advantage of this model is that it can capture complex patterns in the data, often leading to accurate predictions, although the reasoning behind its decision may not always be straightforward to interpret.",
+            "Model2.pkl": 'This model uses XGBoost, a modern and very powerful method based on gradient boosting. It analyzes multiple clinical and cognitive features but excludes CDRSB, LDELTOTAL, and mPACCdigit from the prediction. XGBoost is designed to be highly efficient and accurate, even with large and complex datasets. However, like the Random Forest, its internal decision process is difficult to interpret directly, making it more of a "black-box" approach.',
+            "XAIModel1.pkl": 'This model uses a Decision Tree, a simpler method where predictions are made by following a clear series of “if-then” rules based on the patient’s test scores. It includes CDRSB, LDELTOTAL, and mPACCdigit in its analysis. Because of its structure, the model is easily explainable: physicians can see exactly which variables and thresholds lead to the final diagnosis. While it may be less accurate than more complex models like Random Forest or XGBoost, it provides valuable transparency for clinical decision-making.',
+            "XAIModel2.pkl": "This model is also based on a Decision Tree, but it makes predictions without using CDRSB, LDELTOTAL, and mPACCdigit. Like XAIModel1, it follows a transparent rule-based structure, making its decisions easy to trace and understand. The absence of those three variables makes it useful in clinical contexts where those specific measures are not available, while still allowing physicians to follow the diagnostic reasoning step by step."
         }
         self.inputs = {}  # param -> widget
         self.last_parsed = None
@@ -152,6 +152,9 @@ class PageManager:
         self.start_frame = None
         self.selection_frame = None
         self.input_frame = None
+
+        # For cancelling an insert
+        self.last_saved_row_index = None
 
         # Build UI
         self.build_start_page()
@@ -203,10 +206,10 @@ class PageManager:
             r = ctk.CTkRadioButton(radios_frame, text=m, variable=self.model_var, value=m)
             r.pack(anchor="w", padx=8, pady=2)
 
-        # Multi-line description (editable)
-        desc_label = ctk.CTkLabel(self.selection_frame, text="Model descriptions (editable):", anchor="w")
+        # Multi-line description
+        desc_label = ctk.CTkLabel(self.selection_frame, text="Model descriptions:", anchor="w")
         desc_label.pack(fill="x", padx=8, pady=(10,0))
-        self.desc_text = ctk.CTkTextbox(self.selection_frame, width=940, height=160)
+        self.desc_text = ctk.CTkTextbox(self.selection_frame, width=960, height=375)
         # populate with combined descriptions
         combined = self.get_combined_descriptions()
         self.desc_text.insert("0.0", combined)
@@ -378,14 +381,18 @@ class PageManager:
         self.prediction_label = ctk.CTkLabel(self.input_frame, text="", font=("Helvetica", 14, "bold"), text_color="red")
         self.prediction_label.pack(pady=(8,6))
 
-        # Confirm / Contest buttons
+        # Confirm / Contest / Undo buttons
         confirm_frame = ctk.CTkFrame(self.input_frame, fg_color="transparent")
         confirm_frame.pack(pady=(6,8))
 
         confirm_btn = ctk.CTkButton(confirm_frame, text="Confirm Diagnosis", command=self.on_confirm)
         confirm_btn.grid(row=0, column=0, padx=8)
+
         contest_btn = ctk.CTkButton(confirm_frame, text="Contest Diagnosis", command=self.on_contest_toggle)
         contest_btn.grid(row=0, column=1, padx=8)
+
+        undo_btn = ctk.CTkButton(confirm_frame, text="Undo Last", command=self.on_undo_last)
+        undo_btn.grid(row=0, column=3, padx=8)
 
         # Contest dropdown (hidden initially)
         self.contest_choice = ctk.CTkComboBox(confirm_frame, values=["CN","EMCI","LMCI","AD"], width=140)
@@ -467,6 +474,11 @@ class PageManager:
             messagebox.showerror("Save error", f"Error saving data:\n{e}")
             return
         messagebox.showinfo("Saved", "Data saved to NEWADNIMERGE.csv (confirmed diagnosis).")
+        try:
+            df = pd.read_csv(NEW_CSV)
+            self.last_saved_row_index = len(df) - 1
+        except Exception:
+            self.last_saved_row_index = None
         self.prediction_label.configure(text="")
         self.status_label.configure(text="Saved confirmed diagnosis.")
         # reset last prediction
@@ -504,6 +516,11 @@ class PageManager:
                     messagebox.showerror("Save error", f"Error saving data:\n{e}")
                     return
             messagebox.showinfo("Saved", "Data saved to NEWADNIMERGE.csv (contested diagnosis recorded).")
+            try:
+                df = pd.read_csv(NEW_CSV)
+                self.last_saved_row_index = len(df) - 1
+            except Exception:
+                self.last_saved_row_index = None
             self.contest_choice.set("")
             self.contest_choice.grid_remove()
             self.prediction_label.configure(text="")
@@ -514,6 +531,34 @@ class PageManager:
         else:
             # show it
             self.contest_choice.grid()
+
+    
+    def on_undo_last(self):
+        """Undo the most recent saved row, without touching older rows."""
+        if self.last_saved_row_index is None:
+            messagebox.showinfo("Undo", "No recent entry to undo.")
+            return
+        if not os.path.exists(NEW_CSV):
+            messagebox.showerror("Undo", "No dataset file found.")
+            return
+
+        try:
+            df = pd.read_csv(NEW_CSV)
+            if df.empty:
+                messagebox.showinfo("Undo", "The dataset is already empty.")
+                return
+            if len(df) - 1 != self.last_saved_row_index:
+                # The file has grown since the last save -> don't undo
+                messagebox.showinfo("Undo", "Cannot undo: another entry was added afterwards.")
+                return
+            # Drop last row
+            df = df.iloc[:-1, :]
+            df.to_csv(NEW_CSV, index=False)
+            self.last_saved_row_index = None
+            self.status_label.configure(text="Last entry undone.")
+            messagebox.showinfo("Undo", "The last entry was undone successfully.")
+        except Exception as e:
+            messagebox.showerror("Undo error", f"Error while undoing:\n{e}")
 
 
     def validate_and_parse_inputs(self):
@@ -592,7 +637,7 @@ class PageManager:
             return False, None
         return True, parsed
 
-    
+
     def append_row_to_csv(self, feature_row_dict, dx_value):
         """
         Append a single row to NEWADNIMERGE.csv.

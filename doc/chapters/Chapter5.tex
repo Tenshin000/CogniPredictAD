@@ -8,9 +8,9 @@ In the second phase, however, we applied the transformations that could introduc
 \subsection{Data Preparation}
 \begin{itemize}
 	\item \textbf{Selection of baseline visits only:} The first clinical-operational choice was to work only on baseline visits (VISCODE == "bl"), because the goal is to predict the diagnosis based on the information collected at the first visit; 
-	\item \textbf{SMC diagnosis management:} Records with \textit{DX\_bl} = SMC were realigned using the DX variable and ultimately classified as "CN", for the reasons stated in the chapter "Multiclass Problem"; 
-	\item \textbf{Consolidating bl columns:} Clean up duplicates and merge "baseline" values into main columns;
-	\item \textbf{Dirty value handling:} Deleting row with RAVLT\_perc\_forgetting = -316.667 and RAVLT\_forgetting = -19;
+	\item \textbf{SMC diagnosis management:} Records with \textit{DX\_bl} = SMC were realigned using the DX variable, but ultimately all have been classified as "CN". We already explained why in the reasons stated in the chapter "Multiclass Problem"; 
+	\item \textbf{Consolidating bl columns:} Clean up duplicates and merge "baseline" values into "main" columns;
+	\item \textbf{Error handling:} Deleted the row with RAVLT\_perc\_forgetting = -316.667 and RAVLT\_forgetting = -19;
 	\item \textbf{Text category cleaning (ethnicity, race, marriage):} String values standardized to improve readability and avoid inconsistencies;
 	\item \textbf{Encoding of categorical variables:} One-hot encoding (PTETHCAT, PTMARRY), binary mapping (PTGENDER: Male=1, Female=0) and ordinal encoding for DX (CN=0, EMCI=1, LMCI=2, AD=3).
 	\item \textbf{Preliminary Feature Reduction:} Removal of columns not relevant to the diagnosis;
@@ -40,12 +40,12 @@ In the second phase, however, we applied the transformations that could introduc
 \subsection{Data Reduction}
 \begin{itemize}
 	\item \textbf{Removal of redundant features:} \textit{ADAS11}, \textit{ADASQ4}, \textit{EcogPtTotal}, \textit{EcogSPTotal}, \textit{mPACCtrailsB}, and \textit{TAU} were removed because they had a high correlation with other features and their informative value was low;
-	\item \textbf{Attribute Subset Selection:} I apply four selection methods to the train: \textit{Pearson correlation} ($|r| \ge 0.6$), \textit{mutual information} (top 25), \textit{SelectKBest f\_classif} ($k=25$), and \textit{Recursive Feature Elimination} (RFE with Random Forest). It combines the results by counting how many times each feature appears and retains those selected at least three times, plus other features deemed useful even though they were counted less frequently.
+	\item \textbf{Attribute Subset Selection:} I apply four selection methods to the train: \textit{Pearson correlation} ($|r| \ge 0.6$), \textit{mutual information} (top 25), \textit{SelectKBest with Kruskal–Wallis H-test} ($k=25$), and \textit{Recursive Feature Elimination} (RFE with Random Forest). It combines the results by counting how many times each feature appears and retains those selected at least three times, plus other features deemed useful even though they were counted less frequently.
 \end{itemize}
 
 \subsection{Some Considerations}
 \subsubsection{Correlation}
-The dataset contains groups of highly correlated variables (e.g., different neuropsychological scores, ECG components, and MRI volumetric measurements). Rather than eliminating them through aggressive reduction, we decided to retain them and rely on models that are intrinsically robust to correlation.
+The dataset contains groups of highly correlated variables (e.g., different neuropsychological scores, ECG components, and MRI volumetric measurements). Rather than eliminating them through aggressive reduction, I decided to retain them and rely on models that are intrinsically robust to correlation.
 This choice was motivated by two main reasons:
 \begin{enumerate}
 	\item \textbf{Clinical interpretability:} Correlated variables can describe different facets of the same function or biomarker. Removing them would impoverish medical interpretation;
@@ -55,7 +55,10 @@ This choice was motivated by two main reasons:
 \subsubsection{Normalization}
 During the data preparation process, no global normalization or standardization was applied to all variables. 
 
-This choice was driven by one reason: we wanted to \textbf{preserve the clinical interpretability}. Maintaining variables in their original units facilitates the medical interpretation of the results and comparability with clinical reference values. Normalization would have made it more difficult to attribute direct clinical significance to the transformed values.
+This choice was driven by one reason: I wanted to \textbf{preserve the clinical interpretability}. Maintaining variables in their original units facilitates the medical interpretation of the results and comparability with clinical reference values. Normalization would have made it more difficult to attribute direct clinical significance to the transformed values.
+
+\subsubsection{Binning}
+Binning was not applied because it would have reduced the useful information and discriminatory power of continuous variables. The models used already capture nonlinearities and thresholds, so prior discretization is unnecessary and could introduce artifacts.
 
 \newpage
 
