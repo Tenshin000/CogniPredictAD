@@ -1,9 +1,22 @@
 # CogniPredictAD
+*Data Mining and Machine Learning, a.y. 2024/2025*
+
+*Univeristy of Pisa,*
+*Department of Information Engineering,*
+*m.sc. Computer Engineering / m.sc. Artificial Intelligence and Data Engineering*
+
+*Project by Francesco Panattoni*
+
 This report introduces CogniPredictAD, a *Data Mining and Machine Learning* project designed to analyze clinical and biological parameters from the ADNI dataset, with the goal of predicting final clinical diagnoses (CN, EMCI, LMCI, AD) based on baseline data.
 The analysis includes a detailed examination of preprocessing techniques: advanced missing data management, normalizations, and feature engineering. We assess the models based on their balanced accuracy and present the results through various evaluations.
 Due to the ambiguity of the high predictivity of three values (CDRSB, LDELTOTAL, mPACCdigit), I build two families of models: with and without these features to reduce the risk of overfitting on ADNI.
 The modeling phase includes Decision Tree, Random Forest, Extra Trees, XGBoost, LightGBM, CatBoost, Multinomial Logistic Regression, and Bagging. Hybrid sampling techniques, Grid Search for hyperparameter optimization, and cross-validation are applied. With the full set, the models achieve very high metrics (e.g., balanced accuracy ≈ 0.926, ROC-AUC ≈ 0.987), while by removing the three dominant features, the LightGBM with hybrid sampling retains the best balanced performance (balanced accuracy ≈ 0.721, ROC-AUC ≈ 0.907). For transparency, two optimized Decision Trees was also selected, and the trees and explanatory rules were saved.
 The conclusions highlight good predictive performance on the ADNIMERGE dataset, but caution against possible sample bias and the need for external validation (by adding additional patients to the dataset or through data integration with similar datasets) before any clinical use.
+
+
+## Data Acquisition
+All data required are available through [ADNI](https://adni.loni.usc.edu/) and the Image and Data Archive provided by the [Laboratory of Neuro Imaging](https://www.loni.usc.edu/) at the University of Southern California. To obtain access to data from ADNI, see this link: http://adni.loni.usc.edu/data-samples/access-data/
+After getting Data access from the Alzheimer's Disease Neuroimaging Initiative (ADNI), place the ADNIMERGE.csv file in the *data* folder.
 
 
 ## Introduction
