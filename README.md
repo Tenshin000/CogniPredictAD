@@ -20,6 +20,27 @@ All data required are available through [ADNI](https://adni.loni.usc.edu/) and t
 After getting Data access from the Alzheimer's Disease Neuroimaging Initiative (ADNI), place the ADNIMERGE.csv file in the *data* folder.
 
 
+## Studies Cited in the Notebooks
+### Notebook 2 (Data Preparation)
+- [Race, Ethnicity, and Alzheimer's](https://aaic.alz.org/downloads2020/2020_Race_and_Ethnicity_Fact_Sheet.pdf)
+
+### Notebook 3 (Data Exploration)
+- [Cerebrospinal fluid and blood biomarkers in Alzheimer’s disease](https://pmc.ncbi.nlm.nih.gov/articles/PMC3782169/)
+- [Tau as a biomarker of neurodegenerative diseases](https://pmc.ncbi.nlm.nih.gov/articles/PMC2993973/)
+- [Marriage and risk of dementia: systematic review and meta-analysis of observational studies](https://pubmed.ncbi.nlm.nih.gov/29183957/)
+- [Marital status and risk of dementia over 18 years: Surprising findings from the National Alzheimer's Coordinating Center](https://pmc.ncbi.nlm.nih.gov/articles/PMC11923573/)
+- [Contributions of the ADNI Biostatistics Core](https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.14159)
+
+### Notebook 4 (Data Preprocessing)
+- [Predicting clinical decline and conversion to Alzheimer’s disease or dementia using novel Elecsys Aβ(1–42), pTau and tTau CSF immunoassays](https://www.nature.com/articles/s41598-019-54204-z)
+- [Tau as a biomarker of neurodegenerative diseases](https://pmc.ncbi.nlm.nih.gov/articles/PMC2993973/)
+
+### Notebook 5 (New Data Exploration)
+- [Apolipoprotein E epsilon4 association with dementia in a population-based study: The Framingham study](https://pubmed.ncbi.nlm.nih.gov/8618665/)
+
+### Notebook 6 (Hyperparameter Tuning)
+- [Risk Score Stratification of Alzheimer’s Disease and Mild Cognitive Impairment using Deep Learning](https://www.medrxiv.org/content/10.1101/2020.11.09.20226746v3.full)
+
 ## Installation
 ### With venv
 ```bash
@@ -370,14 +391,30 @@ The following pages contain the graphs and tables that led to the final evaluati
 | Decision\_Tree1 | 0.6405   | 0.6521            | 0.6881               | 0.6405            | 0.6522              | 0.6357           | 0.8567          |
 | Decision\_Tree0 | 0.6612   | 0.6464            | 0.6904               | 0.6612            | 0.6726              | 0.6547           | 0.8380          |
 
-
-
 ### Final Decision
 For the dataset containing the three highly predictive cognitive scores (CDRSB, LDELTOTAL, mPACCdigit), ***Random_Forest1*** (**the RF trained with the hybrid sampling strategy**) was chosen as the main model, and ***Decision_Tree1*** (**the version with sampling**) was chosen as the reference XAI model. This choice is motivated by very high test metrics (balanced accuracy, F1, ROC-AUC) that show the best sensitive tradeoff between classes.
 **Model1.pkl and XAIModel1.pkl are respectively Random_Forest1 and Decision_Tree1.**
 
 For the dataset where those three cognitive scores were removed, the model that maintained the best performance was ***XGBoost1*** (XGBoost with hybrid sampling), and, again, ***Decision_Tree1*** was chosen as the XAIModel (the version built on the dataset without the three scores). This selection also comes from comparing the metrics on the test set.
 **Model2.pkl and XAIModel2.pkl are respectively XGBoost1 and Decision_Tree1.**
+
+### Comparison with the State of the Art
+The ADNIMERGE.csv file is widely used in the scientific literature, with hundreds of studies explicitly citing it as the source of ADNI tabular data. Despite this, I have not come across many studies that have formulated the problem as a multiclass classification with the four labels CN, EMCI, LMCI, and AD. Most machine learning models proposed in the literature focus on binary tasks, such as CN vs. AD, CN vs. MCI, or MCI vs. AD. However, it is still possible to propose a comparison with the state of the art starting from these experimental settings.
+
+Our results in short:
+
+| Model           | Accuracy | Balanced Accuracy | Precision (weighted) | Recall (weighted) | F1 Score (weighted) | F1 Score (macro) | ROC AUC (macro) |
+| --------------- | -------- | ----------------- | -------------------- | ----------------- | ------------------- | ---------------- | --------------- |
+| Model1          | 0.9256   | 0.9198            | 0.9271               | 0.9256            | 0.9258              | 0.9169           | 0.9865          |
+| Model2          | 0.7355   | 0.7210            | 0.7458               | 0.7355            | 0.7392              | 0.7172           | 0.9071          |
+| XAIModel1       | 0.8988   | 0.8930            | 0.9015               | 0.8988            | 0.8995              | 0.8862           | 0.9803          |
+| XAIModel2       | 0.6405   | 0.6521            | 0.6881               | 0.6405            | 0.6522              | 0.6357           | 0.8567          |
+
+- [Kauppi et al. (medRxiv, 2020)](https://www.medrxiv.org/content/10.1101/2020.11.09.20226746v3): Deep-learning risk-scoring pipeline using selected neurocognitive tests, achieving multiclass *A**U**C* ≈ 0.984.
+- [Alatrany et al. (Scientific Reports, 2024)](https://www.nature.com/articles/s41598-024-51985-w): Multimodal, explainability-oriented approach on NACC. SVM reaches multiclass *F*1 ≈ 90.7%. Note that the data source (NACC vs. ADNI) and feature set are not directly comparable.
+- [Cuingnet et al. (NeuroImage, 2010)](https://adni.loni.usc.edu/adni-publications/Cuingnet_Neuroimage_2010-1.pdf): Historical ADNI benchmark (MRI-based). Multiclass performance typically 70–90% accuracy, lower than binary tasks.
+Model1 is competitive with these works, Model2 favors robustness over dominant features, and XAIModels illustrate the trade-off between interpretability and accuracy. Model1 cannot be claimed superior without identical splits/preprocessing or formal statistical tests.
+
 
 ## Conclusions
 ### Real World Applications
