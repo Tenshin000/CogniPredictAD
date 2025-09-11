@@ -48,6 +48,33 @@ For the dataset where those three cognitive scores were removed, the model that 
 
 \textbf{Model2.pkl and XAIModel2.pkl are respectively XGBoost1 and Decision\_Tree1.} 
 
+\subsection{Comparison with the State of the Art}
+The ADNIMERGE.csv file is widely used in the scientific literature, with hundreds of studies explicitly citing it as the source of ADNI tabular data. Despite this, I have not come across many studies that have formulated the problem as a multiclass classification with the four labels CN, EMCI, LMCI, and AD. Most machine learning models proposed in the literature focus on binary tasks, such as CN vs. AD, CN vs. MCI, or MCI vs. AD. However, it is still possible to propose a comparison with the state of the art starting from these experimental settings.
+
+Our results in short:
+
+\begin{table}[H]
+	\centering
+	\small % oppure \scriptsize o \footnotesize
+	\begin{tabularx}{\textwidth}{l *{7}{>{\centering\arraybackslash}X}}
+		\toprule
+		Model & Balanced Accuracy & F1 Score (weighted) & F1 Score (macro) & ROC AUC (macro) \\
+		\midrule
+		Model1 & 0.9256 & 0.9198 & 0.9271 & 0.9256 & 0.9258 & 0.9169 & 0.9865 \\
+		Model2 & 0.7355 & 0.7210 & 0.7458 & 0.7355 & 0.7392 & 0.7172 & 0.9071 \\
+		XAIModel1 & 0.8988 & 0.8930 & 0.9015 & 0.8988 & 0.8995 & 0.8862 & 0.9803 \\
+		XAIModel2 & 0.6405 & 0.6521 & 0.6881 & 0.6405 & 0.6522 & 0.6357 & 0.8567 \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+\begin{itemize}
+	\item \href{https://www.medrxiv.org/content/10.1101/2020.11.09.20226746v3}{Kauppi et al. (medRxiv, 2020)}: Deep-learning risk-scoring pipeline using selected neurocognitive tests, achieving multiclass $AUC \approx 0.984$.
+	\item \href{https://www.nature.com/articles/s41598-024-51985-w}{Alatrany et al. (Scientific Reports, 2024)}: Multimodal, explainability-oriented approach on NACC. SVM reaches multiclass $F1 \approx 90.7\%$. Note that the data source (NACC vs. ADNI) and feature set are not directly comparable.
+	\item \href{https://adni.loni.usc.edu/adni-publications/Cuingnet_Neuroimage_2010-1.pdf}{Cuingnet et al. (NeuroImage, 2010)}: Historical ADNI benchmark (MRI-based). Multiclass performance typically $70$--$90\%$ accuracy, lower than binary tasks.
+\end{itemize}
+
+Model1 is competitive with these works, Model2 favors robustness over dominant features, and XAIModels illustrate the trade-off between interpretability and accuracy. Model1 cannot be claimed superior without identical splits/preprocessing or formal statistical tests.
 
 \newpage
 

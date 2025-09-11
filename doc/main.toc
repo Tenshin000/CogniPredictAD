@@ -24,6 +24,7 @@
 \contentsline {subsection}{\numberline {8.2}Explainability}{9}{subsection.8.2}%
 \contentsline {subsection}{\numberline {8.3}Results}{9}{subsection.8.3}%
 \contentsline {subsection}{\numberline {8.4}Final Decision}{10}{subsection.8.4}%
+\contentsline {subsection}{\numberline {8.5}Comparison with the State of the Art}{10}{subsection.8.5}%
 \contentsline {section}{\numberline {9}Conclusions}{17}{section.9}%
 \contentsline {subsection}{\numberline {9.1}Real World Applications}{17}{subsection.9.1}%
 \contentsline {subsection}{\numberline {9.2}Final Considerations}{17}{subsection.9.2}%
