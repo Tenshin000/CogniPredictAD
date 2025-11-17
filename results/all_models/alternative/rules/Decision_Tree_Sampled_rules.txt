@@ -1,0 +1,52 @@
+IF ADAS13 <= 19.50
+|   |--- FAQ <= 0.50
+|   |   |--- EcogPtMem <= 2.00
+|   |   |   |--- ADAS13 <= 6.50
+|   |   |   |   |--- THEN class = CN
+|   |   |   |--- ADAS13 >  6.50
+|   |   |   |   |--- THEN class = CN
+|   |   |--- EcogPtMem >  2.00
+|   |   |   |--- WholeBrain/ICV <= 0.65
+|   |   |   |   |--- THEN class = LMCI
+|   |   |   |--- WholeBrain/ICV >  0.65
+|   |   |   |   |--- THEN class = EMCI
+|   |--- FAQ >  0.50
+|   |   |--- WholeBrain/ICV <= 0.66
+|   |   |   |--- EcogPtDivatt <= 2.17
+|   |   |   |   |--- EcogPtVisspat <= 1.15
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |   |   |--- EcogPtVisspat >  1.15
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |   |--- EcogPtDivatt >  2.17
+|   |   |   |   |--- THEN class = EMCI
+|   |   |--- WholeBrain/ICV >  0.66
+|   |   |   |--- MMSE <= 26.50
+|   |   |   |   |--- THEN class = EMCI
+|   |   |   |--- MMSE >  26.50
+|   |   |   |   |--- THEN class = EMCI
+IF ADAS13 >  19.50
+|   |--- MMSE <= 25.50
+|   |   |--- FAQ <= 8.50
+|   |   |   |--- MMSE <= 23.50
+|   |   |   |   |--- THEN class = AD
+|   |   |   |--- MMSE >  23.50
+|   |   |   |   |--- EcogSPMem <= 2.01
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |   |   |--- EcogSPMem >  2.01
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |--- FAQ >  8.50
+|   |   |   |--- THEN class = AD
+|   |--- MMSE >  25.50
+|   |   |--- MMSE <= 26.50
+|   |   |   |--- EcogSPMem <= 2.59
+|   |   |   |   |--- THEN class = LMCI
+|   |   |   |--- EcogSPMem >  2.59
+|   |   |   |   |--- THEN class = AD
+|   |   |--- MMSE >  26.50
+|   |   |   |--- EcogSPPlan <= 1.35
+|   |   |   |   |--- THEN class = EMCI
+|   |   |   |--- EcogSPPlan >  1.35
+|   |   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |   |--- THEN class = EMCI

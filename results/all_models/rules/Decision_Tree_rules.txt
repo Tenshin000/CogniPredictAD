@@ -1,0 +1,49 @@
+IF CDRSB <= 0.25
+|   |--- MOCA <= 23.50
+|   |   |--- THEN class = CN
+|   |--- MOCA >  23.50
+|   |   |--- THEN class = CN
+IF CDRSB >  0.25
+|   |--- LDELTOTAL <= 4.50
+|   |   |--- CDRSB <= 3.25
+|   |   |   |--- MMSE <= 23.50
+|   |   |   |   |--- THEN class = AD
+|   |   |   |--- MMSE >  23.50
+|   |   |   |   |--- mPACCdigit <= -9.90
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |   |   |--- mPACCdigit >  -9.90
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |--- CDRSB >  3.25
+|   |   |   |--- MMSE <= 25.50
+|   |   |   |   |--- FAQ <= 9.50
+|   |   |   |   |   |--- THEN class = AD
+|   |   |   |   |--- FAQ >  9.50
+|   |   |   |   |   |--- THEN class = AD
+|   |   |   |--- MMSE >  25.50
+|   |   |   |   |--- mPACCdigit <= -8.66
+|   |   |   |   |   |--- THEN class = AD
+|   |   |   |   |--- mPACCdigit >  -8.66
+|   |   |   |   |   |--- THEN class = LMCI
+|   |--- LDELTOTAL >  4.50
+|   |   |--- LDELTOTAL <= 8.50
+|   |   |   |--- PTEDUCAT <= 15.50
+|   |   |   |   |--- EcogSPOrgan <= 2.45
+|   |   |   |   |   |--- THEN class = EMCI
+|   |   |   |   |--- EcogSPOrgan >  2.45
+|   |   |   |   |   |--- THEN class = EMCI
+|   |   |   |--- PTEDUCAT >  15.50
+|   |   |   |   |--- MMSE <= 26.50
+|   |   |   |   |   |--- THEN class = AD
+|   |   |   |   |--- MMSE >  26.50
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |--- LDELTOTAL >  8.50
+|   |   |   |--- CDRSB <= 0.75
+|   |   |   |   |--- LDELTOTAL <= 11.50
+|   |   |   |   |   |--- THEN class = EMCI
+|   |   |   |   |--- LDELTOTAL >  11.50
+|   |   |   |   |   |--- THEN class = CN
+|   |   |   |--- CDRSB >  0.75
+|   |   |   |   |--- RAVLT_learning <= 1.50
+|   |   |   |   |   |--- THEN class = EMCI
+|   |   |   |   |--- RAVLT_learning >  1.50
+|   |   |   |   |   |--- THEN class = EMCI

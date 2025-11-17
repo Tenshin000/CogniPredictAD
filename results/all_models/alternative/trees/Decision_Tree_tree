@@ -1,0 +1,29 @@
+digraph Tree {
+node [shape=box, style="filled, rounded", color="black", fontname="helvetica"] ;
+edge [fontname="helvetica"] ;
+0 [label=<MMSE &le; 26.5<br/>gini = 0.75<br/>samples = 1934<br/>value = [483.5, 483.5, 483.5, 483.5]<br/>class = LMCI>, fillcolor="#ffffff"] ;
+1 [label=<FAQ &le; 8.5<br/>gini = 0.528<br/>samples = 604<br/>value = [22.253, 71.949, 173.813, 470.432]<br/>class = AD>, fillcolor="#ea97f1"] ;
+0 -> 1 [labeldistance=2.5, labelangle=45, headlabel="True"] ;
+2 [label=<MMSE &le; 23.5<br/>gini = 0.675<br/>samples = 328<br/>value = [22.253, 64.754, 146.462, 121.964]<br/>class = LMCI>, fillcolor="#eaf5fc"] ;
+1 -> 2 ;
+3 [label=<gini = 0.235<br/>samples = 38<br/>value = [0.0, 4.317, 2.647, 46.462]<br/>class = AD>, fillcolor="#dd55e9"] ;
+2 -> 3 ;
+4 [label=<gini = 0.665<br/>samples = 290<br/>value = [22.253, 60.437, 143.815, 75.502]<br/>class = LMCI>, fillcolor="#c3e1f7"] ;
+2 -> 4 ;
+5 [label=<gini = 0.167<br/>samples = 276<br/>value = [0.0, 7.195, 27.351, 348.468]<br/>class = AD>, fillcolor="#db4ce8"] ;
+1 -> 5 ;
+6 [label=<FAQ &le; 0.5<br/>gini = 0.665<br/>samples = 1330<br/>value = [461.247, 411.551, 309.687, 13.068]<br/>class = CN>, fillcolor="#fdf7f2"] ;
+0 -> 6 [labeldistance=2.5, labelangle=-45, headlabel="False"] ;
+7 [label=<EcogPtMem &le; 2.108<br/>gini = 0.558<br/>samples = 865<br/>value = [418.089, 208.653, 88.23, 0.0]<br/>class = CN>, fillcolor="#f4cbad"] ;
+6 -> 7 ;
+8 [label=<gini = 0.455<br/>samples = 649<br/>value = [353.353, 97.851, 50.291, 0.0]<br/>class = CN>, fillcolor="#efaf82"] ;
+7 -> 8 ;
+9 [label=<gini = 0.607<br/>samples = 216<br/>value = [64.736, 110.802, 37.939, 0.0]<br/>class = EMCI>, fillcolor="#c6f7c2"] ;
+7 -> 9 ;
+10 [label=<WholeBrain/ICV &le; 0.655<br/>gini = 0.601<br/>samples = 465<br/>value = [43.158, 202.897, 221.457, 13.068]<br/>class = LMCI>, fillcolor="#f2f8fd"] ;
+6 -> 10 ;
+11 [label=<gini = 0.356<br/>samples = 146<br/>value = [10.115, 11.512, 104.994, 5.808]<br/>class = LMCI>, fillcolor="#66b3eb"] ;
+10 -> 11 ;
+12 [label=<gini = 0.576<br/>samples = 319<br/>value = [33.043, 191.385, 116.464, 7.26]<br/>class = EMCI>, fillcolor="#c3f7bf"] ;
+10 -> 12 ;
+}

@@ -11,7 +11,6 @@ beautifulsoup4==4.13.4
 bleach==6.2.0
 blinker==1.9.0
 branca==0.8.1
-catboost==1.2.8
 certifi==2025.8.3
 cffi==1.17.1
 charset-normalizer==3.4.2
@@ -78,7 +77,6 @@ jupyterlab_widgets==3.0.15
 kiwisolver==1.4.8
 lark==1.2.2
 lazy_loader==0.4
-lightgbm==4.6.0
 lime==0.2.0.1
 llvmlite==0.44.0
 MarkupSafe==3.0.2
@@ -162,7 +160,6 @@ webencodings==0.5.1
 websocket-client==1.8.0
 Werkzeug==3.0.6
 widgetsnbextension==4.0.14
-xgboost==3.0.4
 xyzservices==2025.4.0
 zipp==3.23.0
 zope.event==5.1.1

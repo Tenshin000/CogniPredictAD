@@ -1,15 +1,47 @@
-\section{Model Selection}
-The following classification algorithms were chosen:
+\section{Data Preprocessing}
+The \textbf{Preprocessing phase} reshaped the learning set into a modelling-ready multiclass table by applying \textbf{structured imputation}, \textbf{biologically informed transformations}, \textbf{feature reduction}, and \textbf{controlled class balancing}. The objective was to obtain a compact, coherent, and statistically stable representation suitable for diagnostic classification.
+
+\subsection{Cleaning and Imputation}
+Missingness was evaluated across modalities. Continuous and discrete gaps were imputed using a \textbf{KNN-based} strategy that preserved local structure and maintained integer semantics where appropriate. This procedure ensured numerical coherence while avoiding distortions in clinically sensitive variables. 
+
+\subsection{Transformations and Normalizations}
+Two families of transformations were central:
+\begin{itemize}
+	\item \textbf{CSF biomarkers} were expressed as the ratios \textbf{TAU/ABETA} and \textbf{PTAU/ABETA}, which were calculated to enhance biological interpretability and provide more diagnostically meaningful measures than the raw values;
+	\item Structural \textbf{MRI measures} were \textbf{normalized} by \textbf{intracranial volume} (\textbf{ICV}), yielding relative regional volumes that are comparable across individuals and less affected by head-size confounds.
+\end{itemize}
+
+Furthermore, \textbf{demographic and categorical predictors} were \textbf{encoded} into low-cardinality representations to enhance interpretability and compatibility with tabular models.
+
+\subsection{Feature Reduction and Selection}
+Redundant or low-information variables were removed through a combination of statistical and conceptual criteria. Highly overlapping cognitive scales were consolidated: \textbf{ADAS11} and \textbf{ADASQ4} were \textbf{discarded} in favour of \textbf{ADAS13}, which subsumes their information almost entirely. \textbf{Global Ecog scores were removed}, while the domain-specific components were retained for their finer discriminative value. When two composite scores were strongly correlated, the version with greater mutual information regarding diagnosis was preferred. Demographic attributes with negligible variability were excluded to avoid noise and spurious effects.
+
+\subsection{Class Balancing}
+To address the residual \textbf{class imbalance}, a \textbf{hybrid sampling pipeline} was implemented. \textbf{Majority classes} were modestly \textbf{under-sampled} with \textbf{Random Undersampler}, while \textbf{minority classes} were synthetically \textbf{oversampled} using \textbf{SMOTENC}, which preserves mixed continuous–categorical structure. All diagnostic groups (\textbf{DX}) were brought to comparable sample sizes, producing a balanced dataset suitable for unbiased model comparison.
+
+\subsection{Some Considerations}
+\subsubsection{Correlation}
+The dataset contains groups of highly correlated variables (e.g., different neuropsychological scores, ECG components, and MRI volumetric measurements). Rather than eliminating them through aggressive reduction, I decided to retain them and rely on models that are intrinsically robust to correlation.
+This choice was motivated by two main reasons:
 \begin{enumerate}
-	\item \textbf{Decision Tree:} This model constructs a series of "if $\to$ then" rules (split on individual features) to separate classes using a binary tree. Each leaf of the tree corresponds to a prediction. It was chosen because it is immediately interpretable (\textit{XAI}\footnote{Explainable Artificial Intelligence});
-	\item \textbf{Random Forest:} Builds many different decision trees on subsamples of the data and averages their predictions. This reduces variance compared to a single tree and improves robustness to noise, outliers, and collinearity;
-	\item \textbf{Extra Trees}\footnote{Extremely Randomized Trees}\textbf{:} Similar to Random Forest but chooses more random splits, increasing diversity among trees and often reducing overfitting on noisy features. It was tested to compare with Random Forest and evaluate whether increased randomness improved generalization across the dataset;
-	\item \textbf{XGBoost:} A boosting algorithm that builds trees sequentially, each improving the errors of the previous one. It is highly efficient, regularized, and capable of capturing nonlinear interactions between variables, while also controlling overfitting;
-	\item \textbf{LightGBM:} A gradient boosting implementation designed to be very fast and scalable. It uses techniques (leaf-wise splitting, binning) that make it particularly efficient on heterogeneous datasets;
-	\item \textbf{CatBoost:} A boosting variant that natively handles categorical variables and has robust default hyperparameters to reduce overfitting. It is suitable for working with clinical data;
-	\item \textbf{Multinomial Logistic Regression:} A linear model that estimates the probabilities of membership in each class using a linear combination of features. It requires feature standardization to function properly, which was ensured with StandardScaler in the pipeline. It was included as a simple and interpretable statistical baseline, useful for comparing whether the gain from complex models is consistent with a linear solution;
-	\item \textbf{Bagging}\footnote{Bootstrap Aggregating}\textbf{:} An ensemble approach that trains several models on different bootstrap samples drawn from the dataset, and then combines their outputs by averaging. The main effect is a reduction in model variance, leading to more stable predictions. It was selected because, in clinical datasets where variability and noise are substantial, bagging provides a straightforward way to assess how much predictive stability can be gained simply by aggregating multiple weak learners.
+	\item \textbf{Clinical interpretability:} Correlated variables can describe different facets of the same function or biomarker. Removing them would impoverish medical interpretation;
+	\item \textbf{Complementary predictive value:} Even correlated measures may contain specific variance useful for distinguishing clinical subgroups.
 \end{enumerate}
+
+\subsubsection{Normalization}
+During the data preparation process, no global normalization or standardization was applied to all variables. 
+
+This choice was driven by one reason: I wanted to \textbf{preserve the clinical interpretability}. Maintaining variables in their original units facilitates the medical interpretation of the results and comparability with clinical reference values. Normalization would have made it more difficult to attribute direct clinical significance to the transformed values.
+
+\subsubsection{Binning}
+Binning was not applied because it would have reduced the useful information and discriminatory power of continuous variables. The models used already capture nonlinearities and thresholds, so prior discretization is unnecessary and could introduce artifacts.
+
+\newcolumn
+
+\subsection{Final Dataset}
+The resulting dataset contains a focused and interpretable feature set spanning demographic characteristics, genetic risk, cognitive performance, functional assessments, CSF ratios, and ICV-normalized MRI measures. Its structure is explicitly tailored for multimodal diagnostic modelling, reducing redundancy while retaining clinically meaningful variability.
+
+The preprocessing decisions emphasise interpretability, biological plausibility, robustness to noise, and balanced class representation. These principles ensure that the subsequent modelling pipeline operates on data that are both statistically reliable and clinically coherent.
 
 \newpage
 
@@ -24,10 +56,10 @@ The following classification algorithms were chosen:
 			\textbf{Attribute} & \textbf{Description} & \textbf{Category} \\
 			\midrule
 			DX                    & Clinical diagnosis at the time of visit: CN, SMC, EMCI, LMCI, AD                   & Diagnosis             \\
-			AGE                   & Participant’s age at time of visit                                                 & Demographics          \\
+			AGE                   & Participant's age at time of visit                                                 & Demographics          \\
 			PTGENDER              & Participant's gender (Male/Female)                                                 & Demographics          \\
 			PTEDUCAT              & Years of formal education completed                                                & Demographics          \\
-			APOE4                 & Number of APOE $\varepsilon$4 alleles (0, 1, or 2), a genetic risk factor for Alzheimer’s      & Demographics          \\
+			APOE4                 & Number of APOE $\varepsilon$4 alleles (0, 1, or 2), a genetic risk factor for Alzheimer's      & Demographics          \\
 			MMSE                  & Mini-Mental State Examination score (0–30, higher = better)                        & Clinical Scores       \\
 			CDRSB                 & Clinical Dementia Rating - Sum of Boxes (0–18, higher = worse)                     & Clinical Scores       \\
 			ADAS13                & ADAS-Cog 13-item total score (higher = worse)                                      & Clinical Scores       \\
@@ -38,7 +70,7 @@ The following classification algorithms were chosen:
 			RAVLT\_immediate       & RAVLT total immediate recall score (sum over 5 trials)                             & Clinical Scores       \\
 			RAVLT\_learning        & Learning score (Trial 5 minus Trial 1 of RAVLT)                                    & Clinical Scores       \\
 			RAVLT\_perc\_forgetting & ~~Percent forgetting from RAVLT (higher = worse)                                     & Clinical Scores       \\
-			mPACCdigit            & Modified Preclinical Alzheimer’s Cognitive Composite – Digit Symbol test           & Composite Scores      \\
+			mPACCdigit            & Modified Preclinical Alzheimer's Cognitive Composite – Digit Symbol test           & Composite Scores      \\
 			EcogPtMem             & Subject self-reported memory complaints (ECog)                                     & ECogPT                \\
 			EcogPtLang            & Subject self-reported language difficulties (ECog)                                 & ECogPT                \\
 			EcogPtVisspat         & Subject self-reported visuospatial difficulties (ECog)                             & ECogPT                \\
@@ -52,6 +84,7 @@ The following classification algorithms were chosen:
 			EcogSPOrgan           & Informant-reported organization issues (ECog)                                      & ECogSP                \\
 			EcogSPDivatt          & Informant-reported divided attention issues (ECog)                                 & ECogSP                \\
 			FDG                   & FDG PET SUVR – brain glucose metabolism                                            & Biomarkers            \\
+			TAU/ABETA            & CSF tau protein/A$\beta$42 ratio                                     & Biomarkers            \\
 			PTAU/ABETA            & CSF phosphorylated tau protein/A$\beta$42 ratio                                     & Biomarkers            \\
 			Hippocampus/ICV       & Volume of hippocampus/Intracranial volume ratio from MRI                           & MRI                   \\
 			Entorhinal/ICV        & Volume of the entorhinal cortex/Intracranial volume ratio from MRI                 & MRI                   \\

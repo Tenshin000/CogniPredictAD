@@ -6,12 +6,16 @@ import numpy as np
 import pandas as pd
 import pickle
 import seaborn as sns
+import itertools
 
+from CogniPredictAD.preprocessing import ADNIPreprocessor
 from IPython.display import display
-from catboost import CatBoostClassifier
-from lightgbm import LGBMClassifier
+from imblearn.over_sampling import SMOTENC
+from imblearn.pipeline import Pipeline
+from imblearn.under_sampling import RandomUnderSampler
+from scipy.stats import wilcoxon
 from sklearn.base import clone
-from sklearn.ensemble import BaggingClassifier, ExtraTreesClassifier, RandomForestClassifier
+from sklearn.ensemble import RandomForestClassifier, ExtraTreesClassifier, AdaBoostClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import (
     accuracy_score, balanced_accuracy_score, classification_report,
@@ -19,271 +23,310 @@ from sklearn.metrics import (
     roc_auc_score, roc_curve
 )
 from sklearn.model_selection import RepeatedStratifiedKFold
-from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import StandardScaler, label_binarize
 from sklearn.tree import DecisionTreeClassifier
-from xgboost import XGBClassifier
 
 
 class ADNIClassifier:
     """
-    ADNIClassifier: helper class to train and evaluate multiple classifier models on an ADNIMERG dataset.
+    ADNIClassifier 
+    Helper to to train and evaluate multiple classifier models on an ADNIMERGE dataset.
+
+    The class can preload classification algorithms with parameters obtained by CV Hyperparameters Tuning. 
+    It runs repeated stratified cross-validation, computes validation metrics and plots confusion matrices, ROC curves and violin plots.
     """
     # ----------------------------#
     #        INITIALIZATION       #
     # ----------------------------# 
-    def __init__(self, classifier: str = "Standard1"):
+    def __init__(self, classifier: str = "standard"):
         """
         Initialize the class and load a predefined set of classifiers 
         based on the provided selection string.
         """
-        if classifier == "Standard1" or classifier == "standard1" or classifier == "STANDARD1" or classifier == "None":
-            self.classifiers = self._default_classifiers_1()
-        elif classifier == "Standard2" or classifier == "standard2" or classifier == "STANDARD2":
-            self.classifiers = self._default_classifiers_2()
-        elif classifier == "Standard3" or classifier == "standard3" or classifier == "STANDARD3":
-            self.classifiers = self._default_classifiers_3()
-        elif classifier == "Standard4" or classifier == "standard4" or classifier == "STANDARD4":
-            self.classifiers = self._default_classifiers_4()
+        classifier = classifier.lower()
+        if classifier == "standard" or classifier == "None":
+            self.classifiers = self._default_classifiers()
+        elif classifier == "alternative":
+            self.classifiers = self._alernative_classifiers()
         else:
-            self.classifiers = self._default_classifiers_1()
+            raise ValueError(f"Unknown classifier preset: {classifier}")
 
     # ----------------------------#
     #   CLASSIFIERS DEFINITIONS   #
     # ----------------------------# 
-    def _default_classifiers_1(self):
+    def _default_classifiers(self):
+        preprocessing = ADNIPreprocessor()
+        categorical_features = [1, 3]  # PTGENDER, APOE4
+        undersample_dict = {"CN": 385, "LMCI": 385}
+        oversample_dict = {"EMCI": 385, "AD": 385}
+        
         return {
-            "Decision Tree": DecisionTreeClassifier(
-                random_state=42, class_weight="balanced",
-                ccp_alpha=0.005, criterion="entropy", max_depth=6,
-                max_features=0.8, min_samples_leaf=4, min_samples_split=2
-            ),
-            "Random Forest": RandomForestClassifier(
-                random_state=42, class_weight="balanced", n_jobs=-1,
-                criterion="entropy", max_depth=None, max_features=1.0,
-                min_samples_leaf=2, n_estimators=100
-            ),
-            "Extra Trees": ExtraTreesClassifier(
-                random_state=42, class_weight="balanced", n_jobs=-1,
-                criterion="entropy", max_depth=None, max_features=1.0,
-                min_samples_leaf=2, n_estimators=75
-            ),
-            "XGBoost": XGBClassifier(
-                random_state=42, use_label_encoder=False, eval_metric="mlogloss", verbosity=0,
-                colsample_bytree=0.7, gamma=0.5, learning_rate=0.1,
-                max_depth=8, n_estimators=100, reg_alpha=1, reg_lambda=1,
-                subsample=1.0
-            ),
-            "LightGBM": LGBMClassifier(
-                random_state=42, verbose=-1,
-                colsample_bytree=1.0, learning_rate=0.01, max_depth=8,
-                min_child_samples=20, n_estimators=100, num_leaves=15,
-                reg_alpha=0, reg_lambda=0, subsample=0.8
-            ),
-            "CatBoost": CatBoostClassifier(
-                random_state=42, verbose=False, loss_function="MultiClass",
-                bagging_temperature=0.5, border_count=128, depth=6,
-                iterations=100, l2_leaf_reg=1, learning_rate=0.1,
-                random_strength=0.5
-            ),
-            "Multinomial Logistic Regression": Pipeline([
-                ("scaler", StandardScaler()),
-                ("logreg", LogisticRegression(
-                    random_state=42, solver="saga", max_iter=2000, class_weight="balanced",
-                    C=1.0, penalty="l1"
+                'Decision Tree': Pipeline([
+                    ('pre', preprocessing), 
+                    ('clf', DecisionTreeClassifier(
+                        random_state=42, class_weight='balanced',
+                        criterion='entropy', max_depth=5,
+                        min_samples_split=2, min_samples_leaf=8,
+                        ccp_alpha=0.005
+                    ))
+                ]),
+                'Random Forest': Pipeline([
+                    ('pre', preprocessing),
+                    ('clf', RandomForestClassifier(
+                        random_state=42, class_weight='balanced', n_jobs=-1,
+                        criterion='entropy', max_depth=6, max_features=1.0,
+                        min_samples_leaf=4, n_estimators=100
+                    ))
+                ]),
+                'Extra Trees': Pipeline([
+                    ('pre', preprocessing),
+                    ('clf', ExtraTreesClassifier(
+                        random_state=42, class_weight='balanced', n_jobs=-1,
+                        criterion='entropy', max_depth=None, max_features=1.0,
+                        min_samples_leaf=4, n_estimators=75
+                    ))
+                ]),
+                'Adaptive Boosting': Pipeline([
+                    ('pre', preprocessing),
+                    ('clf', AdaBoostClassifier(
+                        random_state=42,
+                        estimator=DecisionTreeClassifier(
+                            class_weight='balanced', criterion='gini',
+                            max_depth=4, min_samples_leaf=8
+                        ),
+                        learning_rate=0.1,
+                        n_estimators=50
+                    ))
+                ]),
+                'Multinomial Logistic Regression': Pipeline([
+                    ('pre', preprocessing),
+                    ('scl', StandardScaler()), 
+                    ('clf', LogisticRegression(
+                        random_state=42, solver='saga', max_iter=2000,
+                        class_weight='balanced', penalty='l1', C=0.1
+                    ))
+                ]),
+                'Decision Tree Sampled': Pipeline([
+                    ('pre', preprocessing), 
+                    ('rus', RandomUnderSampler(sampling_strategy=undersample_dict, random_state=42)),
+                    ('smotenc', SMOTENC(categorical_features=categorical_features, sampling_strategy=oversample_dict, random_state=42)),
+                    ('clf', DecisionTreeClassifier(
+                        random_state=42, class_weight='balanced',
+                        criterion='gini', max_depth=5,
+                        min_samples_split=2, min_samples_leaf=8,
+                        ccp_alpha=0.0
+                    ))
+                ]),
+                'Random Forest Sampled': Pipeline([
+                    ('pre', preprocessing),
+                    ('rus', RandomUnderSampler(sampling_strategy=undersample_dict, random_state=42)),
+                    ('smotenc', SMOTENC(categorical_features=categorical_features, sampling_strategy=oversample_dict, random_state=42)),
+                    ('clf', RandomForestClassifier(
+                        random_state=42, class_weight='balanced', n_jobs=-1,
+                        criterion='entropy', max_depth=6, max_features=1.0,
+                        min_samples_leaf=4, n_estimators=50
+                    ))
+                ]),
+                'Extra Trees Sampled': Pipeline([
+                    ('pre', preprocessing),
+                    ('rus', RandomUnderSampler(sampling_strategy=undersample_dict, random_state=42)),
+                    ('smotenc', SMOTENC(categorical_features=categorical_features, sampling_strategy=oversample_dict, random_state=42)),
+                    ('clf', ExtraTreesClassifier(
+                        random_state=42, class_weight='balanced', n_jobs=-1,
+                        criterion='gini', max_depth=None, max_features=1.0,
+                        min_samples_leaf=8, n_estimators=75
+                    ))
+                ]),
+                'Adaptive Boosting Sampled': Pipeline([
+                    ('pre', preprocessing),
+                    ('rus', RandomUnderSampler(sampling_strategy=undersample_dict, random_state=42)),
+                    ('smotenc', SMOTENC(categorical_features=categorical_features, sampling_strategy=oversample_dict, random_state=42)),
+                    ('clf', AdaBoostClassifier(
+                        random_state=42,
+                        estimator=DecisionTreeClassifier(
+                            class_weight='balanced', criterion='gini',
+                            max_depth=4, min_samples_leaf=8
+                        ),
+                        learning_rate=0.1,
+                        n_estimators=50
+                    ))
+                ]),
+                'Multinomial Logistic Regression Sampled': Pipeline([
+                    ('pre', preprocessing),
+                    ('scl', StandardScaler()),
+                    ('rus', RandomUnderSampler(sampling_strategy=undersample_dict, random_state=42)),
+                    ('smotenc', SMOTENC(categorical_features=categorical_features, sampling_strategy=oversample_dict, random_state=42)), 
+                    ('clf', LogisticRegression(
+                        random_state=42, solver='saga', max_iter=2000,
+                        class_weight='balanced', penalty='l1', C=1.0
+                    ))
+                ])
+            }
+    
+    def _alernative_classifiers(self):
+        preprocessing = ADNIPreprocessor()
+        categorical_features = [1, 3]  # PTGENDER, APOE4
+        undersample_dict = {"CN": 385, "LMCI": 385}
+        oversample_dict = {"EMCI": 385, "AD": 385}
+
+        return {
+            'Decision Tree': Pipeline([
+                ('pre', preprocessing),
+                ('clf', DecisionTreeClassifier(
+                    random_state=42, class_weight='balanced',
+                    criterion='gini', max_depth=5,
+                    min_samples_split=2, min_samples_leaf=2,
+                    ccp_alpha=0.01
                 ))
             ]),
-            "Bagging": BaggingClassifier(
-                random_state=42, n_jobs=-1,
-                bootstrap=True, max_features=0.8, max_samples=0.8,
-                n_estimators=50
-            )
-        }
-
-
-    def _default_classifiers_2(self):
-        return {
-            "Decision Tree": DecisionTreeClassifier(
-                random_state=42, class_weight="balanced",
-                ccp_alpha=0.005, criterion="entropy", max_depth=6,
-                max_features=0.8, min_samples_leaf=4, min_samples_split=2
-            ),
-            "Random Forest": RandomForestClassifier(
-                random_state=42, class_weight="balanced", n_jobs=-1,
-                criterion="entropy", max_depth=None, max_features=0.5,
-                min_samples_leaf=2, n_estimators=100
-            ),
-            "Extra Trees": ExtraTreesClassifier(
-                random_state=42, class_weight="balanced", n_jobs=-1,
-                criterion="entropy", max_depth=None, max_features=1.0,
-                min_samples_leaf=2, n_estimators=100
-            ),
-            "XGBoost": XGBClassifier(
-                random_state=42, use_label_encoder=False, eval_metric="mlogloss", verbosity=0,
-                colsample_bytree=0.7, gamma=0.5, learning_rate=0.05,
-                max_depth=6, n_estimators=75, reg_alpha=0, reg_lambda=1,
-                subsample=1.0
-            ),
-            "LightGBM": LGBMClassifier(
-                random_state=42, verbose=-1,
-                colsample_bytree=0.7, learning_rate=0.05, max_depth=8,
-                min_child_samples=20, n_estimators=75, num_leaves=31,
-                reg_alpha=0, reg_lambda=0, subsample=0.8
-            ),
-            "CatBoost": CatBoostClassifier(
-                random_state=42, verbose=False, loss_function="MultiClass",
-                bagging_temperature=0.2, border_count=128, depth=8,
-                iterations=100, l2_leaf_reg=1, learning_rate=0.1,
-                random_strength=0.5
-            ),
-            "Multinomial Logistic Regression": Pipeline([
-                ("scaler", StandardScaler()),
-                ("logreg", LogisticRegression(
-                    random_state=42, solver="saga", max_iter=2000, class_weight="balanced",
-                    C=1.0, penalty="l1"
+            'Random Forest': Pipeline([
+                ('pre', preprocessing),
+                ('clf', RandomForestClassifier(
+                    random_state=42, class_weight='balanced', n_jobs=-1,
+                    criterion='gini', max_depth=6, max_features=0.8,
+                    min_samples_leaf=2, n_estimators=100
                 ))
             ]),
-            "Bagging": BaggingClassifier(
-                random_state=42, n_jobs=-1,
-                bootstrap=True, max_features=0.8, max_samples=1.0,
-                n_estimators=100
-            )
-        }
-
-
-    def _default_classifiers_3(self):
-        return {
-            "Decision Tree": DecisionTreeClassifier(
-                random_state=42, class_weight="balanced",
-                ccp_alpha=0.005, criterion="gini", max_depth=6,
-                max_features=0.8, min_samples_leaf=1, min_samples_split=8
-            ),
-            "Random Forest": RandomForestClassifier(
-                random_state=42, class_weight="balanced", n_jobs=-1,
-                criterion="entropy", max_depth=6, max_features=0.5,
-                min_samples_leaf=8, n_estimators=50
-            ),
-            "Extra Trees": ExtraTreesClassifier(
-                random_state=42, class_weight="balanced", n_jobs=-1,
-                criterion="gini", max_depth=None, max_features=1.0,
-                min_samples_leaf=8, n_estimators=75
-            ),
-            "XGBoost": XGBClassifier(
-                random_state=42, use_label_encoder=False, eval_metric="mlogloss", verbosity=0,
-                colsample_bytree=1.0, gamma=0.1, learning_rate=0.1,
-                max_depth=8, n_estimators=75, reg_alpha=1, reg_lambda=1,
-                subsample=0.8
-            ),
-            "LightGBM": LGBMClassifier(
-                random_state=42, verbose=-1,
-                colsample_bytree=0.7, learning_rate=0.1, max_depth=3,
-                min_child_samples=5, n_estimators=100, num_leaves=31,
-                reg_alpha=1, reg_lambda=1, subsample=0.8
-            ),
-            "CatBoost": CatBoostClassifier(
-                random_state=42, verbose=False, loss_function="MultiClass",
-                bagging_temperature=0.5, border_count=32, depth=6,
-                iterations=100, l2_leaf_reg=1, learning_rate=0.1,
-                random_strength=0.5
-            ),
-            "Multinomial Logistic Regression": Pipeline([
-                ("scaler", StandardScaler()),
-                ("logreg", LogisticRegression(
-                    random_state=42, solver="saga", max_iter=2000, class_weight="balanced",
-                    C=0.1, penalty="l1"
+            'Extra Trees': Pipeline([
+                ('pre', preprocessing),
+                ('clf', ExtraTreesClassifier(
+                    random_state=42, class_weight='balanced', n_jobs=-1,
+                    criterion='gini', max_depth=None, max_features=0.8,
+                    min_samples_leaf=4, n_estimators=100
                 ))
             ]),
-            "Bagging": BaggingClassifier(
-                random_state=42, n_jobs=-1,
-                bootstrap=False, max_features=0.8, max_samples=0.6,
-                n_estimators=100
-            )
-        }
-
-
-    def _default_classifiers_4(self):
-        return {
-            "Decision Tree": DecisionTreeClassifier(
-                random_state=42, class_weight="balanced",
-                ccp_alpha=0.005, criterion="entropy", max_depth=5,
-                max_features=0.8, min_samples_leaf=1, min_samples_split=8
-            ),
-            "Random Forest": RandomForestClassifier(
-                random_state=42, class_weight="balanced", n_jobs=-1,
-                criterion="entropy", max_depth=None, max_features=0.5,
-                min_samples_leaf=2, n_estimators=100
-            ),
-            "Extra Trees": ExtraTreesClassifier(
-                random_state=42, class_weight="balanced", n_jobs=-1,
-                criterion="entropy", max_depth=None, max_features=0.5,
-                min_samples_leaf=2, n_estimators=100
-            ),
-            "XGBoost": XGBClassifier(
-                random_state=42, use_label_encoder=False, eval_metric="mlogloss", verbosity=0,
-                colsample_bytree=1.0, gamma=0, learning_rate=0.1,
-                max_depth=8, n_estimators=100, reg_alpha=1, reg_lambda=1,
-                subsample=0.8
-            ),
-            "LightGBM": LGBMClassifier(
-                random_state=42, verbose=-1,
-                colsample_bytree=1.0, learning_rate=0.1, max_depth=8,
-                min_child_samples=10, n_estimators=75, num_leaves=31,
-                reg_alpha=1, reg_lambda=1, subsample=0.8
-            ),
-            "CatBoost": CatBoostClassifier(
-                random_state=42, verbose=False, loss_function="MultiClass",
-                bagging_temperature=0.2, border_count=32, depth=8,
-                iterations=100, l2_leaf_reg=1, learning_rate=0.1,
-                random_strength=0.5
-            ),
-            "Multinomial Logistic Regression": Pipeline([
-                ("scaler", StandardScaler()),
-                ("logreg", LogisticRegression(
-                    random_state=42, solver="saga", max_iter=2000, class_weight="balanced",
-                    C=1.0, penalty="l1"
+            'Adaptive Boosting': Pipeline([
+                ('pre', preprocessing),
+                ('clf', AdaBoostClassifier(
+                    random_state=42,
+                    estimator=DecisionTreeClassifier(
+                        class_weight='balanced', criterion='gini',
+                        max_depth=6, min_samples_leaf=8
+                    ),
+                    learning_rate=0.05,
+                    n_estimators=100
                 ))
             ]),
-            "Bagging": BaggingClassifier(
-                random_state=42, n_jobs=-1,
-                bootstrap=False, max_features=0.5, max_samples=1.0,
-                n_estimators=100
-            )
+            'Multinomial Logistic Regression': Pipeline([
+                ('pre', preprocessing),
+                ('scl', StandardScaler()),
+                ('clf', LogisticRegression(
+                    random_state=42, solver='saga', max_iter=2000,
+                    class_weight='balanced', penalty='l2', C=1.0
+                ))
+            ]),
+            'Decision Tree Sampled': Pipeline([
+                ('pre', preprocessing),
+                ('rus', RandomUnderSampler(sampling_strategy=undersample_dict, random_state=42)),
+                ('smotenc', SMOTENC(categorical_features=categorical_features, sampling_strategy=oversample_dict, random_state=42)),
+                ('clf', DecisionTreeClassifier(
+                    random_state=42, class_weight='balanced',
+                    criterion='entropy', max_depth=5,
+                    min_samples_split=2, min_samples_leaf=2,
+                    ccp_alpha=0.01
+                ))
+            ]),
+            'Random Forest Sampled': Pipeline([
+                ('pre', preprocessing),
+                ('rus', RandomUnderSampler(sampling_strategy=undersample_dict, random_state=42)),
+                ('smotenc', SMOTENC(categorical_features=categorical_features, sampling_strategy=oversample_dict, random_state=42)),
+                ('clf', RandomForestClassifier(
+                    random_state=42, class_weight='balanced', n_jobs=-1,
+                    criterion='gini', max_depth=6, max_features=0.5,
+                    min_samples_leaf=4, n_estimators=100
+                ))
+            ]),
+            'Extra Trees Sampled': Pipeline([
+                ('pre', preprocessing),
+                ('rus', RandomUnderSampler(sampling_strategy=undersample_dict, random_state=42)),
+                ('smotenc', SMOTENC(categorical_features=categorical_features, sampling_strategy=oversample_dict, random_state=42)),
+                ('clf', ExtraTreesClassifier(
+                    random_state=42, class_weight='balanced', n_jobs=-1,
+                    criterion='gini', max_depth=6, max_features=1.0,
+                    min_samples_leaf=8, n_estimators=100
+                ))
+            ]),
+            'Adaptive Boosting Sampled': Pipeline([
+                ('pre', preprocessing),
+                ('rus', RandomUnderSampler(sampling_strategy=undersample_dict, random_state=42)),
+                ('smotenc', SMOTENC(categorical_features=categorical_features, sampling_strategy=oversample_dict, random_state=42)),
+                ('clf', AdaBoostClassifier(
+                    random_state=42,
+                    estimator=DecisionTreeClassifier(
+                        class_weight='balanced', criterion='gini',
+                        max_depth=6, min_samples_leaf=2
+                    ),
+                    learning_rate=0.05,
+                    n_estimators=50
+                ))
+            ]),
+            'Multinomial Logistic Regression Sampled': Pipeline([
+                ('pre', preprocessing),
+                ('scl', StandardScaler()),
+                ('rus', RandomUnderSampler(sampling_strategy=undersample_dict, random_state=42)),
+                ('smotenc', SMOTENC(categorical_features=categorical_features, sampling_strategy=oversample_dict, random_state=42)),
+                ('clf', LogisticRegression(
+                    random_state=42, solver='saga', max_iter=2000,
+                    class_weight='balanced', penalty='l2', C=1.0
+                ))
+            ])
         }
-
 
     # ----------------------------#
-    #          UTILITY            #
+    #          UTILITIES          #
     # ----------------------------# 
     def _softmax(self, arr):
+        """
+        Compute the softmax function on rows of an array to convert values ​​(score/decision) into normalized probabilities.
+        """
         e = np.exp(arr - np.max(arr, axis=1, keepdims=True))
         return e / np.sum(e, axis=1, keepdims=True)
 
     def _get_probabilities(self, fitted_clf, X, classes):
+        """
+        Gets an array (n_samples, n_classes) of probabilities sorted by classes for a previously trained classifier.
+        
+        Returns calibrated probabilities whenever possible to ensure reliable ROC AUC.
+        """
+        # Try predict_proba first
         if hasattr(fitted_clf, "predict_proba"):
             try:
                 probs = fitted_clf.predict_proba(X)
+
+                # Check if fitted_clf is a Pipeline and last step has classes_ attribute
                 prob_cols = getattr(fitted_clf, "classes_", None)
                 if prob_cols is None and isinstance(fitted_clf, Pipeline):
-                    final = fitted_clf.named_steps[list(fitted_clf.named_steps.keys())[-1]]
-                    prob_cols = getattr(final, "classes_", None)
+                    final_estimator = fitted_clf.named_steps[list(fitted_clf.named_steps.keys())[-1]]
+                    prob_cols = getattr(final_estimator, "classes_", None)
+
+                # Create DataFrame for alignment with expected classes
                 prob_df = pd.DataFrame(probs, columns=prob_cols)
-                prob_df = prob_df.reindex(columns=classes, fill_value=0)
+                # Reindex to include all classes; missing classes get very small probability
+                prob_df = prob_df.reindex(columns=classes, fill_value=1e-6)
+                # Normalize so rows sum to 1
+                prob_df = prob_df.div(prob_df.sum(axis=1), axis=0)
+
                 return prob_df.values
             except Exception:
                 pass
 
+        # Fallback to decision_function if predict_proba not available
         if hasattr(fitted_clf, "decision_function"):
             try:
                 df = fitted_clf.decision_function(X)
                 if df.ndim == 1:
+                    # binary case
                     df = np.vstack([-df, df]).T
                 probs = self._softmax(df)
                 prob_df = pd.DataFrame(probs, columns=classes[:probs.shape[1]])
-                prob_df = prob_df.reindex(columns=classes, fill_value=0)
+                prob_df = prob_df.reindex(columns=classes, fill_value=1e-6)
+                # Normalize to ensure sum to 1
+                prob_df = prob_df.div(prob_df.sum(axis=1), axis=0)
                 return prob_df.values
             except Exception:
                 pass
 
+        # Last resort: hard predictions -> convert to one-hot
         preds = fitted_clf.predict(X)
         one_hot = np.zeros((len(preds), len(classes)))
         class_to_idx = {c: i for i, c in enumerate(classes)}
@@ -293,38 +336,45 @@ class ADNIClassifier:
         return one_hot
 
     def _safe_clone_and_fit(self, clf, X_train, y_train):
+        """
+        clone (sklearn.base.clone) the clf object and train it on the supplied data; returns the fitted clone.
+        """
         cloned = clone(clf)
         cloned.fit(X_train, y_train)
         return cloned
 
     def _ensure_dir(self, path):
+        """Ensure Directory"""
         os.makedirs(path, exist_ok=True)
 
     def _clean_name(self, name):
+        """Clean Name"""
         return name.replace(" ", "_").replace("/", "_")
     
     def _unique_model_path(self, base_dir, clf_name):
+        """
+        Return a deterministic file path under base_dir for saving a model.
+        Uses _clean_name and the fixed extension '.pkl'. If the file exists it will
+        be overwritten when opened with "wb" (pickle) or by joblib.dump.
+        """
+        self._ensure_dir(base_dir)
         clean_name = self._clean_name(clf_name)
-        i = 0
-        while True:
-            candidate = os.path.join(base_dir, f"{clean_name}{i}.pkl")
-            if not os.path.exists(candidate):
-                return candidate
-            i += 1
-
+        return os.path.join(base_dir, f"{clean_name}.pkl")
+    
     # ----------------------------#
     #     CORE EVALUATION (CV)    #
     # ----------------------------# 
-    def _run_repeated_cv(self, clf, X, y, cv_splitter):
+    def _run_repeated_cv(self, clf, X, y, cv_splitter, classes):
         """
-        Run repeated stratified CV for a single classifier. 
+        Run repeated stratified Cross Validation for a single classifier. 
         Return: true_all (np.array), pred_all (np.array), prob_all (np.ndarray), fold_accuracies (list)
+
+        NOTE: 'classes' must be provided to guarantee consistent ordering of probability columns.
         """
         true_all = []
         pred_all = []
         prob_all_list = []
         fold_accuracies = []
-        classes = np.unique(y)
 
         for train_idx, val_idx in cv_splitter.split(X, y):
             X_tr, X_val = X.iloc[train_idx], X.iloc[val_idx]
@@ -333,7 +383,7 @@ class ADNIClassifier:
             # Clone and Fit on fold
             fitted = self._safe_clone_and_fit(clf, X_tr, y_tr)
 
-            # Predict and Probabilities
+            # Predict and Probabilities (use the external 'classes' to align probabilities)
             y_pred = fitted.predict(X_val)
             prob_arr = self._get_probabilities(fitted, X_val, classes)
 
@@ -349,7 +399,7 @@ class ADNIClassifier:
         return np.array(true_all), np.array(pred_all), prob_all, fold_accuracies
 
     # ----------------------------#
-    #          PLOTTING           #
+    #      PLOTTING HELPERS       #
     # ----------------------------# 
     def _plot_roc_per_class(self, roc_dict, classes):
         """
@@ -422,9 +472,11 @@ class ADNIClassifier:
         if n_classifiers == 0:
             return
 
-        n_cols = 4
+        n_cols = 3
         n_rows = n_classifiers // n_cols + int(n_classifiers % n_cols > 0)
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(20, 5 * n_rows))
+        # make n_classes dynamic by inspecting first matrix if available
+        first_cm = next(iter(confusion_dict.values()))
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(16, 16))
         axes = axes.flatten()
 
         for idx, (clf_name, cm) in enumerate(confusion_dict.items()):
@@ -441,7 +493,7 @@ class ADNIClassifier:
                 fmt = ".2f"
                 annot = cm_arr
 
-            sns.heatmap(cm_arr, annot=annot, fmt=fmt, cmap="Blues", cbar=False, ax=ax)
+            sns.heatmap(cm_arr, annot=annot, fmt=fmt, cmap="Blues", cbar=False, ax=ax, square=True)
             ax.set_title(f"{clf_name} {title_prefix}")
             ax.set_xlabel("Predicted")
             ax.set_ylabel("True")
@@ -475,81 +527,114 @@ class ADNIClassifier:
         plt.show()
 
     # ----------------------------#
-    #        PUBLIC METHODS       #
-    # ----------------------------# 
+    #   WILCOXON PAIRWISE TEST    #
+    # ----------------------------#
+    def _wilcoxon_pairwise(self, scores_per_model):
+        """
+        Perform pairwise Wilcoxon signed-rank tests between models and print results
+        in a readable table.
+
+        Input:
+            scores_per_model : dict
+                Dictionary mapping model_name -> list of per-fold F1 macro scores
+
+        Output:
+            dict : mapping "ModelA vs ModelB" -> {statistic, p_value, significance, winner}
+        """
+        model_names = list(scores_per_model.keys())
+        results = []
+
+        # Loop over all unique model pairs
+        for i in range(len(model_names)):
+            for j in range(i+1, len(model_names)):
+                model_a = model_names[i]
+                model_b = model_names[j]
+                try:
+                    stat, p = wilcoxon(scores_per_model[model_a], scores_per_model[model_b])
+                except Exception:
+                    # If test fails (e.g., zero differences), return NaN
+                    stat, p = np.nan, np.nan
+                results.append({
+                    "Model A": model_a,
+                    "Model B": model_b,
+                    "Statistic": stat,
+                    "P-value": p
+                })
+
+        # Convert results list to DataFrame
+        df_results = pd.DataFrame(results)
+        # Sort by p-value for easier interpretation
+        df_results = df_results.sort_values("P-value").reset_index(drop=True)
+        return df_results
+
+    # ----------------------------#
+    #         PUBLIC API          #
+    # ----------------------------#
     def fit_evaluate_store_models(self, X_train: pd.DataFrame, y_train: pd.Series,
                                   output_dir: str = "../results/all_models",
                                   cv_splits: int = 5, cv_repeats: int = 3):
         """
         Train, evaluate, and store multiple classifiers using Repeated Stratified CV.  
-        Generates metrics, per-class reports, confusion matrices, ROC curves, and saves trained models.
-
-        Parameters
-        ----------
-        X_train : pd.DataFrame
-            Training feature matrix.
-        y_train : pd.Series
-            Training labels.
-        output_dir : str, default="../results/all_models"
-            Directory to save trained models.
-        cv_splits : int, default=5
-            Number of folds in cross-validation.
-        cv_repeats : int, default=3
-            Number of times cross-validation is repeated.
-
-        Returns
-        -------
-        dict
-            {
-                "results_df": pd.DataFrame  # Global metrics per model
-                "per_class_df": pd.DataFrame  # Metrics per class
-            }
+        Generates metrics, per-class reports, confusion matrices, ROC curves, violin plots, and Wilcoxon tests on F1 macro.
         """
         # Ensure output directory exists
         self._ensure_dir(output_dir)
 
-        # CV Splitter
+        # Initialize repeated stratified K-Fold CV
         cv_splitter = RepeatedStratifiedKFold(n_splits=cv_splits, n_repeats=cv_repeats, random_state=42)
-        classes = np.unique(y_train)
 
+        # Determine the set of classes present in y_train
+        classes = [c for c in ["CN", "EMCI", "LMCI", "AD"] if c in y_train.values]
+
+        # Initialize storage containers
         metrics_list = []
         per_class_metrics_list = []
         confusion_dict = {}
         confusion_norm_dict = {}
         roc_dict = {}
-        saved_model_paths = {}
         accuracies_per_model = {}
+        f1_macro_per_model = {}  # store per-fold F1 macro for Wilcoxon
 
         for clf_name, clf in self.classifiers.items():
             print(f"Training & Evaluating: {clf_name}")
 
-            # Repeated CV
-            true_all, pred_all, prob_all, fold_accuracies = self._run_repeated_cv(clf, X_train, y_train, cv_splitter)
-
-            # Store fold accuracies
+            # --- Repeated CV evaluation ---
+            true_all, pred_all, prob_all, fold_accuracies = self._run_repeated_cv(
+                clf, X_train, y_train, cv_splitter, classes
+            )
             accuracies_per_model[clf_name] = fold_accuracies
+
+            # Compute per-fold F1 macro scores
+            fold_f1_macro = []
+            for i, (train_idx, val_idx) in enumerate(cv_splitter.split(X_train, y_train)):
+                y_val = y_train.iloc[val_idx]
+                y_pred = pred_all[val_idx] if isinstance(pred_all, np.ndarray) else np.array(pred_all)[val_idx]
+                fold_f1_macro.append(f1_score(y_val, y_pred, average="macro"))
+            f1_macro_per_model[clf_name] = fold_f1_macro
 
             # Compute global metrics
             roc_auc_macro = np.nan
             try:
-                roc_auc_macro = roc_auc_score(label_binarize(true_all, classes=classes), prob_all,
-                                              average="macro", multi_class="ovr")
+                roc_auc_macro = roc_auc_score(
+                    label_binarize(true_all, classes=classes), prob_all,
+                    average="macro", multi_class="ovr"
+                )
             except Exception:
-                roc_auc_macro = np.nan
+                pass
 
             clf_metrics = {
                 "Model": clf_name,
+                "F1 Score (macro)": f1_score(true_all, pred_all, average="macro"),
                 "Accuracy": accuracy_score(true_all, pred_all),
                 "Balanced Accuracy": balanced_accuracy_score(true_all, pred_all),
                 "Precision (weighted)": precision_score(true_all, pred_all, average="weighted", zero_division=0),
                 "Recall (weighted)": recall_score(true_all, pred_all, average="weighted"),
                 "F1 Score (weighted)": f1_score(true_all, pred_all, average="weighted"),
-                "F1 Score (macro)": f1_score(true_all, pred_all, average="macro"),
                 "ROC AUC (macro)": roc_auc_macro
             }
             metrics_list.append(clf_metrics)
 
-            # Per-class metrics using classification_report
+            # --- Per-class metrics ---
             class_report = classification_report(true_all, pred_all, labels=classes, output_dict=True, zero_division=0)
             for cls in classes:
                 rep = class_report.get(str(cls), {})
@@ -562,7 +647,7 @@ class ADNIClassifier:
                     "Support": rep.get("support", 0)
                 })
 
-            # Confusion matrix counts and normalized
+            # --- Confusion matrices ---
             cm = confusion_matrix(true_all, pred_all, labels=classes)
             confusion_dict[clf_name] = cm
             row_sums = cm.sum(axis=1, keepdims=True)
@@ -571,7 +656,7 @@ class ADNIClassifier:
                 cm_norm = np.nan_to_num(cm_norm)
             confusion_norm_dict[clf_name] = cm_norm
 
-            # ROC One-vs-Rest per class
+            # --- ROC One-vs-Rest per class ---
             y_true_bin = label_binarize(true_all, classes=classes)
             fpr_dict, tpr_dict, auc_dict = {}, {}, {}
             for i, cls in enumerate(classes):
@@ -590,312 +675,63 @@ class ADNIClassifier:
                 auc_dict[cls] = auc_val
             roc_dict[clf_name] = (fpr_dict, tpr_dict, auc_dict)
 
-            # Refit classifier on entire training set and save
-            fitted_full = self._safe_clone_and_fit(clf, X_train, y_train)
+            final_clf = clone(clf)
+
+            sample_dimension = max(len(X_train) // len(y_train.unique()), 500)
+
+            # If the pipeline contains undersampling or oversampling, update sampling_strategy to sample_dimension
+            if 'rus' in final_clf.named_steps:
+                rus = final_clf.named_steps['rus']
+                # Replace all original counts (e.g., 385) with sample_dimension
+                new_strategy = {k: sample_dimension for k in rus.sampling_strategy}
+                final_clf.named_steps['rus'].sampling_strategy = new_strategy
+
+            if 'smotenc' in final_clf.named_steps:
+                sm = final_clf.named_steps['smotenc']
+                # Replace all original counts (e.g., 385) with sample_dimension
+                new_strategy = {k: sample_dimension for k in sm.sampling_strategy}
+                final_clf.named_steps['smotenc'].sampling_strategy = new_strategy
+
+            # Fit the modified pipeline on the full training set
+            fitted_full = self._safe_clone_and_fit(final_clf, X_train, y_train)
+
+            # --- Extract only the scaler (if any) and the classifier ---
+            steps_to_save = []
+            if isinstance(fitted_full, Pipeline):
+                for name, step in fitted_full.named_steps.items():
+                    if isinstance(step, StandardScaler) or name == 'clf':
+                        steps_to_save.append((name, step))
+                pipeline_to_save = Pipeline(steps_to_save)
+            else:
+                pipeline_to_save = fitted_full
+
+            # Save the fitted model
             model_path = self._unique_model_path(output_dir, clf_name)
-            # Save as .pkl using pickle
             try:
                 with open(model_path, "wb") as _f:
-                    pickle.dump(fitted_full, _f, protocol=pickle.HIGHEST_PROTOCOL)
+                    pickle.dump(pipeline_to_save, _f, protocol=pickle.HIGHEST_PROTOCOL)
             except Exception:
-                # Fallback to joblib
-                joblib.dump(fitted_full, model_path)
-            saved_model_paths[clf_name] = model_path
-
-        # Assemble result DataFrames
-        results_df = pd.DataFrame(metrics_list).sort_values("ROC AUC (macro)", ascending=False)
+                joblib.dump(pipeline_to_save, model_path)
+                
+        # --- Assemble results DataFrames ---
+        results_df = pd.DataFrame(metrics_list).sort_values("F1 Score (macro)", ascending=False)
         per_class_df = pd.DataFrame(per_class_metrics_list)
 
-        # CHANGE WITH "PRINT" IF YOU WANT TO USE OUTSIDE OF IPYTHON
         display(results_df)
         display(per_class_df)
 
+        # --- Plots ---
         self._plot_roc_per_class(roc_dict, classes)
         self._plot_confusion_matrices(confusion_dict, title_prefix="Confusion Matrix")
         self._plot_confusion_matrices(confusion_norm_dict, title_prefix="Normalized Confusion Matrix")
         self._plot_violin(accuracies_per_model)
 
+        # --- Wilcoxon pairwise test ---
+        wilcoxon_results_df = self._wilcoxon_pairwise(f1_macro_per_model)
+        display(wilcoxon_results_df)
+
         return {
             "results_df": results_df,
-            "per_class_df": per_class_df
-        }
-    
-
-    def evaluate_models_from_dir(self, models_dir: str,
-                                X_train: pd.DataFrame, y_train: pd.Series,
-                                X_test: pd.DataFrame, y_test: pd.Series,
-                                cv_splits: int = 5, cv_repeats: int = 3,
-                                display_individual_tables: bool = True):
-        """
-        Load pre-trained .joblib models from `models_dir` and evaluate each model on:
-        - Training set
-        - Repeated stratified Cross-Validation (using the model's hyperparameters)
-        - Testing set
-
-        For each model this function prints (via `display`) a small table with the same
-
-        Parameters
-        ----------
-        models_dir : str
-            Directory containing .joblib model files (assumed to be pre-trained).
-        X_train, y_train : training data (pandas DataFrame/Series)
-        X_test, y_test : testing data (pandas DataFrame/Series)
-        cv_splits, cv_repeats : ints for RepeatedStratifiedKFold
-        display_individual_tables : if True, calls `display` for each per-model table
-
-        Returns
-        -------
-        dict with keys:
-        - per_model_tables: dict mapping model_name -> DataFrame (Train/CV/Test metrics)
-        - per_class_test: dict mapping model_name -> DataFrame (per-class metrics on test)
-        - bar_plot_data: DataFrame summarizing balanced accuracies for plotting
-        - confusion_matrices: dict mapping model_name -> raw confusion array (test)
-        - confusion_matrices_norm: dict mapping model_name -> normalized confusion array (test)
-        - test_comparison: DataFrame summarizing scores on test set
-        """
-        # Collect pkl files
-        all_files = [f for f in os.listdir(models_dir) if f.lower().endswith('.pkl')]
-        all_files = sorted(all_files)
-        if len(all_files) == 0:
-            raise ValueError(f"No .pkl files found in {models_dir}")
-
-        cv_splitter = RepeatedStratifiedKFold(n_splits=cv_splits, n_repeats=cv_repeats, random_state=42)
-        classes = np.unique(np.concatenate([y_train, y_test]))
-
-        per_model_tables = {}
-        per_class_test = {}
-
-        # For bar plot
-        bar_rows = []
-
-        # Store confusion matrices per model (raw and normalized)
-        confusion_dict = {}
-        confusion_norm_dict = {}
-
-        for fname in all_files:
-            model_path = os.path.join(models_dir, fname)
-            try:
-                with open(model_path, "rb") as _f:
-                    loaded = pickle.load(_f)
-            except Exception as e:
-                # Try joblib.load as a fallback for backward compatibility
-                try:
-                    loaded = joblib.load(model_path)
-                except Exception:
-                    print(f"Skipping {fname}: failed to load ({e})")
-                    continue
-
-            model_name = os.path.splitext(fname)[0]
-            print(f"Evaluating model: {model_name}")
-
-            # TRAIN EVALUATION
-            try:
-                y_train_pred = loaded.predict(X_train)
-            except Exception as e:
-                print(f"Warning: model {model_name} couldn't predict on X_train directly: {e} -- will clone+fit on full train for train/test predictions")
-                fitted_full = self._safe_clone_and_fit(loaded, X_train, y_train)
-                y_train_pred = fitted_full.predict(X_train)
-                loaded = fitted_full  # use this fitted version for test preds as well
-
-            prob_train = self._get_probabilities(loaded, X_train, classes)
-            roc_auc_train = np.nan
-            try:
-                roc_auc_train = roc_auc_score(label_binarize(y_train, classes=classes), prob_train,
-                                            average="macro", multi_class="ovr")
-            except Exception:
-                roc_auc_train = np.nan
-
-            train_metrics = {
-                "Split": "Train",
-                "Accuracy": accuracy_score(y_train, y_train_pred),
-                "Balanced Accuracy": balanced_accuracy_score(y_train, y_train_pred),
-                "Precision (weighted)": precision_score(y_train, y_train_pred, average="weighted", zero_division=0),
-                "Recall (weighted)": recall_score(y_train, y_train_pred, average="weighted"),
-                "F1 Score (weighted)": f1_score(y_train, y_train_pred, average="weighted"),
-                "F1 Score (macro)": f1_score(y_train, y_train_pred, average="macro"),
-                "ROC AUC (macro)": roc_auc_train
-            }
-
-            # CROSS-VALIDATION EVALUATION (clone model and run repeated CV)
-            true_cv, pred_cv, prob_cv, fold_accuracies = self._run_repeated_cv(loaded, X_train, y_train, cv_splitter)
-            roc_auc_cv = np.nan
-            try:
-                roc_auc_cv = roc_auc_score(label_binarize(true_cv, classes=classes), prob_cv,
-                                        average="macro", multi_class="ovr")
-            except Exception:
-                roc_auc_cv = np.nan
-
-            cv_metrics = {
-                "Split": "CrossVal",
-                "Accuracy": accuracy_score(true_cv, pred_cv),
-                "Balanced Accuracy": balanced_accuracy_score(true_cv, pred_cv),
-                "Precision (weighted)": precision_score(true_cv, pred_cv, average="weighted", zero_division=0),
-                "Recall (weighted)": recall_score(true_cv, pred_cv, average="weighted"),
-                "F1 Score (weighted)": f1_score(true_cv, pred_cv, average="weighted"),
-                "F1 Score (macro)": f1_score(true_cv, pred_cv, average="macro"),
-                "ROC AUC (macro)": roc_auc_cv
-            }
-
-            # TEST EVALUATION
-            try:
-                y_test_pred = loaded.predict(X_test)
-            except Exception as e:
-                print(f"Warning: model {model_name} couldn't predict on X_test directly: {e} -- will clone+fit on full train and retry")
-                fitted_full = self._safe_clone_and_fit(loaded, X_train, y_train)
-                y_test_pred = fitted_full.predict(X_test)
-                prob_test = self._get_probabilities(fitted_full, X_test, classes)
-                # Ensure loaded points to a fitted estimator for consistency below
-                loaded = fitted_full
-            else:
-                prob_test = self._get_probabilities(loaded, X_test, classes)
-
-            roc_auc_test = np.nan
-            try:
-                roc_auc_test = roc_auc_score(label_binarize(y_test, classes=classes), prob_test,
-                                            average="macro", multi_class="ovr")
-            except Exception:
-                roc_auc_test = np.nan
-
-            test_metrics = {
-                "Split": "Test",
-                "Accuracy": accuracy_score(y_test, y_test_pred),
-                "Balanced Accuracy": balanced_accuracy_score(y_test, y_test_pred),
-                "Precision (weighted)": precision_score(y_test, y_test_pred, average="weighted", zero_division=0),
-                "Recall (weighted)": recall_score(y_test, y_test_pred, average="weighted"),
-                "F1 Score (weighted)": f1_score(y_test, y_test_pred, average="weighted"),
-                "F1 Score (macro)": f1_score(y_test, y_test_pred, average="macro"),
-                "ROC AUC (macro)": roc_auc_test
-            }
-
-            # Assemble per-model table
-            model_table = pd.DataFrame([train_metrics, cv_metrics, test_metrics])
-            model_table = model_table.set_index('Split')
-            per_model_tables[model_name] = model_table
-
-            if display_individual_tables:
-                display(model_table)
-
-            # Per-class metrics ONLY for test set (same style as fit_evaluate_store_models)
-            class_report = classification_report(y_test, y_test_pred, labels=classes, output_dict=True, zero_division=0)
-            per_class_rows = []
-            for cls in classes:
-                rep = class_report.get(str(cls), class_report.get(cls, {}))
-                per_class_rows.append({
-                    "Model": model_name,
-                    "Class": cls,
-                    "Precision": rep.get("precision", 0.0),
-                    "Recall": rep.get("recall", 0.0),
-                    "F1 Score": rep.get("f1-score", 0.0),
-                    "Support": rep.get("support", 0)
-                })
-            per_class_df = pd.DataFrame(per_class_rows)
-            per_class_test[model_name] = per_class_df
-            if display_individual_tables:
-                display(per_class_df)
-
-            # CONFUSION MATRICES (TEST SET)
-            cm = confusion_matrix(y_test, y_test_pred, labels=classes)
-            confusion_dict[model_name] = cm
-
-            # Normalized per-row (true) -> percentages
-            row_sums = cm.sum(axis=1, keepdims=True)
-            with np.errstate(divide="ignore", invalid="ignore"):
-                cm_norm = np.divide(cm.astype(float), row_sums, where=row_sums != 0)
-                cm_norm = np.nan_to_num(cm_norm)
-            confusion_norm_dict[model_name] = cm_norm
-
-            # Collect bar plot rows
-            bar_rows.append({"Model": model_name, "Split": "Train", "Balanced Accuracy": model_table.loc['Train', 'Balanced Accuracy']})
-            bar_rows.append({"Model": model_name, "Split": "CrossVal", "Balanced Accuracy": model_table.loc['CrossVal', 'Balanced Accuracy']})
-            bar_rows.append({"Model": model_name, "Split": "Test", "Balanced Accuracy": model_table.loc['Test', 'Balanced Accuracy']})
-
-        # Create bar plot dataframe
-        bar_df = pd.DataFrame(bar_rows)
-        if not bar_df.empty:
-            models = bar_df['Model'].unique()
-            splits = ['Train', 'CrossVal', 'Test']
-
-            y = np.arange(len(models))  # label locations (asse y)
-            height = 0.2  # spessore barre
-
-            fig, ax = plt.subplots(figsize=(8, max(6, len(models) * 0.5)))  # altezza aumentata per leggibilità
-
-            for i, split in enumerate(splits):
-                vals = [bar_df[(bar_df['Model'] == m) & (bar_df['Split'] == split)]['Balanced Accuracy'].values
-                        for m in models]
-                vals = [v[0] if len(v) > 0 else 0.0 for v in vals]
-                ax.barh(y + (i - 1) * height, vals, height, label=split)
-
-            ax.set_xlabel('Balanced Accuracy')
-            ax.set_yticks(y)
-            ax.set_yticklabels(models)
-            ax.set_title('Balanced Accuracy by Model and Split')
-            ax.legend()
-            ax.set_xlim(0, 1)  # range Balanced Accuracy
-            plt.tight_layout()
-            plt.show()
-        
-        # Print confusion matrices (raw) as tables for each model (TEST SET)
-        if confusion_dict:
-            print("\nConfusion matrices (raw counts) - TEST SET:")
-            for mname, cm in confusion_dict.items():
-                df_cm = pd.DataFrame(cm, index=classes, columns=classes)
-                df_cm.index.name = "True"
-                df_cm.columns.name = "Pred"
-
-            # Plot all raw confusion matrices as heatmaps using the class helper
-            self._plot_confusion_matrices(confusion_dict, title_prefix="Confusion Matrix (Test)")
-
-        #  Print confusion matrices (normalized) as tables for each model (TEST SET)
-        if confusion_norm_dict:
-            print("\nConfusion matrices (normalized by true-row) - TEST SET:")
-            for mname, cmn in confusion_norm_dict.items():
-                df_cmn = pd.DataFrame(cmn, index=classes, columns=classes)
-                df_cmn.index.name = "True"
-                df_cmn.columns.name = "Pred"
-            
-            # Plot all normalized confusion matrices as heatmaps using the class helper
-            self._plot_confusion_matrices(confusion_norm_dict, title_prefix="Normalized Confusion Matrix (Test)")
-
-        # Comparison table for TEST SET only. Gather test-rows from each model_table into a single DataFrame.
-        test_rows = []
-        for mname, table in per_model_tables.items():
-            if 'Test' in table.index:
-                tr = table.loc['Test'].to_dict()
-                tr['Model'] = mname
-                test_rows.append(tr)
-            else:
-                # If unexpectedly missing, create NaN row
-                test_rows.append({
-                    "Model": mname,
-                    "Accuracy": np.nan,
-                    "Balanced Accuracy": np.nan,
-                    "Precision (weighted)": np.nan,
-                    "Recall (weighted)": np.nan,
-                    "F1 Score (weighted)": np.nan,
-                    "F1 Score (macro)": np.nan,
-                    "ROC AUC (macro)": np.nan
-                })
-
-        if test_rows:
-            test_comparison_df = pd.DataFrame(test_rows)
-            # Set Model as index and reorder columns for readability
-            test_comparison_df = test_comparison_df.set_index('Model')[
-                ["Accuracy", "Balanced Accuracy", "Precision (weighted)", "Recall (weighted)",
-                "F1 Score (weighted)", "F1 Score (macro)", "ROC AUC (macro)"]
-            ]
-            # Sort by Balanced Accuracy descending
-            test_comparison_df = test_comparison_df.sort_values("Balanced Accuracy", ascending=False)
-            print("\nOverall comparison on TEST SET (sorted by Balanced Accuracy):")
-            display(test_comparison_df)
-        else:
-            test_comparison_df = pd.DataFrame()
-
-        return {
-            'per_model_tables': per_model_tables,
-            'per_class_test': per_class_test,
-            'bar_plot_data': bar_df,            
-            'confusion_matrices': confusion_dict,
-            'confusion_matrices_norm': confusion_norm_dict,
-            'test_comparison': test_comparison_df
+            "per_class_df": per_class_df,
+            "wilcoxon_results_df": wilcoxon_results_df
         }

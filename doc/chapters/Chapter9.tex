@@ -1,29 +1,220 @@
-\section{Conclusions}
-\subsection{Real World Applications}
-A CogniPredictAD application (in main.py) has been developed with customtkinter that allows you to select one of four previously saved models (Model1.pkl, Model2.pkl, XAIModel1.pkl, and XAIModel2.pkl), manually enter a set of clinical and cognitive measures, obtain a diagnostic prediction (labels 0, 1, 2, or 3 for CN, EMCI, LMCI, and AD, respectively), and display it. The user can confirm or dispute the diagnosis: both actions add a line to the data/NEWADNIMERGE.csv file (creating a folder/file if necessary), while an “Undo Last” command cancels the last saved entry. This application can be used by clinicians to collect data, evaluate prediction models, and ultimately help establish a diagnosis.
-
-\subsection{Final Considerations}
-One of the main limitations of the dataset is that, after filtering for baseline visits with non-zero diagnoses, only 2,419 patients remain, a size that limits the ability to generalize the results to external populations. While these metrics showed very high performance on the test set (for Model 1: Balanced Accuracy = 0.9198, F1 macro = 0.9169, ROC AUC (macro) = 0.9865), these metrics should be interpreted with caution.
+\section{Classification}
+\subsection{Building Models}
+From the \textbf{Grid Search}, the \textbf{best estimators}, their \textbf{parameters}, and \textbf{scores} were collected for each \textbf{model}. These best-estimators were saved, then retrained and evaluated using \textbf{5-fold cross-validation}, producing several outputs: confusion matrices, per-class metrics, macro F1 score, accuracy, ROC-AUC, and repeated evaluations to assess stability.
 
 \vspace{2mm}
 
-Furthermore, three cognitive scores (CDRSB, LDELTOTAL, and mPACCdigit) provide a very strong diagnostic signal in this dataset: their presence largely explains the high effectiveness of Model 1 (Random Forest), while their removal leads to significantly lower metrics and a different distribution of important features, with XGBoost proving to be the best classifier in the pipeline without these variables. For these reasons, interpretable models (XAIModel1 and XAIModel2) and an alternative pipeline (Model2 and XAIModel2) that exclude the three scores were developed to assess the robustness and clinical plausibility of the predictions.
+Cross-validated rankings indicate that ensemble methods are top performers, with only small margins separating them: adaptive boosting, random forest, and extra trees show nearly equivalent CV performance. Logistic regression and shallow, un-sampled decision trees lag behind on macro F1 and balanced accuracy.
 
 \vspace{2mm}
 
-Furthermore, many columns have missing values, and the missingness pattern is often not \textit{MCAR}\footnote{Missing Completely At Random}. In fact, CSF and PET values are more often missing in healthy subjects or at certain visits. For example, \textit{ABETA}, \textit{TAU}, and \textit{PTAU} have many missing values and are not so irrelevant in the diagnosis of Alzheimer's disease. This forces us to impute \textit{NULL} values and potentially increase noise in the dataset.
+Pairwise statistical comparison across CV folds was performed using the \textbf{Wilcoxon signed-rank test} on model F1\_macro scores to determine whether observed differences were reproducible. The results show many non-significant comparisons and a minority with $p$-values below conventional thresholds. Specifically, twelve pairwise comparisons yielded $p<0.05$, while numerous others returned $p\geq0.05$, several exceeding $p=0.2$, and many near or above $p=0.5$. The smallest observed $p$-values are on the order of $1\!\times\!10^{-3}$, indicating a few consistent differences across CV folds.  
+
+\textbf{However, where $p<0.05$, the differences in macro F1 are small, implying negligible practical effect despite statistical significance.} Thus, Wilcoxon analysis suggests that CV ranking alone is insufficient for definitive model selection, and an independent evaluation on the test set is required to determine the best model.
+
+\subsection{Explainability}
+SHAP\footnote{SHapley Additive exPlanations: A Python library for the explainability of Machine Learning models} summary plots were generated for each model.
 
 \vspace{2mm}
 
-Despite size limitations, the reliance on a few highly predictive cognitive scores, and the large amount of \textit{NULL} values, the study retains methodological value and potential for application. The models can be useful as support tools (for example, risk stratification, imputation of missing diagnoses, or prioritized screening), not as a substitute for clinical assessment. Their use must be subject to external validation, calibration of the operating thresholds and post-deploy monitoring.
-
-\subsection{Improvements for Future Works}
-To improve the study, increasing the size and variability of the data is a priority: integrating future ADNI4\footnote{ADNI4 is the most recent phase of the ADNI study and was initiated in 2022. Previous phases were ADNI1 (2004–2009), ADNIGO (2009–2010), ADNI2 (2011–2016), and ADNI3 (2016–2022).} entries into ADNIMERGE and, if possible, compatible external cohorts would increase statistical power and generalizability.
+\textbf{CDRSB, LDELTOTAL, and mPACCdigit dominate the feature explanations.} SHAP plots reveal these variables as the most important in absolute terms, far above other features. The plots also show that the direction of effect is consistent: worse values for these scores bias predictions toward more severe classes, whereas higher LDELTOTAL and mPACCdigit push predictions toward cognitively normal status.
 
 \vspace{2mm}
 
-In this context, we could also introduce a new feature that identifies patients based on their geographic area of origin. Since ADNI participants are from the United States and Canada, their area would be classified as North America. If, for example, we were able to integrate a European dataset compatible with ADNI for predicting Alzheimer's disease, we could analyze whether geographic area affects the likelihood of developing the disease. This approach could open the way to new and interesting lines of research.
+SHAP point-clouds demonstrate consistent sign and concentration across ensemble and tree models, producing clear decision rules in unambiguous cases but fragility when these variables are missing, noisy, or cohort-specific.
 
-It is also essential to harmonize the variables (mapping and units for imaging) and enrich the database with complementary modalities (genetics, PET, blood biomarkers) and longitudinal information, thus reducing reliance on a few cognitive scores.
+\vspace{2mm}
 
-However, CogniPredictAD is already a good support tool for doctors in helping with the diagnosis of Alzheimer's. 
+Sampling distributes importance to secondary predictors (e.g., hippocampus/ICV ratios and Ecog measures), generating deeper trees with lower node purity, which tend to generalize better under class-balancing interventions.
+
+\vspace{2mm}
+
+Decision tree diagrams and exported rule files show that class separation typically relies on thresholds of a few key features (often one of the three clinical scores, or combinations of biomarkers and cognitive tests). The resulting rules are easily interpretable and suitable for communicating “if $\to$ then” statements to clinical staff.
+
+\subsection{Results}
+Models were evaluated on the training set, 5-fold CV, and the test set. The final evaluation focused primarily on explainability and test set results, including: \textit{F1 Score (macro), Accuracy, Balanced Accuracy, Precision (weighted), Recall (weighted), F1 Score (weighted), and ROC AUC (macro)}. Evaluation plots and confusion matrices are included in the following pages alongside evaluation tables for the test set.
+
+An Extra Trees classifier trained without hybrid sampling (\texttt{Extra\_Trees}) achieved the best test performance: a \textbf{macro F1 $\approx$ 0.9376}, \textbf{accuracy $\approx$ 0.9442}, and \textbf{ROC AUC $\approx$ 0.9867}.  
+
+As a complementary explainable model (\texttt{XAIModel}), a decision tree trained with sampling (\texttt{Decision\_Tree\_Sampled}) was selected for improved generalization and concise rule-based outputs. Both primary and XAI models, including exported rules and tree diagrams, are available in the results directory.
+
+\subsection{The Problem with CDRSB, LDELTOTAL, and mPACCdigit}
+As shown in the explainability section, the cognitive scores \textit{CDRSB}\footnote{Clinical Dementia Rating - Sum of Boxes}, \textit{LDELTOTAL}\footnote{Logical Memory II delayed recall total score}, and \textit{mPACCdigit}\footnote{Modified Preclinical Alzheimer's Cognitive Composite – Digit Symbol test} exhibit exceptionally high predictive power.  
+
+\vspace{2mm}
+
+While this improves model accuracy, it raises a concern of feature dominance: \textbf{a small number of variables may disproportionately drive predictions, while many others contribute minimally}, potentially leading to local overfitting. Models may appear highly effective on the ADNI dataset but lose performance on more heterogeneous populations or external data.
+
+\vspace{2mm}
+
+\textbf{However, these three variables may genuinely be strong predictors of Alzheimer's diagnosis.} The issue may reflect dataset bias rather than a flaw in the cognitive measures themselves.
+
+\vspace{2mm}
+
+To test this, classifiers were retrained with leakage-free preprocessing and CV, omitting CDRSB, LDELTOTAL, and mPACCdigit. Both unsampled and hybrid-sampled variants were evaluated via exhaustive grid search. The removal reduced discriminative power but retained sufficient signal for meaningful model comparison.
+
+\vspace{2mm}
+
+Feature-attribution analyses (permutation importance and SHAP) showed a reconfiguration of the predictive hierarchy: ADAS13, MMSE, FAQ, and RAVLT scores became leading predictors, while structural MRI ratios (Hippocampus/ICV, Entorhinal/ICV, Fusiform/ICV, Ventricles/ICV), CSF ratios (TAU/ABETA, PTAU/ABETA), and FDG PET measures assumed secondary roles. Sampling mitigated single-feature dominance and produced deeper, lower-purity trees, enhancing interpretability of non-dominant signals but reducing overall predictive ceiling.
+
+\vspace{2mm}
+
+Performance metrics reflect the expected drop: the best alternative model was an Adaptive Boosting ensemble (macro F1 $\approx$ 0.7303, accuracy $\approx$ 0.7459, macro ROC AUC $\approx$ 0.9037). Pairwise Wilcoxon tests showed few significant differences, and effect sizes were small, highlighting that statistical significance does not always indicate practical superiority.
+
+\begin{itemize}
+	\item The system remains usable without the dominant cognitive measures if remaining cognitive and functional assessments are reliably collected.
+	\item Ensemble models continue to offer the best discrimination, while sampled shallow trees provide a defensible, interpretable fallback.
+\end{itemize}
+
+\subsection{Final Decision}
+\textbf{\textit{Extra\_Trees}} (trained without hybrid sampling) was chosen as the main model, and \textbf{\textit{Decision\_Tree\_Sampled}} (trained with sampling) as the XAI reference. This selection is based on superior test metrics, balancing class sensitivity.  
+
+\textbf{Model.pkl and XAIModel.pkl correspond to Extra\_Trees and Decision\_Tree\_Sampled, respectively.}
+
+\vspace{2mm}
+
+For the dataset excluding the three cognitive scores, the best-performing model was \textbf{\textit{Adaptive Boosting}} (unsampled), with \textbf{\textit{Decision\_Tree}} as the XAI reference.  
+
+\textbf{AltModel.pkl and AltXAIModel.pkl correspond to Adaptive\_Boosting and Decision\_Tree in the alternative folder.}
+
+\subsection{Comparison with the State of the Art}
+The ADNIMERGE.csv file is widely used in the scientific literature, with hundreds of studies explicitly citing it as the source of ADNI tabular data. Despite this, I have not come across many studies that have formulated the problem as a multiclass classification with the four labels CN, EMCI, LMCI, and AD. Most machine learning models proposed in the literature focus on binary tasks, such as CN vs. AD, CN vs. MCI, or MCI vs. AD. However, it is still possible to propose a comparison with the state of the art starting from these experimental settings.
+
+Our results in short:
+
+\begin{table}[H]
+	\centering
+	\small % oppure \scriptsize o \footnotesize
+	\begin{tabularx}{\textwidth}{l *{7}{>{\centering\arraybackslash}X}}
+		\toprule
+		Model Name & F1 Score (macro) & Accuracy & ROC AUC (macro) \\
+		\midrule
+		Model & 0.9376 & 0.9442 & 0.9867  \\
+		XAIModel & 0.9131 & 0.9236 & 0.9804 \\
+		AltModel & 0.7303 & 0.7459 & 0.9037  \\
+		AltXAIModel & 0.6602 & 0.6632 & 0.8467 \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+\begin{itemize}
+	\item \href{https://www.medrxiv.org/content/10.1101/2020.11.09.20226746v3}{Kauppi et al. (medRxiv, 2020)}: Deep-learning risk-scoring pipeline using selected neurocognitive tests, achieving multiclass $AUC \approx 0.984$.
+	\item \href{https://www.nature.com/articles/s41598-024-51985-w}{Alatrany et al. (Scientific Reports, 2024)}: Multimodal, explainability-oriented approach on NACC. SVM reaches multiclass $F1 \approx 90.7\%$. Note that the data source (NACC vs. ADNI) and feature set are not directly comparable.
+	\item \href{https://adni.loni.usc.edu/adni-publications/Cuingnet_Neuroimage_2010-1.pdf}{Cuingnet et al. (NeuroImage, 2010)}: Historical ADNI benchmark (MRI-based). Multiclass performance typically $70$--$90\%$ accuracy, lower than binary tasks.
+\end{itemize}
+
+\textbf{Model} is competitive with these works, \textbf{AltModel} favors robustness over dominant features, and \textbf{XAIModels} illustrate the trade-off between interpretability and accuracy. \textbf{Model} cannot be claimed superior without identical splits/preprocessing or formal statistical tests.
+
+The following pages contain the graphs and tables that led to the final evaluation. 
+
+
+\newpage
+
+\subsection{Tables and Images}
+
+\end{multicols}	
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.65\textwidth]{images/1_Evaluation.png}
+	\label{fig:Evaluation with CDRSB, LDELTOTAL, and mPACCdigit}
+	\caption{Evaluation of F1 Macro Scores with CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models/1)}
+\end{figure}
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=0.65\textwidth]{images/2_Evaluation.png}
+	\label{fig:Evaluation without CDRSB, LDELTOTAL, and mPACCdigit}
+	\caption{Evaluation of F1 Macro Scores without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models/2)}
+\end{figure}
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.05\textwidth]{images/1_Confusion_Matrix.png}
+	\label{fig:Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit}
+	\caption{Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models/1)}
+\end{figure} 
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.05\textwidth]{images/1_Confusion_Matrix_Normalized.png}
+	\label{fig:Normalized Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit}
+	\caption{Normalized Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models/1)}
+\end{figure}
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.05\textwidth]{images/2_Confusion_Matrix.png}
+	\label{fig:Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit}
+	\caption{Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models/2)}
+\end{figure} 
+
+\newpage
+
+\begin{figure}[H]
+	\centering
+	\includegraphics[width=1.05\textwidth]{images/2_Confusion_Matrix_Normalized.png}
+	\label{fig:Normalized Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit}
+	\caption{Normalized Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models/2)}
+\end{figure}
+
+\newpage
+
+\textit{M\_L\_R is for Multinomial\_Logistic\_Regression.}
+
+\vspace{4mm}
+
+\begin{table}[H]
+	\centering
+	\caption{With CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models/1)}
+	\begin{tabularx}{\textwidth}{lccccccc}
+		\toprule
+		Model & F1 Score (macro) & Accuracy & Balanced Accuracy & Precision (weighted) & Recall (weighted) & F1 Score (weighted) & ROC AUC (macro) \\
+		\midrule
+		Extra\_Trees & 0.9376 & 0.9442 & 0.9408 & 0.9448 & 0.9442 & 0.9443 & 0.9867 \\
+		Extra\_Trees\_Sampled & 0.9359 & 0.9421 & 0.9411 & 0.9435 & 0.9421 & 0.9425 & 0.9890 \\
+		Random\_Forest & 0.9301 & 0.9380 & 0.9341 & 0.9387 & 0.9380 & 0.9381 & 0.9886 \\
+		Adaptive\_Boosting & 0.9285 & 0.9360 & 0.9347 & 0.9378 & 0.9360 & 0.9363 & 0.9878 \\
+		Random\_Forest\_Sampled & 0.9271 & 0.9339 & 0.9358 & 0.9367 & 0.9339 & 0.9344 & 0.9863 \\
+		Adaptive\_Boosting\_Sampled & 0.9262 & 0.9339 & 0.9329 & 0.9361 & 0.9339 & 0.9343 & 0.9890 \\
+		Decision\_Tree\_Sampled & 0.9131 & 0.9236 & 0.9178 & 0.9244 & 0.9236 & 0.9235 & 0.9804 \\
+		Decision\_Tree & 0.8934 & 0.9050 & 0.9026 & 0.9096 & 0.9050 & 0.9057 & 0.9824 \\
+		M\_L\_R & 0.8700 & 0.8843 & 0.8816 & 0.8893 & 0.8843 & 0.8843 & 0.9825 \\
+		M\_L\_R\_Sampled & 0.8677 & 0.8822 & 0.8754 & 0.8851 & 0.8822 & 0.8826 & 0.9827 \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+\vspace{4mm}
+
+\begin{table}[H]
+	\centering
+	\caption{Without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models/2)}
+	\begin{tabularx}{\textwidth}{lccccccc}
+		\toprule
+		Model & F1 Score (macro) & Accuracy & Balanced Accuracy & Precision (weighted) & Recall (weighted) & F1 Score (weighted) & ROC AUC (macro) \\
+		\midrule
+		Adaptive\_Boosting & 0.7303 & 0.7459 & 0.7327 & 0.7456 & 0.7459 & 0.7437 & 0.9037 \\
+		Adaptive\_Boosting\_Sampled & 0.7112 & 0.7293 & 0.7157 & 0.7316 & 0.7293 & 0.7277 & 0.9001 \\
+		Random\_Forest & 0.7061 & 0.7252 & 0.7052 & 0.7256 & 0.7252 & 0.7245 & 0.9022 \\
+		Random\_Forest\_Sampled & 0.7035 & 0.7190 & 0.7050 & 0.7251 & 0.7190 & 0.7208 & 0.9041 \\
+		Extra\_Trees\_Sampled & 0.7011 & 0.7211 & 0.7075 & 0.7258 & 0.7211 & 0.7202 & 0.9003 \\
+		Extra\_Trees & 0.6998 & 0.7293 & 0.6952 & 0.7215 & 0.7293 & 0.7238 & 0.9105 \\
+		M\_L\_R\_Sampled & 0.6829 & 0.7066 & 0.6933 & 0.7135 & 0.7066 & 0.7063 & 0.8921 \\
+		M\_L\_R & 0.6768 & 0.7004 & 0.6882 & 0.7055 & 0.7004 & 0.6996 & 0.8952 \\
+		Decision\_Tree & 0.6603 & 0.6632 & 0.6622 & 0.6960 & 0.6632 & 0.6736 & 0.8467 \\
+		Decision\_Tree\_Sampled & 0.6482 & 0.6508 & 0.6543 & 0.6990 & 0.6508 & 0.6626 & 0.8445 \\
+		\bottomrule
+	\end{tabularx}
+\end{table}
+
+\newpage
+\begin{multicols}{2}
+
+

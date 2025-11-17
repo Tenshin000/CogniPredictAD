@@ -1,48 +1,9 @@
-\section{Hyperparameter Selection and Hybrid Sampling}
-\subsection{Grid Search}
-To optimize the performance of the classifiers, a \textbf{Grid Search} procedure with layered cross-validation was adopted. Grid Search was chosen because it allows for a systematic and controlled exploration of the most relevant hyperparameters for each model, ensuring reproducibility and the ability to transparently compare the tested configurations.
-
-\subsection{Hybrid Sampling}
-The dataset also presented a slight imbalance in diagnostic classes, as already discussed in the "Multiclass Problem" chapter. 
-
-To address this problem, a \textbf{Hybrid Sampling strategy} was applied, combining:
+\section{Model Selection}
+The following classification algorithms were chosen:
 \begin{enumerate}
-	\item \textbf{RUS}\footnote{Random Under-Sampling} to reduce the number of instances in the majority classes, preventing the dataset from becoming excessively biased toward synthetic examples;
-	\item \textbf{SMOTENC}\footnote{Synthetic Minority Over-sampling Technique for Nominal and Continuous features} to generate new synthetic examples of the minority classes, taking into account the mixed nature of the variables (continuous and categorical).
+	\item \textbf{Decision Tree:} This model constructs a series of "if $\to$ then" rules (split on individual features) to separate classes using a binary tree. Each leaf of the tree corresponds to a prediction. It was chosen because it is immediately interpretable (\textit{XAI}\footnote{Explainable Artificial Intelligence});
+	\item \textbf{Random Forest:} Builds many different decision trees on subsamples of the data and averages their predictions. This reduces variance compared to a single tree and improves robustness to noise, outliers, and collinearity;
+	\item \textbf{Extra Trees}\footnote{Extremely Randomized Trees}\textbf{:} Similar to Random Forest but chooses more random splits, increasing diversity among trees and often reducing overfitting on noisy features. It was tested to compare with Random Forest and evaluate whether increased randomness improved generalization across the dataset;
+	\item \textbf{AdaBoost:} A boosting algorithm (Adaptive Boosting) that builds a strong classifier by combining many weak learners (often decision stumps). It iteratively reweights training samples, increasing the weight of those misclassified by previous learners so that subsequent models focus on harder examples. Each weak learner is also given a weight based on its accuracy, and the final prediction is a weighted vote (or sum) of all learners. It tends to reduce bias and can generalize well, though it may be sensitive to noisy data and outliers;
+	\item \textbf{Multinomial Logistic Regression:} A linear model that estimates the probabilities of membership in each class using a linear combination of features. It requires feature standardization to function properly, which was ensured with StandardScaler in the pipeline. It was included as a simple and interpretable statistical baseline, useful for comparing whether the gain from complex models is consistent with a linear solution.
 \end{enumerate}
-I kept the "old" dataset (the one obtained with Preprocessing) and the "new" one (the resampled one) and tried Hyperparameter Tuning on both. 
-
-\subsection{The problem with CDRSB, LDELTOTAL, and mPACCdigit}
-The cognitive scores \textit{CDRSB}\footnote{Clinical Dementia Rating - Sum of Boxes}, \textit{LDELTOTAL}\footnote{Logical Memory II delayed recall total score} and \textit{mPACCdigit}\footnote{Modified Preclinical Alzheimer’s Cognitive Composite – Digit Symbol test} show exceptionally high predictive power compared to the rest. While this may be advantageous in terms of model accuracy, it also raises the concern of feature dominance: \textbf{a small number of variables may disproportionately drive the predictions, while many others contribute minimally}. This imbalance can lead to a form of local overfitting, where \textbf{models appear highly effective on the ADNI dataset but lose performance when applied to more heterogeneous clinical populations or external data.}
-
-\textbf{However, this assumption cannot be verified, as it is equally possible that these three variables are genuine strong predictors of Alzheimer’s diagnosis.}
-
-So the issue does not reflect a weakness of the cognitive measures themselves, but rather the possibility of dataset bias: the strength of these predictors may be tied to the specific characteristics of ADNI rather than to generalizable diagnostic patterns. 
-
-To address this, the modeling strategy should consider two complementary approaches:
-\begin{enumerate}
-	\item building a predictive model that leverages these dominant variables;
-	\item building an alternative model that excludes them.
-\end{enumerate}
-
-Hybrid Sampling will be applied to both datasets and then I will compare whether the standard models or the resampled models performs better on the test set. 
-
-\subsection{Hyperparameter Optimization}
-In practice, I will end up with two models: one that can also use CDRSB, LDELTOTAL, and mPACCdigit, chosen from the standard and resampled models, and one that doesn't use CDRSB, LDELTOTAL, and mPACCdigit, chosen from the standard and resampled models.
-
-\vspace{2mm}
-
-Therefore, I need to run four Grid Searches. For each model, a large set of hyperparameter configurations was defined to explore, often with thousands of possible combinations. Optimization was conducted through five-fold cross-validation, with different metrics depending on the scenario: \textit{F1 Macro} when the most predictive variables were present, \textit{Balanced Accuracy} in the most restrictive experiments, and \textit{F1 Macro}.
-
-\vspace{2mm} 
-
-\textit{F1 Macro}\footnote{$F1_{\text{macro}} = \frac{1}{K} \sum_{k=1}^{K} \frac{2 \cdot \text{Precision}_k \cdot \text{Recall}_k} {\text{Precision}_k + \text{Recall}_k}$} assigns equal weight to each class and simultaneously punishes low precision or low recall. It is therefore suitable when a few strong features can "inflate" the accuracy without ensuring fairness between classes.
-
-\vspace{2mm}
-
-\textit{Balanced Accuracy}\footnote{$BA = \frac{1}{K} \sum_{k=1}^{K} \text{Recall}_k$} is insensitive to prevalence and less dependent on precision. In the absence of dominant features, it directs the optimization to correctly retrieve all classes.
-
-\vspace{2mm}
-
-At the end of the Grid Search, the optimal parameters found for each model were used to instantiate the “final” versions of the classifiers and produce subsequent evaluations. 
-

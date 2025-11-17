@@ -1,64 +1,10 @@
-\section{Data Preprocessing}
-We divided the \textit{Preprocessing} into two phases. 
+\section{Learning Set}
+The \textbf{preparation phase} focused on isolating a coherent baseline cohort, restructuring the heterogeneous \textit{ADNIMERGE.csv} into an analyzable form, and enforcing clinically sound data standards. The raw dataset, originally \textbf{visit–centric} and affected by extensive missingness, redundant attributes, and inconsistencies across ADNI phases, was reduced to a strictly \textbf{baseline-oriented structure} in which each participant contributes a single, diagnostically reliable record. 
 
-In the first phase, which involved preparing the dataset, we performed all the transformations and cleaning operations that did not involve the risk of \textit{data leakage}, applying them to the entire dataset before splitting it into training and testing. 
+A first objective was to ensure diagnostic consistency. Screening and baseline labels were reconciled to guarantee that each subject possesses a unique and clinically valid baseline diagnosis. This step was essential for framing the downstream problem as a cross-sectional classification task. Demographic attributes were then harmonized: ethnicity and race were merged into a compact demographic descriptor, marital status was simplified into an informative binary form, and sex was encoded to support normalization and group comparisons. These operations provided a unified representation while preserving clinically relevant distinctions.
 
-In the second phase, however, we applied the transformations that could introduce data leakage exclusively to the training set, with the sole exception of imputing missing values: in this case, the \textit{KNN}\footnote{K-Nearest Neighbors} Imputer was trained on the training set and then used for both training and testing, to ensure consistency and avoid leakage. Preprocessing has in turn been divided into: \textit{Data Cleaning}, \textit{Data Transformation}, \textit{Outlier Detection} and \textit{Data Reduction}. 
+Attributes with overwhelming missingness or with limited value for single-visit modelling were removed. The retained variables concentrated on demographics, genetic risk, cognition, CSF biomarkers, and structural MRI measurements. Biomarker fields containing detection-limit symbols were converted into usable quantitative values, ensuring numerical compatibility without distorting their clinical meaning. Categorical labels exhibiting inconsistencies across ADNI phases were standardized to a homogeneous nomenclature.
 
-\subsection{Data Preparation}
-\begin{itemize}
-	\item \textbf{Selection of baseline visits only:} The first clinical-operational choice was to work only on baseline visits (VISCODE == "bl"), because the goal is to predict the diagnosis based on the information collected at the first visit; 
-	\item \textbf{SMC diagnosis management:} Records with \textit{DX\_bl} = SMC were realigned using the DX variable, but ultimately all have been classified as "CN". We already explained why in the reasons stated in the chapter "Multiclass Problem"; 
-	\item \textbf{Consolidating bl columns:} Clean up duplicates and merge "baseline" values into "main" columns;
-	\item \textbf{Error handling:} Deleted the row with RAVLT\_perc\_forgetting = -316.667 and RAVLT\_forgetting = -19;
-	\item \textbf{Text category cleaning (ethnicity, race, marriage):} String values standardized to improve readability and avoid inconsistencies;
-	\item \textbf{Encoding of categorical variables:} One-hot encoding (PTETHCAT, PTMARRY), binary mapping (PTGENDER: Male=1, Female=0) and ordinal encoding for DX (CN=0, EMCI=1, LMCI=2, AD=3).
-	\item \textbf{Preliminary Feature Reduction:} Removal of columns not relevant to the diagnosis;
-	\item \textbf{Splitting train/test:} \textit{Separation into training and test sets while avoiding leakage.}
-\end{itemize}
+A \textbf{systematic assessment of numerical plausibility} led to the identification of \textit{outliers} that could not be justified clinically. Implausible values in cognitive tests and structural MRI volumes were marked for later imputation rather than corrected ad hoc, thereby \textbf{avoiding data leakage}. 
 
-\subsection{Data Cleaning}
-\begin{itemize}
-	\item \textbf{Handling missing values:} Identifying percentages of missing values and using KNN Imputer for continuous variables ;
-	\item \textbf{Numeric Value Conversion:} Convert cognitive scales and age from float to int, correcting for approximations due to imputation or format errors.
-\end{itemize}
-
-\subsection{Data Transformation}
-\begin{itemize}
-	\item \textbf{Creation of new CSF metrics:} \textit{TAU/ABETA} and \textit{PTAU/ABETA} ratios more predictive than single measures according to the literature;
-	\item \textbf{MRI normalization to ICV (Intracranial Volume):}
-	Necessary to correct for differences due to gender and cranial size.
-\end{itemize}
-
-\subsection{Outlier Detection}
-\begin{itemize}
-	\item \textbf{Univariate Analysis:} use \textit{IQR}\footnote{Interquartile Range is a statistical method to identify and handle outliers, which are extreme values that can negatively impact model accuracy. Outliers are then detected as data points falling outside a range defined by $Q1 – 1.5 \cdot IQR$ and $Q3 + 1.5 \cdot IQR$.} and \textit{Z-score threshold}\footnote{Z-score: identifies data points that are a certain number of standard deviations away from the mean, typically flagging values with a Z-score greater than 3 or less than -3 as potential outliers.} for each column to find outliers;
-	\item \textbf{Multivariate Analysis:} Constructs groups (EcogPt, EcogSP, Neuropsych, MRI, MRI/ICV, CSF, CSF/ABETA, mPACC), applies \textit{LOF}\footnote{Local Outlier Factor is based on a concept of a local density, where locality is given by k nearest neighbors, whose distance is used to estimate the density.} and \textit{DBSCAN}\footnote{Density-Based Spatial Clustering of Applications with Noise identifies outliers as data points that do not belong to any dense cluster. These are points in low-density regions that are surrounded by empty space rather than other points, making them significantly different from the majority of the data.} to normalized data (\textit{RobustScaler}\footnote{$x'_i = \frac{x_i - \text{median}(X)}{Q_3(X)-Q_1(X)}$}). Only data points reported by both techniques and with a \textit{LOF\_score} greater than 2 are kept to flag them as "extreme";
-	\item \textbf{Cleaning up problematic outliers:} Outliers with values that were clearly out of range and therefore deemed highly unlikely were replaced with the mean by class.
-\end{itemize}
-
-\columnbreak
-
-\subsection{Data Reduction}
-\begin{itemize}
-	\item \textbf{Removal of redundant features:} \textit{ADAS11}, \textit{ADASQ4}, \textit{EcogPtTotal}, \textit{EcogSPTotal}, \textit{mPACCtrailsB}, and \textit{TAU} were removed because they had a high correlation with other features and their informative value was low;
-	\item \textbf{Attribute Subset Selection:} I apply four selection methods to the train: \textit{Pearson correlation} ($|r| \ge 0.6$), \textit{mutual information} (top 25), \textit{SelectKBest with Kruskal–Wallis H-test} ($k=25$), and \textit{Recursive Feature Elimination} (RFE with Random Forest). It combines the results by counting how many times each feature appears and retains those selected at least three times, plus other features deemed useful even though they were counted less frequently.
-\end{itemize}
-
-\subsection{Some Considerations}
-\subsubsection{Correlation}
-The dataset contains groups of highly correlated variables (e.g., different neuropsychological scores, ECG components, and MRI volumetric measurements). Rather than eliminating them through aggressive reduction, I decided to retain them and rely on models that are intrinsically robust to correlation.
-This choice was motivated by two main reasons:
-\begin{enumerate}
-	\item \textbf{Clinical interpretability:} Correlated variables can describe different facets of the same function or biomarker. Removing them would impoverish medical interpretation;
-	\item \textbf{Complementary predictive value:} Even correlated measures may contain specific variance useful for distinguishing clinical subgroups.
-\end{enumerate}
-
-\subsubsection{Normalization}
-During the data preparation process, no global normalization or standardization was applied to all variables. 
-
-This choice was driven by one reason: I wanted to \textbf{preserve the clinical interpretability}. Maintaining variables in their original units facilitates the medical interpretation of the results and comparability with clinical reference values. Normalization would have made it more difficult to attribute direct clinical significance to the transformed values.
-
-\subsubsection{Binning}
-Binning was not applied because it would have reduced the useful information and discriminatory power of continuous variables. The models used already capture nonlinearities and thresholds, so prior discretization is unnecessary and could introduce artifacts.
-
+After consolidation, the resulting dataset forms a compact \textbf{learning set} explicitly designed for multiclassification. The final structure is well aligned with the goals of diagnostic modelling: it is coherent, interpretable, statistically stable, and it supports principled preprocessing steps. 

@@ -1,5 +1,5 @@
 \section{Data Exploration}
-Explorations reveal that the dataset has 16,421 rows and 116 columns. However, these records represent the various visits, and we are only interested in the baseline ones. The dataset contains 2,419 useful patients (using "useful" means those who did not have a NULL baseline diagnosis) for the proposed problem.
+Explorations revealed that the dataset has 16,421 rows and 116 columns. However, these records represent the various visits, and I was only interested in the baseline ones. The dataset contains 2,419 useful patients (using "useful" means those who did not have a NULL baseline diagnosis) for the proposed problem.
 
 Many columns contain significant percentages of missing cases. The diagnostic classes of the baseline sample are unbalanced, but not extremely unbalanced.
 
@@ -7,10 +7,15 @@ Demographic and risk analyses show bias in the ADNI sample. Ethnicity is heavily
 
 The \textit{Data Exploration} was then divided into three parts: 
 \begin{enumerate}
-	\item the preliminary data exploration of the raw dataset;
-	\item the data exploration after splitting and preparing the actual dataset;
-	\item the data exploration after Preprocessing to select the classification models.
+	\item the \textit{preliminary data exploration} of the raw dataset;
+	\item the \textit{data exploration} after splitting and preparing the actual learning set;
+	\item the \textit{data exploration} after Preprocessing to select the classification models. 
 \end{enumerate}
 
+The \textit{preliminary data exploration}'s descriptive summaries revealed extensive missing data, especially in key biomarker and imaging variables, prompting a structured missing-data plan. Review of baseline and visit fields confirmed usable \textit{DX\_bl} labels and clarified visit patterns, motivating a restriction to baseline records for classification.
+
+In the \textit{data exploration}, the training set was inspected using a reduced set of clinically relevant variables and derived ratios. Summary statistics, boxplots, and correlation maps were used to assess distributions and multicollinearity. Clinical and biomarker distributions showed the expected disease gradient but with strong overlap, skewness, and outliers. Sex differences in MRI volumes confirmed the need for ICV normalization. Class counts showed \textit{only mild imbalance} across CN, EMCI, LMCI, and AD. 
+
+After preprocessing on the training set, I do a \textit{new data exploration}. The final training file contained a compact multimodal set covering demographics, APOE4, cognition, Ecog, CSF ratios, and MRI/ICV ratios. Feature distributions were summarised using medians and IQRs. Outliers were assessed with \textbf{Local Outlier Factor} across clinical, CSF, MRI/ICV, and combined sets. Only a small number of high-anomaly cases emerged, many clinically plausible, supporting the use of models robust to skew and extreme values rather than broad exclusion. 
 
 

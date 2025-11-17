@@ -1,3 +1,4 @@
+import copy
 import graphviz
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,7 +9,8 @@ import warnings
 from IPython.display import Image, display
 from lime.lime_tabular import LimeTabularExplainer
 from sklearn import tree
-from sklearn.tree import export_graphviz
+from sklearn.preprocessing import StandardScaler
+from sklearn.tree import export_graphviz, plot_tree, _tree
 from typing import Union, Optional, List, Sequence, Tuple, Any
 
 
@@ -35,66 +37,71 @@ class ModelExplainer:
     #        INITIALIZATION       #
     # ----------------------------#
     def __init__(self, models: Sequence[Tuple[str, Any]], X_train: pd.DataFrame, y_train: Optional[pd.Series] = None,
-             feature_names: Optional[List[str]] = None, class_names: Optional[List[str]] = None,
-             background_size: int = 100, random_state: Optional[Union[int, np.random.Generator]] = None):
+                 feature_names: Optional[List[str]] = None, class_names: Optional[List[str]] = None,
+                 background_size: int = 100, random_state: int = 42):
         # Store models as list of (name, model) pairs
         self.models = list(models)
         # Copy of training data (used for explanations)
         self.X_train = X_train.copy()
-        self.y_train = y_train.copy()
+        # copy y_train only if provided
+        self.y_train = y_train.copy() if y_train is not None else None
         # Feature names for visualization
         self.feature_names = feature_names or list(X_train.columns)
         # Optional class names (useful for multiclass problems)
         self.class_names = class_names
-        # Create background with controlled seed
-        if isinstance(random_state, np.random.Generator):
-            rng = random_state
-        else:
-            rng = np.random.default_rng(random_state)
         # Background sample for SHAP explanations
-        self.background = self.X_train.sample(min(background_size, len(self.X_train)), random_state=rng)    
+        self.background = self.X_train.sample(min(background_size, len(self.X_train)), random_state=random_state)
 
     # ----------------------------#
-    #         SHAP HELPER         #
+    #         SHAP HELPERS        #
     # ----------------------------#
     def _get_shap_explainer(self, name: str, model: Any):
         """Try multiple ways to create a shap.Explainer. 
         Returns (explainer, used_method) or (None, reason)."""
+        # Always use X_train (copied) for explainer construction
+        X_for_model = self.X_train.copy()
+        # Decide output names to pass to SHAP (prefer user-provided class_names,
+        # otherwise try to infer from the model if available)
+        output_names = None
+        if self.class_names is not None:
+            output_names = self.class_names
+        elif hasattr(model, "classes_"):
+            output_names = [str(c) for c in getattr(model, "classes_")]
+
         # 1) If model is callable directly
         if callable(model):
             try:
-                expl = shap.Explainer(model, self.background, feature_names=self.feature_names)
+                expl = shap.Explainer(model, X_for_model, feature_names=self.feature_names, output_names=output_names)
                 return expl, "callable(model)"
             except Exception as e:
                 warnings.warn(f"[{name}] shap.Explainer(callable model) failed: {e}")
 
-        # 2) Try using predict_proba (preferred for classifiers)
+        # 2) predict_proba
         if hasattr(model, "predict_proba") and callable(getattr(model, "predict_proba")):
             try:
-                predict_proba = lambda X_train: model.predict_proba(X_train)
-                expl = shap.Explainer(predict_proba, self.background, feature_names=self.feature_names)
+                predict_proba = lambda X_input: model.predict_proba(X_input)
+                expl = shap.Explainer(predict_proba, X_for_model, feature_names=self.feature_names, output_names=output_names)
                 return expl, "model.predict_proba"
             except Exception as e:
                 warnings.warn(f"[{name}] shap.Explainer(model.predict_proba) failed: {e}")
 
-        # 3) Try using predict (useful for regressors or classifiers without predict_proba)
+        # 3) predict
         if hasattr(model, "predict") and callable(getattr(model, "predict")):
             try:
-                predict = lambda X_train: model.predict(X_train)
-                expl = shap.Explainer(predict, self.background, feature_names=self.feature_names)
+                predict = lambda X_input: model.predict(X_input)
+                expl = shap.Explainer(predict, X_for_model, feature_names=self.feature_names, output_names=output_names)
                 return expl, "model.predict"
             except Exception as e:
                 warnings.warn(f"[{name}] shap.Explainer(model.predict) failed: {e}")
 
-        # 4) Try TreeExplainer for tree-based models (XGBoost, LightGBM, sklearn ensembles)
+        # 4) Fallback: build a generic shap.Explainer letting SHAP pick TreeExplainer if appropriate
         try:
-            expl = shap.TreeExplainer(model)
-            return expl, "TreeExplainer"
+            expl = shap.Explainer(model, self.background, feature_names=self.feature_names, output_names=output_names)
+            return expl, "shap.Explainer(fallback_with_background)"
         except Exception as e:
-            warnings.warn(f"[{name}] TreeExplainer attempt failed: {e}")
+            warnings.warn(f"[{name}] fallback shap.Explainer attempt failed: {e}")
 
-        # 5) If all attempts fail
-        return None, "no usable callable or tree explainer"
+        return None, "no usable callable or explainer"
 
     # ----------------------------#
     #            SHAP             #
@@ -157,7 +164,7 @@ class ModelExplainer:
                     a.text(0.5, 0.5, f"SHAP failed\n({name})", ha="center", va="center")
                 continue
 
-            # --- SUMMARY (beeswarm / summary) ---
+            # SUMMARY (beeswarm / summary)
             try:
                 plt.sca(ax_summary)   # set current axis
                 # try to use the SHAP matplotlib backend (many versions respect current axis with matplotlib=True)
@@ -236,32 +243,48 @@ class ModelExplainer:
 
         for name, model in models:
             explainer, used = self._get_shap_explainer(name, model)
-            if explainer is None:
-                warnings.warn(f"[{name}] Could not create SHAP explainer: {used}. Skipping.")
-                continue
-
             try:
                 shap_vals = explainer(self.X_train)
             except Exception as e:
                 warnings.warn(f"[{name}] Explainer(...) failed: {e}. Skipping.")
                 continue
 
-            # crea una nuova figura per ogni modello
-            plt.figure(figsize=figsize)
-            try:
-                # prova a usare beeswarm (matplotlib backend)
+            vals_shape = getattr(shap_vals, "values", None).shape if hasattr(shap_vals, "values") else None
+
+            # determine class names
+            class_names = self.class_names or list(getattr(model, "classes_", range(vals_shape[2] if vals_shape else 1)))
+
+            # convert to array if needed
+            vals = shap_vals.values if hasattr(shap_vals, "values") else np.array(shap_vals)
+
+            if vals.ndim == 3:  # multiclass case: (samples, features, classes) or (samples, features, outputs)
+                # SHAP sometimes gives (samples, features, classes) or (samples, features, outputs)
+                n_classes = vals.shape[2]
+                for cls_idx, cname in enumerate(class_names[:n_classes]):
+                    plt.figure(figsize=figsize)
+                    try:
+                        shap.summary_plot(vals[:, :, cls_idx], features=self.X_train, feature_names=self.feature_names, show=False)
+                        plt.title(f"{name} — SHAP summary — {cname}")
+                    except Exception:
+                        # fallback: beeswarm with Explanation object
+                        try:
+                            single_expl = shap.Explanation(values=vals[:, :, cls_idx], feature_names=self.feature_names)
+                            shap.plots.beeswarm(single_expl, show=False)
+                            plt.title(f"{name} — SHAP summary — {cname}")
+                        except Exception as e:
+                            warnings.warn(f"[{name}] per-class summary failed for {cname}: {e}")
+                    plt.tight_layout()
+                    plt.show()
+            else:
+                # single-output case
+                plt.figure(figsize=figsize)
                 try:
-                    shap.plots.beeswarm(shap_vals, show=False)
-                except Exception:
-                    # fallback a summary_plot
                     shap.summary_plot(shap_vals, features=self.X_train, feature_names=self.feature_names, show=False)
-                plt.title(f"{name} — SHAP summary")
-            except Exception as e:
-                warnings.warn(f"[{name}] summary plot generation failed: {e}")
-                plt.text(0.5, 0.5, "summary_plot failed", ha="center", va="center")
-            
-            plt.tight_layout()
-            plt.show()
+                    plt.title(f"{name} — SHAP summary")
+                except Exception as e:
+                    warnings.warn(f"[{name}] summary plot failed: {e}")
+                plt.tight_layout()
+                plt.show()
 
 
     def shap_waterfall_plots(self, sample_idx: Union[int, Sequence[int]] = 0, max_models: Optional[int] = None, figsize_per_row=(8, 5), axes=None):
@@ -465,32 +488,162 @@ class ModelExplainer:
         plt.tight_layout()
         plt.show()
 
+    # ----------------------------#
+    #            TREES            #
+    # ----------------------------#
     def plot_decision_trees(self, max_depth: Optional[int] = None, fontsize: int = 10):
         """
-        Display decision tree models (whose name starts with 'Decision_Tree') 
-        using matplotlib (does not require Graphviz).
+        Display Decision Tree models (whose name starts with 'Decision_Tree')
+        using Matplotlib. This version unwraps common wrappers (Pipeline, GridSearchCV,
+        AdaBoost/Bagging, Voting, etc.) to find the underlying DecisionTreeClassifier
+        instance that actually contains `.tree_`.
         """
+        from sklearn.utils.validation import check_is_fitted
+
+        def _unwrap_to_tree(est):
+            """Recursively try to locate an object that has .tree_ (DecisionTreeClassifier)."""
+            seen = set()
+            queue = [est]
+            while queue:
+                cur = queue.pop(0)
+                if cur is None:
+                    continue
+                cid = id(cur)
+                if cid in seen:
+                    continue
+                seen.add(cid)
+
+                # direct DecisionTreeClassifier-like
+                if hasattr(cur, "tree_"):
+                    return cur
+
+                # common wrapper attributes that may contain an estimator
+                if hasattr(cur, "best_estimator_"):
+                    queue.append(cur.best_estimator_)
+                if hasattr(cur, "estimator_"):
+                    queue.append(cur.estimator_)
+                if hasattr(cur, "base_estimator_"):
+                    queue.append(cur.base_estimator_)
+                # sklearn Pipelines
+                if hasattr(cur, "steps") and isinstance(getattr(cur, "steps"), (list, tuple)) and len(cur.steps) > 0:
+                    queue.append(cur.steps[-1][1])
+                if hasattr(cur, "named_steps") and isinstance(getattr(cur, "named_steps"), dict) and len(cur.named_steps) > 0:
+                    queue.append(list(cur.named_steps.values())[-1])
+                # ensembles like VotingClassifier, BaggingClassifier, AdaBoostClassifier
+                if hasattr(cur, "estimators_") and getattr(cur, "estimators_", None):
+                    # estimators_ is usually a list of estimators or list of (name, estimator)
+                    for e in cur.estimators_:
+                        queue.append(e[1] if isinstance(e, tuple) else e)
+                if hasattr(cur, "estimators") and getattr(cur, "estimators", None):
+                    for e in cur.estimators:
+                        queue.append(e[1] if isinstance(e, tuple) else e)
+                # sometimes "base_estimator" (without trailing underscore)
+                if hasattr(cur, "base_estimator") and getattr(cur, "base_estimator", None):
+                    queue.append(cur.base_estimator)
+            return None
+
         found = False
+        desired_order = ["CN", "EMCI", "LMCI", "AD"]
+
         for name, model in self.models:
             if not name.startswith("Decision_Tree"):
                 continue
             found = True
-            if not hasattr(model, "tree_"):
-                print(f"[{name}] does not look like a DecisionTreeClassifier (missing 'tree_' attribute).")
-                continue
+
             try:
+                inner = _unwrap_to_tree(model)
+                if inner is None:
+                    print(f"[{name}] could not find underlying DecisionTreeClassifier (no .tree_ in object or wrappers).")
+                    continue
+
+                # ensure fitted
+                try:
+                    check_is_fitted(inner, attributes="tree_")
+                except Exception:
+                    print(f"[{name}] underlying DecisionTreeClassifier is not fitted (no .tree_).")
+                    continue
+
+                # Work on a deep copy of the real tree estimator
+                tree_copy = copy.deepcopy(inner)
+
+                # Obtain original class ordering from the estimator if possible
+                orig_classes = list(getattr(tree_copy, "classes_", []))
+                if not orig_classes:
+                    # fallback: try outer model classes_
+                    orig_classes = list(getattr(model, "classes_", [])) or orig_classes
+
+                # Reorder classes according to desired_order, preserving any other classes
+                display_classes = [c for c in desired_order if c in orig_classes] + [c for c in orig_classes if c not in desired_order]
+                if display_classes:
+                    # map indices; if mapping fails, skip reordering
+                    try:
+                        idx_map = [orig_classes.index(c) for c in display_classes]
+                        # tree_.value shape: (node_count, n_outputs, n_classes) in sklearn
+                        try:
+                            tree_copy.tree_.value[:] = tree_copy.tree_.value[:, :, idx_map]
+                        except Exception:
+                            # some sklearn versions have different shapes; attempt a safer reorder if possible
+                            val = tree_copy.tree_.value
+                            if val.ndim == 3 and val.shape[2] == len(orig_classes):
+                                reordered = val[:, :, idx_map]
+                                tree_copy.tree_.value[:] = reordered
+                        tree_copy.classes_ = np.array(display_classes)
+                    except Exception:
+                        # If any issue, leave classes as-is
+                        pass
+
+                tree_copy.n_classes_ = len(getattr(tree_copy, "classes_", []))
+
+                # Adjust leaf nodes to pick worst class if tied (keep original logic but robust)
+                try:
+                    node_count = tree_copy.tree_.node_count
+                    children_left = tree_copy.tree_.children_left
+                    children_right = tree_copy.tree_.children_right
+                    values = tree_copy.tree_.value  # shape: (node_count, n_outputs, n_classes)
+                    for i in range(node_count):
+                        if children_left[i] == children_right[i] == -1:  # leaf
+                            vals = values[i, 0] if values.ndim == 3 else values[i]
+                            if vals is None or len(vals) == 0:
+                                continue
+                            max_val = np.max(vals)
+                            tied_idx = [k for k, v in enumerate(vals) if v == max_val]
+                            if len(tied_idx) > 1 and getattr(tree_copy, "classes_", None) is not None:
+                                # choose worst class based on desired_order priority
+                                display = list(tree_copy.classes_)
+                                def severity_index(c):
+                                    try:
+                                        return desired_order.index(c)
+                                    except ValueError:
+                                        return len(desired_order)  # less severe
+                                tied_classes = [display[k] for k in tied_idx]
+                                worst_class = max(tied_classes, key=severity_index)
+                                # construct a new vector: set all to max_val - 1 and worst to max_val
+                                new_vec = np.full_like(vals, fill_value=max_val - 1)
+                                new_vec[display.index(worst_class)] = max_val
+                                if values.ndim == 3:
+                                    tree_copy.tree_.value[i, 0, :] = new_vec
+                                else:
+                                    tree_copy.tree_.value[i, :] = new_vec
+                except Exception:
+                    # non-critical; continue to plotting
+                    pass
+
+                # Plot
                 plt.figure(figsize=(40, 40))
-                tree.plot_tree(
-                    model,
+                plot_tree(
+                    tree_copy,
                     feature_names=[str(f) for f in self.feature_names],
-                    class_names=[str(c) for c in self.class_names] if self.class_names is not None else None,
+                    class_names=[str(c) for c in getattr(tree_copy, "classes_", [])],
                     filled=True,
                     fontsize=fontsize,
                     max_depth=max_depth,
+                    label='all'
                 )
                 plt.title(f"Decision Tree visualization — {name}")
                 plt.show()
+
             except Exception as e:
                 print(f"[{name}] Error while generating the decision tree: {e}")
+
         if not found:
             print("No models found with a name starting with 'Decision_Tree'.")

@@ -8,9 +8,10 @@
 *Project by Francesco Panattoni*
 
 This report introduces CogniPredictAD, a *Data Mining and Machine Learning* project designed to analyze clinical and biological parameters from the ADNI dataset, with the goal of predicting final clinical diagnoses (CN, EMCI, LMCI, AD) based on baseline data.
-The analysis includes a detailed examination of preprocessing techniques: advanced missing data management, normalizations, and feature engineering. We assess the models based on their balanced accuracy and present the results through various evaluations.
-Due to the ambiguity of the high predictivity of three values (CDRSB, LDELTOTAL, mPACCdigit), I build two families of models: with and without these features to reduce the risk of overfitting on ADNI.
-The modeling phase includes Decision Tree, Random Forest, Extra Trees, XGBoost, LightGBM, CatBoost, Multinomial Logistic Regression, and Bagging. Hybrid sampling techniques, Grid Search for hyperparameter optimization, and cross-validation are applied. With the full set, the models achieve very high metrics (e.g., balanced accuracy ≈ 0.926, ROC-AUC ≈ 0.987), while by removing the three dominant features, the LightGBM with hybrid sampling retains the best balanced performance (balanced accuracy ≈ 0.721, ROC-AUC ≈ 0.907). For transparency, two optimized Decision Trees was also selected, and the trees and explanatory rules were saved.
+The analysis includes a detailed examination of preprocessing techniques: advanced missing data management, normalizations, and feature engineering. We assess the models based on their Macro F1 Score and present the results through various evaluations.
+The modeling phase includes Decision Tree, Random Forest, Extra Trees, AdaBoost and Multinomial Logistic Regression (with and without sampling on the dataset). Hybrid sampling techniques, Grid Search for hyperparameter optimization, and cross-validation are applied. In the end the best performance is obtained by Extra Trees (without Hybrid Sampling) with Macro F1 Score ≈ 0.9376, Accuracy ≈ 0.9442, and ROC-AUC ≈ 0.9867.
+We decided, to improve explainability, to also keep Decision Tree (it proved better with Hybrid Sampling) which has Macro F1 Score ≈ 0.9055, Accuracy ≈ 0.9153, and ROC-AUC ≈ 0.9773.
+Due to the ambiguity of the high predictivity of three values (CDRSB, LDELTOTAL, mPACCdigit), I built two alternative models with the same pipeline as the main ones, but without those features.
 The conclusions highlight good predictive performance on the ADNIMERGE dataset, but caution against possible sample bias and the need for external validation (by adding additional patients to the dataset or through data integration with similar datasets) before any clinical use.
 
 
@@ -25,21 +26,22 @@ After getting Data access from the Alzheimer's Disease Neuroimaging Initiative (
 - [Race, Ethnicity, and Alzheimer's](https://aaic.alz.org/downloads2020/2020_Race_and_Ethnicity_Fact_Sheet.pdf)
 
 ### Notebook 3 (Data Exploration)
-- [Cerebrospinal fluid and blood biomarkers in Alzheimer’s disease](https://pmc.ncbi.nlm.nih.gov/articles/PMC3782169/)
+- [Cerebrospinal fluid and blood biomarkers in Alzheimer's disease](https://pmc.ncbi.nlm.nih.gov/articles/PMC3782169/)
 - [Tau as a biomarker of neurodegenerative diseases](https://pmc.ncbi.nlm.nih.gov/articles/PMC2993973/)
 - [Marriage and risk of dementia: systematic review and meta-analysis of observational studies](https://pubmed.ncbi.nlm.nih.gov/29183957/)
 - [Marital status and risk of dementia over 18 years: Surprising findings from the National Alzheimer's Coordinating Center](https://pmc.ncbi.nlm.nih.gov/articles/PMC11923573/)
 - [Contributions of the ADNI Biostatistics Core](https://alz-journals.onlinelibrary.wiley.com/doi/10.1002/alz.14159)
 
 ### Notebook 4 (Data Preprocessing)
-- [Predicting clinical decline and conversion to Alzheimer’s disease or dementia using novel Elecsys Aβ(1–42), pTau and tTau CSF immunoassays](https://www.nature.com/articles/s41598-019-54204-z)
+- [Predicting clinical decline and conversion to Alzheimer's disease or dementia using novel Elecsys Aβ(1–42), pTau and tTau CSF immunoassays](https://www.nature.com/articles/s41598-019-54204-z)
 - [Tau as a biomarker of neurodegenerative diseases](https://pmc.ncbi.nlm.nih.gov/articles/PMC2993973/)
 
 ### Notebook 5 (New Data Exploration)
 - [Apolipoprotein E epsilon4 association with dementia in a population-based study: The Framingham study](https://pubmed.ncbi.nlm.nih.gov/8618665/)
+- [Outlier detection with Local Outlier Factor (LOF)](https://scikit-learn.org/stable/auto_examples/neighbors/plot_lof_outlier_detection.html)
 
-### Notebook 6 (Hyperparameter Tuning)
-- [Risk Score Stratification of Alzheimer’s Disease and Mild Cognitive Impairment using Deep Learning](https://www.medrxiv.org/content/10.1101/2020.11.09.20226746v3.full)
+### Notebook 8 (Hyperparameter Tuning)
+- [Risk Score Stratification of Alzheimer's Disease and Mild Cognitive Impairment using Deep Learning](https://www.medrxiv.org/content/10.1101/2020.11.09.20226746v3.full)
 
 ## Installation
 ### With venv
@@ -83,27 +85,26 @@ pip install -e .
 
 
 ## Introduction
-Early and accurate diagnosis of **Alzheimer’s disease** (AD) is a clinical and social priority: intervening before cognitive impairment becomes severe and allows for the planning of therapies, treatments, and support strategies, and the testing of interventions that slow decline. However, the disease is complex and multifactorial: clinical signs, cognitive tests, Cerebrospinal Fluid (CSF) biomarkers, genetics (e.g. APOE4), and neuroimaging measures interact in a nontrivial way. For this reason, **Machine Learning** (ML) techniques are particularly well-suited: they can integrate multimodal information, model nonlinear relationships, and identify combinations of features that improve the discrimination between **cognitively normal** (CN), **mild cognitive impairment** (MCI), and full-blown **Alzheimer’s subjects** (AD).
+Early and accurate diagnosis of **Alzheimer's disease** (AD) is a clinical and social priority: intervening before cognitive impairment becomes severe and allows for the planning of therapies, treatments, and support strategies, and the testing of interventions that slow decline. However, the disease is complex and multifactorial: clinical signs, cognitive tests, Cerebrospinal Fluid (CSF) biomarkers, genetics (e.g. APOE4), and neuroimaging measures interact in a nontrivial way. For this reason, **Machine Learning** (ML) techniques are particularly well-suited: they can integrate multimodal information, model nonlinear relationships, and identify combinations of features that improve the discrimination between **cognitively normal** (CN), **mild cognitive impairment** (MCI), and full-blown **Alzheimer's subjects** (AD).
 
-A dataset widely used in the literature for these purposes is **ADNI** (**Alzheimer’s Disease Neuroimaging Initiative**), a multicenter longitudinal study that collects clinical, cognitive, genetic, CSF, and imaging data from USA and Canada. In this project, I worked with the **ADNIMERGE.csv** tabular file, which is the merged version of the ADNI data and contains repeated visits over time, many clinical variables, biomarkers, and metadata. The notebooks show the entire process of building classification models and their employment.
+A dataset widely used in the literature for these purposes is **ADNI** (**Alzheimer's Disease Neuroimaging Initiative**), a multicenter longitudinal study that collects clinical, cognitive, genetic, CSF, and imaging data from USA and Canada. In this project, I worked with the **ADNIMERGE.csv** tabular file, which is the merged version of the ADNI data and contains repeated visits over time, many clinical variables, biomarkers, and metadata. The notebooks show the entire process of building classification models and their employment.
 
-In this project, baseline visits were selected (from 16,421 rows to 2,419 rows), extensive cleaning and imputation of missing features was performed, MRI volumes were normalized for ICV, and derived features (biological ratios and cognitive scores) were constructed. I divided the pipeline in two distinct sets with and without the three dominant cognitive features.
+In this project, baseline visits were selected (from 16,421 rows to 2,419 rows), extensive cleaning and imputation of missing features was performed, MRI volumes were normalized for ICV, and derived features (biological ratios and cognitive scores) were constructed. Outlier Detection with IQR Method was used to spot errors.
 
-The modeling compared trees and ensembles, using hyperparameter optimization and sampling strategies. The **Random Forest** (with hybrid sampling) model was chosen as **Model1**. The **XGBoost** (with hybrid sampling) model, chosen as **Model2**, maintained good performance even when excluding the dominant features.
+The modeling compared trees and ensembles, using hyperparameter optimization and sampling strategies. The **Extra Trees** (without hybrid sampling) model was chosen as **Model**. The **Adaptive Boosting** (without hybrid sampling) model, chosen as **AltModel**, maintained good performance even when excluding the dominant features.
 
-Furthermore, **XAIModel1** and **XAIModel2** represent the explainable Decision Trees for the dataset with and without the dominant features.
-
+Furthermore, **XAIModel** and **AltXAIModel** represent the explainable Decision Trees for the dataset with and without the dominant features.
 
 ## Dataset
 **ADNIMERGE.csv** is the **ADNI** merged table used as the main input in the notebooks: the copy used by the project contains 16,421 rows (representing visits) and 116 columns before any cleaning and selection, and incorporates repeat visits for each subject (VISCODE, EXAMDATE), identifiers (RID, PTID), and both the initial screening diagnosis (DX_bl) and the more complete diagnosis assigned at the visit (DX).
 
 The structure is mixed but rich: there are demographics (AGE, PTGENDER, PTEDUCAT, PTETHCAT, PTRACCAT, PTMARRY), genetics (APOE4), numerous cognitive and clinical scores (MMSE, CDRSB, ADAS11/13, LDELTOTAL, FAQ, MOCA, TRABSCOR, RAVLT\_…, mPACC…), CSF and PET biomarkers (ABETA, TAU, PTAU, FDG, also columns such as PIB and AV45), and MRI volumetric measures (Ventricles, Hippocampus, Entorhinal, Fusiform, MidTemp, WholeBrain, ICV). Some features are related to a single visit, while others are repeated but refer to measurements taken during the baseline visit and end with the suffix "\_bl".
 
-*ADNIMERGE.csv*, however, isn’t simply a concatenation: many variables are derived from source files. For example, the variable Hippocampus is derived from the sum of the left/right components (ST29SV + ST88SV) taken from the original *FreeSurfer* files.
+*ADNIMERGE.csv*, however, isn't simply a concatenation: many variables are derived from source files. For example, the variable Hippocampus is derived from the sum of the left/right components (ST29SV + ST88SV) taken from the original *FreeSurfer* files.
 
 
 ## Multiclass Problem
-As I have seen, we have a different class distribution between DX_bl and DX.
+I have observed that the class distribution differs between DX_bl and DX
 - **DX_bl** can be "CN", "SMC", "EMCI", "LMCI", and "AD". It indicates the screening diagnosis, i.e. the preliminary clinical judgment assigned during the first evaluation visit. It is a Screening diagnosis.
 - **DX** can be "CN", "MCI", and "Dementia". It is instead the diagnosis assigned during the baseline visit (denoted by *VISCODE* equal to "bl"), after a more in-depth clinical evaluation.
 
@@ -111,11 +112,11 @@ As I have seen, we have a different class distribution between DX_bl and DX.
 
 The acronym **SMC** refers to *Subjective Memory Concern*, i.e., cognitively normal (CN) subjects reporting perceived memory issues. Since predicting a subjective perception from objective data is not meaningful. So I reassign it based on the value it has in DX.
 
-Furthermore, we divide MCI into EMCI (Early MCI) and LMCI (Late MCI), assuming that DX_bl values accurately distinguish EMCI and LMCI when DX equals MCI. This is because the division into EMCI and LMCI reflects the degree of cognitive impairment and the risk of progression to dementia.
+Furthermore, I divided MCI into EMCI (Early MCI) and LMCI (Late MCI), assuming that DX_bl values accurately distinguish EMCI and LMCI when DX equals MCI. This is because the division into EMCI and LMCI reflects the degree of cognitive impairment and the risk of progression to dementia.
 - **EMCI:** mild cognitive deficits, often detectable only with more sensitive tests. Lower or slower risk of progression to dementia.
-- **LMCI:** more marked and evident impairment, greater impact on daily life. Higher risk of progression to Alzheimer’s or other dementias.
+- **LMCI:** more marked and evident impairment, greater impact on daily life. Higher risk of progression to Alzheimer's or other dementias.
 
-Therefore, we decide to keep them in the diagnostic prediction.
+Therefore, I decided to keep them in the diagnostic prediction.
 
 <figure id="fig:pie-chart-dx" data-latex-placement="H">
 <p><img src="doc/images/DX_pie_chart.png" style="width:48.0%" alt="image" />
@@ -126,51 +127,56 @@ Therefore, we decide to keep them in the diagnostic prediction.
 
 
 ## Data Exploration
-Explorations reveal that the dataset has 16,421 rows and 116 columns. However, these records represent the various visits, and we are only interested in the baseline ones. The dataset contains 2,419 useful patients (using "useful" means those who did not have a NULL baseline diagnosis) for the proposed problem.
+Explorations revealed that the dataset has 16,421 rows and 116 columns. However, these records represent the various visits, and I was only interested in the baseline ones. The dataset contains 2,419 useful patients (using "useful" means those who did not have a NULL baseline diagnosis) for the proposed problem.
 
 Many columns contain significant percentages of missing cases. The diagnostic classes of the baseline sample are unbalanced, but not extremely unbalanced.
 
 Demographic and risk analyses show bias in the ADNI sample. Ethnicity is heavily skewed toward white subjects, with high average levels of education, and many married individuals. There are more men than women, but overall the number is not disproportionate. All this, however, implies that models may perform worse on more heterogeneous clinical populations.
 
 The *Data Exploration* was then divided into three parts:
-1.  the preliminary data exploration of the raw dataset;
-2.  the data exploration after splitting and preparing the actual dataset;
-3.  the data exploration after Preprocessing to select the classification models.
+1. the *preliminary data exploration* of the raw dataset;
+2. the *data exploration* after splitting and preparing the actual learning set;
+3. the *data exploration* after Preprocessing to select the classification models.
+
+The *preliminary data exploration*'s descriptive summaries revealed extensive missing data, especially in key biomarker and imaging variables, prompting a structured missing-data plan. Review of baseline and visit fields confirmed usable *DX_bl* labels and clarified visit patterns, motivating a restriction to baseline records for classification.
+
+In the *data exploration*, the training set was inspected using a reduced set of clinically relevant variables and derived ratios. MRI volumes were normalized by *ICV*, and CSF ratios *TAU/ABETA* and *PTAU/ABETA* were computed to improve biological interpretability and reduce scanner and size effects. Summary statistics, boxplots, and correlation maps were used to assess distributions and multicollinearity. Clinical and biomarker distributions showed the expected disease gradient but with strong overlap, skewness, and outliers. Sex differences in MRI volumes confirmed the need for ICV normalization. Class counts showed *only mild imbalance* across CN, EMCI, LMCI, and AD.
+
+After preprocessing on the training set, I do a *new data exploration*. The final training file contained a compact multimodal set covering demographics, APOE4, cognition, Ecog, CSF ratios, and MRI/ICV ratios. Feature distributions were summarised using medians and IQRs. Outliers were assessed with **Local Outlier Factor** across clinical, CSF, MRI/ICV, and combined sets. Only a small number of high-anomaly cases emerged, many clinically plausible, supporting the use of models robust to skew and extreme values rather than broad exclusion.
+
+
+## Learning Set
+The **preparation phase** focused on isolating a coherent baseline cohort, restructuring the heterogeneous *ADNIMERGE.csv* into an analyzable form, and enforcing clinically sound data standards. The raw dataset, originally **visit–centric** and affected by extensive missingness, redundant attributes, and inconsistencies across ADNI phases, was reduced to a strictly **baseline-oriented structure** in which each participant contributes a single, diagnostically reliable record.
+
+A first objective was to ensure diagnostic consistency. Screening and baseline labels were reconciled to guarantee that each subject possesses a unique and clinically valid baseline diagnosis. This step was essential for framing the downstream problem as a cross-sectional classification task. Demographic attributes were then harmonized: ethnicity and race were merged into a compact demographic descriptor, marital status was simplified into an informative binary form, and sex was encoded to support normalization and group comparisons. These operations provided a unified representation while preserving clinically relevant distinctions.
+
+Attributes with overwhelming missingness or with limited value for single-visit modelling were removed. The retained variables concentrated on demographics, genetic risk, cognition, CSF biomarkers, and structural MRI measurements. Biomarker fields containing detection-limit symbols were converted into usable quantitative values, ensuring numerical compatibility without distorting their clinical meaning. Categorical labels exhibiting inconsistencies across ADNI phases were standardized to a homogeneous nomenclature.
+
+A **systematic assessment of numerical plausibility** led to the identification of *outliers* that could not be justified clinically. Implausible values in cognitive tests and structural MRI volumes were marked for later imputation rather than corrected ad hoc, thereby **avoiding data leakage**.
+
+After consolidation, the resulting dataset forms a compact **learning set** explicitly designed for multiclassification. The final structure is well aligned with the goals of diagnostic modelling: it is coherent, interpretable, statistically stable, and it supports principled preprocessing steps.
 
 
 ## Data Preprocessing
-We divided the *Preprocessing* into two phases.
+The **Preprocessing phase** reshaped the learning set into a modelling-ready multiclass table by applying **structured imputation**, **biologically informed transformations**, **feature reduction**, and **controlled class balancing**. The objective was to obtain a compact, coherent, and statistically stable representation suitable for diagnostic classification.
 
-In the first phase, which involved preparing the dataset, we performed all the transformations and cleaning operations that did not involve the risk of *data leakage*, applying them to the entire dataset before splitting it into training and testing.
+### Cleaning and Imputation
+Missingness was evaluated across modalities. Continuous and discrete gaps were imputed using a **KNN-based** strategy that preserved local structure and maintained integer semantics where appropriate. This procedure ensured numerical coherence while avoiding distortions in clinically sensitive variables.
 
-In the second phase, however, we applied the transformations that could introduce data leakage exclusively to the training set, with the sole exception of imputing missing values: in this case, the *KNN* Imputer was trained on the training set and then used for both training and testing, to ensure consistency and avoid leakage. Preprocessing has in turn been divided into: *Data Cleaning*, *Data Transformation*, *Outlier Detection* and *Data Reduction*.
+### Transformations and Normalizations
+Two families of transformations were central:
 
-### Data Preparation
-- **Selection of baseline visits only:** The first clinical-operational choice was to work only on baseline visits (VISCODE == "bl"), because the goal is to predict the diagnosis based on the information collected at the first visit;
-- **SMC diagnosis management:** Records with *DX_bl* = SMC were realigned using the DX variable, but ultimately all have been classified as "CN". We already explained why in the reasons stated in the chapter "Multiclass Problem";
-- **Consolidating bl columns:** Clean up duplicates and merge "baseline" values into "main" columns;
-- **Error handling:** Deleted the row with RAVLT_perc_forgetting = -316.667 and RAVLT_forgetting = -19;
-- **Text category cleaning (ethnicity, race, marriage):** String values standardized to improve readability and avoid inconsistencies;
-- **Encoding of categorical variables:** One-hot encoding (PTETHCAT, PTMARRY), binary mapping (PTGENDER: Male=1, Female=0) and ordinal encoding for DX (CN=0, EMCI=1, LMCI=2, AD=3).
-- **Preliminary Feature Reduction:** Removal of columns not relevant to the diagnosis;
-- **Splitting train/test:** *Separation into training and test sets while avoiding leakage.*
+- **CSF biomarkers** were expressed as the ratios **TAU/ABETA** and **PTAU/ABETA**, which were calculated to enhance biological interpretability and provide more diagnostically meaningful measures than the raw values;
 
-### Data Cleaning
-- **Handling missing values:** Identifying percentages of missing values and using KNN Imputer for continuous variables ;
-- **Numeric Value Conversion:** Convert cognitive scales and age from float to int, correcting for approximations due to imputation or format errors.
+- Structural **MRI measures** were **normalized** by **intracranial volume** (**ICV**), yielding relative regional volumes that are comparable across individuals and less affected by head-size confounds.
 
-### Data Transformation
-- **Creation of new CSF metrics:** *TAU/ABETA* and *PTAU/ABETA* ratios more predictive than single measures according to the literature;
-- **MRI normalization to ICV (Intracranial Volume):** Necessary to correct for differences due to gender and cranial size.
+Furthermore, **demographic and categorical predictors** were **encoded** into low-cardinality representations to enhance interpretability and compatibility with tabular models.
 
-### Outlier Detection
-- **Univariate Analysis:** use *IQR* and *Z-score threshold* for each column to find outliers;
-- **Multivariate Analysis:** Constructs groups (EcogPt, EcogSP, Neuropsych, MRI, MRI/ICV, CSF, CSF/ABETA, mPACC), applies *LOF* and *DBSCAN* to normalized data (*RobustScaler*). Only data points reported by both techniques and with a *LOF_score* greater than 2 are kept to flag them as "extreme";
-- **Cleaning up problematic outliers:** Outliers with values that were clearly out of range and therefore deemed highly unlikely were replaced with the mean by class.
+### Feature Reduction and Selection
+Redundant or low-information variables were removed through a combination of statistical and conceptual criteria. Highly overlapping cognitive scales were consolidated: **ADAS11** and **ADASQ4** were **discarded** in favour of **ADAS13**, which subsumes their information almost entirely. **Global Ecog scores were removed**, while the domain-specific components were retained for their finer discriminative value. When two composite scores were strongly correlated, the version with greater mutual information regarding diagnosis was preferred. Demographic attributes with negligible variability were excluded to avoid noise and spurious effects.
 
-### Data Reduction
-- **Removal of redundant features:** *ADAS11*, *ADASQ4*, *EcogPtTotal*, *EcogSPTotal*, *mPACCtrailsB*, and *TAU* were removed because they had a high correlation with other features and their informative value was low;
-- **Attribute Subset Selection:** I apply four selection methods to the train: *Pearson correlation* (\|*r*\| ≥ 0.6), *mutual information* (top 25), *SelectKBest with Kruskal–Wallis H-test* (*k* = 25), and *Recursive Feature Elimination* (RFE with Random Forest). It combines the results by counting how many times each feature appears and retains those selected at least three times, plus other features deemed useful even though they were counted less frequently.
+### Class Balancing
+To address the residual **class imbalance**, a **hybrid sampling pipeline** was implemented. **Majority classes** were modestly **under-sampled** with **Random Undersampler**, while **minority classes** were synthetically **oversampled** using **SMOTENC**, which preserves mixed continuous–categorical structure. All diagnostic groups (**DX**) were brought to comparable sample sizes, producing a balanced dataset suitable for unbiased model comparison. 
 
 ### Some Considerations
 #### Correlation
@@ -186,14 +192,19 @@ This choice was driven by one reason: I wanted to **preserve the clinical interp
 #### Binning
 Binning was not applied because it would have reduced the useful information and discriminatory power of continuous variables. The models used already capture nonlinearities and thresholds, so prior discretization is unnecessary and could introduce artifacts.
 
+### Final Dataset
+The resulting dataset contains a focused and interpretable feature set spanning demographic characteristics, genetic risk, cognitive performance, functional assessments, CSF ratios, and ICV-normalized MRI measures. Its structure is explicitly tailored for multimodal diagnostic modelling, reducing redundancy while retaining clinically meaningful variability.
+
+The preprocessing decisions emphasise interpretability, biological plausibility, robustness to noise, and balanced class representation. These principles ensure that the subsequent modelling pipeline operates on data that are both statistically reliable and clinically coherent.
+
 #### Attributes Table
 | **Attribute** | **Description** | **Category** |
 |:---|:---|:---|
 | DX | Clinical diagnosis at the time of visit: CN, SMC, EMCI, LMCI, AD | Diagnosis |
-| AGE | Participant’s age at time of visit | Demographics |
-| PTGENDER | Participant’s gender (Male/Female) | Demographics |
+| AGE | Participant's age at time of visit | Demographics |
+| PTGENDER | Participant's gender (Male/Female) | Demographics |
 | PTEDUCAT | Years of formal education completed | Demographics |
-| APOE4 | Number of APOE *ε*<!-- -->4 alleles (0, 1, or 2), a genetic risk factor for Alzheimer’s | Demographics |
+| APOE4 | Number of APOE *ε*<!-- -->4 alleles (0, 1, or 2), a genetic risk factor for Alzheimer's | Demographics |
 | MMSE | Mini-Mental State Examination score (0–30, higher = better) | Clinical Scores |
 | CDRSB | Clinical Dementia Rating - Sum of Boxes (0–18, higher = worse) | Clinical Scores |
 | ADAS13 | ADAS-Cog 13-item total score (higher = worse) | Clinical Scores |
@@ -204,7 +215,7 @@ Binning was not applied because it would have reduced the useful information and
 | RAVLT_immediate | RAVLT total immediate recall score (sum over 5 trials) | Clinical Scores |
 | RAVLT_learning | Learning score (Trial 5 minus Trial 1 of RAVLT) | Clinical Scores |
 | RAVLT_perc_forgetting |   Percent forgetting from RAVLT (higher = worse) | Clinical Scores |
-| mPACCdigit | Modified Preclinical Alzheimer’s Cognitive Composite – Digit Symbol test | Composite Scores |
+| mPACCdigit | Modified Preclinical Alzheimer's Cognitive Composite – Digit Symbol test | Composite Scores |
 | EcogPtMem | Subject self-reported memory complaints (ECog) | ECogPT |
 | EcogPtLang | Subject self-reported language difficulties (ECog) | ECogPT |
 | EcogPtVisspat | Subject self-reported visuospatial difficulties (ECog) | ECogPT |
@@ -218,6 +229,7 @@ Binning was not applied because it would have reduced the useful information and
 | EcogSPOrgan | Informant-reported organization issues (ECog) | ECogSP |
 | EcogSPDivatt | Informant-reported divided attention issues (ECog) | ECogSP |
 | FDG | FDG PET SUVR – brain glucose metabolism | Biomarkers |
+| TAU/ABETA | CSF tau protein/A*β*<!-- -->42 ratio | Biomarkers |
 | PTAU/ABETA | CSF phosphorylated tau protein/A*β*<!-- -->42 ratio | Biomarkers |
 | Hippocampus/ICV | Volume of hippocampus/Intracranial volume ratio from MRI | MRI |
 | Entorhinal/ICV | Volume of the entorhinal cortex/Intracranial volume ratio from MRI | MRI |
@@ -226,91 +238,75 @@ Binning was not applied because it would have reduced the useful information and
 | Ventricles/ICV | Volume of ventricles/Intracranial volume ratio from MRI | MRI |
 | WholeBrain/ICV | Whole brain volume/Intracranial volume ratio from MRI | MRI |
 
+
 ## Model Selection
 The following classification algorithms were chosen:
 1.  **Decision Tree:** This model constructs a series of "if → then" rules (split on individual features) to separate classes using a binary tree. Each leaf of the tree corresponds to a prediction. It was chosen because it is immediately interpretable (*XAI*);
 2.  **Random Forest:** Builds many different decision trees on subsamples of the data and averages their predictions. This reduces variance compared to a single tree and improves robustness to noise, outliers, and collinearity;
 3.  **Extra Trees:** Similar to Random Forest but chooses more random splits, increasing diversity among trees and often reducing overfitting on noisy features. It was tested to compare with Random Forest and evaluate whether increased randomness improved generalization across the dataset;
-4.  **XGBoost:** A boosting algorithm that builds trees sequentially, each improving the errors of the previous one. It is highly efficient, regularized, and capable of capturing nonlinear interactions between variables, while also controlling overfitting;
-5.  **LightGBM:** A gradient boosting implementation designed to be very fast and scalable. It uses techniques (leaf-wise splitting, binning) that make it particularly efficient on heterogeneous datasets;
-6.  **CatBoost:** A boosting variant that natively handles categorical variables and has robust default hyperparameters to reduce overfitting. It is suitable for working with clinical data;
-7.  **Multinomial Logistic Regression:** A linear model that estimates the probabilities of membership in each class using a linear combination of features. It requires feature standardization to function properly, which was ensured with StandardScaler in the pipeline. It was included as a simple and interpretable statistical baseline, useful for comparing whether the gain from complex models is consistent with a linear solution;
-8.  **Bagging:** An ensemble approach that trains several models on different bootstrap samples drawn from the dataset, and then combines their outputs by averaging. The main effect is a reduction in model variance, leading to more stable predictions. It was selected because, in clinical datasets where variability and noise are substantial, bagging provides a straightforward way to assess how much predictive stability can be gained simply by aggregating multiple weak learners.
+4.  **AdaBoost:** A boosting algorithm (Adaptive Boosting) that builds a strong classifier by combining many weak learners (often decision stumps). It iteratively reweights training samples, increasing the weight of those misclassified by previous learners so that subsequent models focus on harder examples. Each weak learner is also given a weight based on its accuracy, and the final prediction is a weighted vote (or sum) of all learners. It tends to reduce bias and can generalize well, though it may be sensitive to noisy data and outliers;
+5.  **Multinomial Logistic Regression:** A linear model that estimates the probabilities of membership in each class using a linear combination of features. It requires feature standardization to function properly, which was ensured with StandardScaler in the pipeline. It was included as a simple and interpretable statistical baseline, useful for comparing whether the gain from complex models is consistent with a linear solution.
 
 
-## Hyperparameter Selection and Hybrid Sampling
-### Grid Search
-To optimize the performance of the classifiers, a **Grid Search** procedure with layered cross-validation was adopted. Grid Search was chosen because it allows for a systematic and controlled exploration of the most relevant hyperparameters for each model, ensuring reproducibility and the ability to transparently compare the tested configurations.
+## Hyperparameter Tuning
+Each **classification algorithm** is **embedded** in a **pipeline** that handles **preprocessing**. We have created an additional pipeline with a **rebalancing strategy** combining **RandomUnderSampler** for **majority classes** and **SMOTENC** for **minority ones**. Categorical indices for SMOTENC are explicitly computed relative to *PTGENDER* and *APOE4*.
 
-### Hybrid Sampling
-The dataset also presented a slight imbalance in diagnostic classes, as already discussed in the "Multiclass Problem" chapter.
+To optimize the performance of the classifiers, the **hyperparameter tuning** is carried out through exhaustive **Grid Search** with **5-fold cross-validation**. The chosen metric is the **macro-averaged F1 score**, an appropriate criterion when class imbalance is present and when resampling modifies the empirical class distribution.
 
-To address this problem, a **Hybrid Sampling strategy** was applied, combining:
+The **parameter grids** explore regularisation strength for logistic regression, depth and leaf-size constraints for tree-based models, and learning-rate and estimator settings for boosting. The grid search function returns, for each classifier, the optimal configuration and the corresponding cross-validated scores.
 
-1.  **RUS** to reduce the number of instances in the majority classes, preventing the dataset from becoming excessively biased toward synthetic examples;
+*Without sampling*, the preferred configurations include: entropy-based decision trees with pruning (ccp_alpha = 0.005), random forests with moderate depth (max_depth = 6) and a relatively small leaf size, and extra-trees models with unrestricted depth but non-trivial leaf constraints. Logistic regression settles on an *ℓ*<sub>1</sub> penalty with smaller *C* values, confirming the advantage of sparsity for this dataset.
 
-2.  **SMOTENC** to generate new synthetic examples of the minority classes, taking into account the mixed nature of the variables (continuous and categorical).
+When *sampling* is introduced, the resulting configurations remain close to the unsampled ones, showing robustness of the underlying modelling assumptions. Random forests and extra-trees select nearly identical depths and feature constraints, whereas logistic regression increases *C* slightly to account for the modified class distribution.
 
-I kept the "old" dataset (the one obtained with Preprocessing) and the "new" one (the resampled one) and tried Hyperparameter Tuning on both.
-
-### The problem with CDRSB, LDELTOTAL, and mPACCdigit
-The cognitive scores *CDRSB*, *LDELTOTAL* and *mPACCdigit* show exceptionally high predictive power compared to the rest. While this may be advantageous in terms of model accuracy, it also raises the concern of feature dominance: **a small number of variables may disproportionately drive the predictions, while many others contribute minimally**. This imbalance can lead to a form of local overfitting, where **models appear highly effective on the ADNI dataset but lose performance when applied to more heterogeneous clinical populations or external data.**
-
-**However, this assumption cannot be verified, as it is equally possible that these three variables are genuine strong predictors of Alzheimer’s diagnosis.**
-
-So the issue does not reflect a weakness of the cognitive measures themselves, but rather the possibility of dataset bias: the strength of these predictors may be tied to the specific characteristics of ADNI rather than to generalizable diagnostic patterns.
-
-To address this, the modeling strategy should consider two complementary approaches:
-
-1.  building a predictive model that leverages these dominant variables;
-
-2.  building an alternative model that excludes them.
-
-Hybrid Sampling will be applied to both datasets and then I will compare whether the standard models or the resampled models performs better on the test set.
-
-### Hyperparameter Optimization
-In practice, I will end up with two models: one that can also use CDRSB, LDELTOTAL, and mPACCdigit, chosen from the standard and resampled models, and one that doesn’t use CDRSB, LDELTOTAL, and mPACCdigit, chosen from the standard and resampled models.
-
-Therefore, I need to run four Grid Searches. For each model, a large set of hyperparameter configurations was defined to explore, often with thousands of possible combinations. Optimization was conducted through five-fold cross-validation, with different metrics depending on the scenario: *F1 Macro* when the most predictive variables were present, *Balanced Accuracy* in the most restrictive experiments, and *F1 Macro*.
-
-*F1 Macro* assigns equal weight to each class and simultaneously punishes low precision or low recall. It is therefore suitable when a few strong features can "inflate" the accuracy without ensuring fairness between classes.
-
-*Balanced Accuracy* is insensitive to prevalence and less dependent on precision. In the absence of dominant features, it directs the optimization to correctly retrieve all classes.
-
-At the end of the Grid Search, the optimal parameters found for each model were used to instantiate the “final” versions of the classifiers and produce subsequent evaluations.
+At the end of the Grid Search, the optimal parameters found for each model were used to instantiate the "final" versions of the classifiers and produce subsequent evaluations.
 
 
 ## Classification
 ### Building Models
-From the Grid Search, the best estimators, their parameters, and scores were collected for each model. These best-estimators were saved and then retrained and evaluated via 5-fold cross-validation, which produced several reports (confusion matrices, per-class metrics, accuracy, balanced accuracy, and ROC-AUC) and repeated evaluations for stability.
+From the **Grid Search**, the **best estimators**, their **parameters**, and **scores** were collected for each **model**. These best-estimators were saved, then retrained and evaluated using **5-fold cross-validation**, producing several outputs: confusion matrices, per-class metrics, macro F1 score, accuracy, ROC-AUC, and repeated evaluations to assess stability.
 
-So we built four models for each algorithm seen before: one unsampled with the three feature, one sampled with the three feature, one unsampled without the three feature and one sampled without the three feature.
+Cross-validated rankings indicate that ensemble methods are top performers, with only small margins separating them: adaptive boosting, random forest, and extra trees show nearly equivalent CV performance. Logistic regression and shallow, un-sampled decision trees lag behind on macro F1 and balanced accuracy.
+
+Pairwise statistical comparison across CV folds was performed using the **Wilcoxon signed-rank test** on model F1_macro scores to determine whether observed differences were reproducible. The results show many non-significant comparisons and a minority with *p*-values below conventional thresholds. Specifically, twelve pairwise comparisons yielded *p* \< 0.05, while numerous others returned *p* ≥ 0.05, several exceeding *p* = 0.2, and many near or above *p* = 0.5. The smallest observed *p*-values are on the order of 1 × 10<sup>−3</sup>, indicating a few consistent differences across CV folds.
+
+**However, where *p* \< 0.05, the differences in macro F1 are small, implying negligible practical effect despite statistical significance.** Thus, Wilcoxon analysis suggests that CV ranking alone is insufficient for definitive model selection, and an independent evaluation on the test set is required to determine the best model.
 
 ### Explainability
-A method is called to generate *SHAP* summary plots on each model.
+SHAP summary plots were generated for each model.
 
-**The three clinical scores dominate the explanations when present**.
-SHAP plots calculated on models trained on the version with CDRSB, LDELTOTAL, and mPACCdigit clearly show that these three variables are the most important in absolute terms, far above the other features. The SHAP summary plots also highlight that the direction of the effect is consistent i.e., worse values for these scores bias the prediction toward more severe classes.
+**CDRSB, LDELTOTAL, and mPACCdigit dominate the feature explanations.** SHAP plots reveal these variables as the most important in absolute terms, far above other features. The plots also show that the direction of effect is consistent: worse values for these scores bias predictions toward more severe classes, whereas higher LDELTOTAL and mPACCdigit push predictions toward cognitively normal status.
 
-**When the three scores are removed**, biomarkers, demographics, and structural measures emerge.
-In the graphs produced on the version without those three scores, the feature ranking changes: **MMSE, FAQ, MOCA, ADAS13, and EcogSPMem become extremely relevant**. Also relevant are CSF (TAU/ABETA or PTAU/ABETA ratio), APOE4, and some MRI measures normalized for ICV (e.g., Hippocampus/ICV, Ventricles/ICV, WholeBrain/ICV).
+SHAP point-clouds demonstrate consistent sign and concentration across ensemble and tree models, producing clear decision rules in unambiguous cases but fragility when these variables are missing, noisy, or cohort-specific.
 
-The tree diagrams and exported rule files highlight that Decision Trees separate classes using thresholds on a few features (often one of the three clinical scores when present, otherwise a combination of biomarkers and cognitive tests).
+Sampling distributes importance to secondary predictors (e.g., hippocampus/ICV ratios and Ecog measures), generating deeper trees with lower node purity, which tend to generalize better under class-balancing interventions.
 
-The rules are therefore easily interpretable and useful for communicating "if → then" statements to clinical staff.
-
-The balancing effect (*hybrid sampling*) is visible in the importances and local explanations.
-Comparing the plots for models with and without hybrid sampling shows a modest change in the ranking: **sampling tends to increase the relative importance of features that help identify less represented classes**.
+Decision tree diagrams and exported rule files show that class separation typically relies on thresholds of a few key features (often one of the three clinical scores, or combinations of biomarkers and cognitive tests). The resulting rules are easily interpretable and suitable for communicating “if → then” statements to clinical staff.
 
 ### Results
-We evaluated the newly built models on the train dataset, on 5-fold-cross validation and on test dataset. However, for the final evaluation I mainly relied on the explainability and the results of the test set through the following statistics: *Balanced Accuracy, F1 Score (macro), Accuracy, Precision (weighted), Recall (weighted), F1 Score (weighted), and ROC AUC (macro)*. The evaluation plots and confusion matrices are on the following pages, included with the evaluation tables of the statistics on the test dataset.
+Models were evaluated on the training set, 5-fold CV, and the test set. The final evaluation focused primarily on explainability and test set results, including: *F1 Score (macro), Accuracy, Balanced Accuracy, Precision (weighted), Recall (weighted), F1 Score (weighted), and ROC AUC (macro)*. Evaluation plots and confusion matrices are included in the following pages alongside evaluation tables for the test set.
 
-The following pages contain the graphs and tables that led to the final evaluation.
+An Extra Trees classifier trained without hybrid sampling (`Extra_Trees`) achieved the best test performance: a **macro F1 ≈ 0.9376**, **accuracy ≈ 0.9442**, and **ROC AUC ≈ 0.9867**.
 
-**The models ending with 1 were trained on the dataset with Hybrid Sampling, while those ending with 0 were not.**
+As a complementary explainable model (`XAIModel`), a decision tree trained with sampling (`Decision_Tree_Sampled`) was selected for improved generalization and concise rule-based outputs. Both primary and XAI models, including exported rules and tree diagrams, are available in the results directory.
 
-**Although the models with CDRSB, LDELTOTAL, and mPACCdigit and those without CDRSB, LDELTOTAL, and mPACCdigit have the same names (e.g., XGBoost0, XGBoost1, ExtraTrees0, RandomForest1, and so on), they are actually distinct models born from distinct classifiers. Models with CDRSB, LDELTOTAL, and mPACCdigit are in the "results/all_models/1" folder, and those without are in the  
-"results/all_models/2" folder.**
+### The Problem with CDRSB, LDELTOTAL, and mPACCdigit
+
+As shown in the explainability section, the cognitive scores *CDRSB*, *LDELTOTAL*, and *mPACCdigit* exhibit exceptionally high predictive power.
+
+While this improves model accuracy, it raises a concern of feature dominance: **a small number of variables may disproportionately drive predictions, while many others contribute minimally**, potentially leading to local overfitting. Models may appear highly effective on the ADNI dataset but lose performance on more heterogeneous populations or external data.
+
+**However, these three variables may genuinely be strong predictors of Alzheimer's diagnosis.** The issue may reflect dataset bias rather than a flaw in the cognitive measures themselves.
+
+To test this, classifiers were retrained with leakage-free preprocessing and CV, omitting CDRSB, LDELTOTAL, and mPACCdigit. Both unsampled and hybrid-sampled variants were evaluated via exhaustive grid search. The removal reduced discriminative power but retained sufficient signal for meaningful model comparison.
+
+Feature-attribution analyses (permutation importance and SHAP) showed a reconfiguration of the predictive hierarchy: ADAS13, MMSE, FAQ, and RAVLT scores became leading predictors, while structural MRI ratios (Hippocampus/ICV, Entorhinal/ICV, Fusiform/ICV, Ventricles/ICV), CSF ratios (TAU/ABETA, PTAU/ABETA), and FDG PET measures assumed secondary roles. Sampling mitigated single-feature dominance and produced deeper, lower-purity trees, enhancing interpretability of non-dominant signals but reducing overall predictive ceiling.
+
+Performance metrics reflect the expected drop: the best alternative model was an Adaptive Boosting ensemble (macro F1 ≈ 0.7303, accuracy ≈ 0.7459, macro ROC AUC ≈ 0.9037). Pairwise Wilcoxon tests showed few significant differences, and effect sizes were small, highlighting that statistical significance does not always indicate practical superiority.
+
+- The system remains usable without the dominant cognitive measures if remaining cognitive and functional assessments are reliably collected.
+
+- Ensemble models continue to offer the best discrimination, while sampled shallow trees provide a defensible, interpretable fallback.
 
 <figure id="fig:Evaluation with CDRSB, LDELTOTAL, and mPACCdigit" data-latex-placement="H">
 <p><img src="doc/images/1_Evaluation.png" style="width:65.0%" alt="image" />
@@ -351,64 +347,55 @@ The following pages contain the graphs and tables that led to the final evaluati
 *M_L_R is for Multinomial_Logistic_Regression.*
 
 **With CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/1)**
-| Model           | Accuracy | Balanced Accuracy | Precision (weighted) | Recall (weighted) | F1 Score (weighted) | F1 Score (macro) | ROC AUC (macro) |
-| --------------- | -------- | ----------------- | -------------------- | ----------------- | ------------------- | ---------------- | --------------- |
-| Random\_Forest1 | 0.9256   | 0.9198            | 0.9271               | 0.9256            | 0.9258              | 0.9169           | 0.9865          |
-| Extra\_Trees1   | 0.9236   | 0.9188            | 0.9250               | 0.9236            | 0.9240              | 0.9143           | 0.9862          |
-| XGBoost0        | 0.9277   | 0.9168            | 0.9284               | 0.9277            | 0.9275              | 0.9180           | 0.9876          |
-| Random\_Forest0 | 0.9298   | 0.9163            | 0.9310               | 0.9298            | 0.9294              | 0.9205           | 0.9839          |
-| XGBoost1        | 0.9236   | 0.9153            | 0.9244               | 0.9236            | 0.9237              | 0.9138           | 0.9868          |
-| Extra\_Trees0   | 0.9236   | 0.9132            | 0.9240               | 0.9236            | 0.9236              | 0.9136           | 0.9884          |
-| CatBoost1       | 0.9194   | 0.9128            | 0.9205               | 0.9194            | 0.9197              | 0.9102           | 0.9875          |
-| LightGBM1       | 0.9194   | 0.9116            | 0.9202               | 0.9194            | 0.9195              | 0.9095           | 0.9871          |
-| CatBoost0       | 0.9215   | 0.9090            | 0.9219               | 0.9215            | 0.9212              | 0.9108           | 0.9887          |
-| LightGBM0       | 0.9194   | 0.9048            | 0.9207               | 0.9194            | 0.9189              | 0.9075           | 0.9843          |
-| Bagging0        | 0.9194   | 0.9041            | 0.9224               | 0.9194            | 0.9192              | 0.9079           | 0.9844          |
-| Bagging1        | 0.9050   | 0.8953            | 0.9062               | 0.9050            | 0.9053              | 0.8930           | 0.9835          |
-| Decision\_Tree1 | 0.8988   | 0.8930            | 0.9015               | 0.8988            | 0.8995              | 0.8862           | 0.9803          |
-| M\_L\_R1        | 0.8781   | 0.8731            | 0.8831               | 0.8781            | 0.8785              | 0.8629           | 0.9806          |
-| Decision\_Tree0 | 0.8760   | 0.8722            | 0.8813               | 0.8760            | 0.8771              | 0.8615           | 0.9746          |
-| M\_L\_R0        | 0.8740   | 0.8720            | 0.8811               | 0.8740            | 0.8748              | 0.8598           | 0.9815          |
+| Model                     | F1 Score (macro) | Accuracy | Balanced Accuracy | Precision (weighted) | Recall (weighted) | F1 Score (weighted) | ROC AUC (macro) |
+| ------------------------- | ---------------- | -------- | ----------------- | -------------------- | ----------------- | ------------------- | --------------- |
+| Extra_Trees               | 0.9376           | 0.9442   | 0.9408            | 0.9448               | 0.9442            | 0.9443              | 0.9867          |
+| Extra_Trees_Sampled       | 0.9359           | 0.9421   | 0.9411            | 0.9435               | 0.9421            | 0.9425              | 0.9890          |
+| Random_Forest             | 0.9301           | 0.9380   | 0.9341            | 0.9387               | 0.9380            | 0.9381              | 0.9886          |
+| Adaptive_Boosting         | 0.9285           | 0.9360   | 0.9347            | 0.9378               | 0.9360            | 0.9363              | 0.9878          |
+| Random_Forest_Sampled     | 0.9271           | 0.9339   | 0.9358            | 0.9367               | 0.9339            | 0.9344              | 0.9863          |
+| Adaptive_Boosting_Sampled | 0.9262           | 0.9339   | 0.9329            | 0.9361               | 0.9339            | 0.9343              | 0.9890          |
+| Decision_Tree_Sampled     | 0.9131           | 0.9236   | 0.9178            | 0.9244               | 0.9236            | 0.9235              | 0.9804          |
+| Decision_Tree             | 0.8934           | 0.9050   | 0.9026            | 0.9096               | 0.9050            | 0.9057              | 0.9824          |
+| M_L_R                     | 0.8700           | 0.8843   | 0.8816            | 0.8893               | 0.8843            | 0.8843              | 0.9825          |
+| M_L_R_Sampled             | 0.8677           | 0.8822   | 0.8754            | 0.8851               | 0.8822            | 0.8826              | 0.9827          |
 
 
 **Without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/2)**
-| Model           | Accuracy | Balanced Accuracy | Precision (weighted) | Recall (weighted) | F1 Score (weighted) | F1 Score (macro) | ROC AUC (macro) |
-| --------------- | -------- | ----------------- | -------------------- | ----------------- | ------------------- | ---------------- | --------------- |
-| XGBoost1        | 0.7355   | 0.7210            | 0.7458               | 0.7355            | 0.7392              | 0.7172           | 0.9071          |
-| Extra\_Trees0   | 0.7376   | 0.7172            | 0.7383               | 0.7376            | 0.7368              | 0.7140           | 0.9093          |
-| LightGBM1       | 0.7252   | 0.7163            | 0.7400               | 0.7252            | 0.7301              | 0.7098           | 0.9081          |
-| Extra\_Trees1   | 0.7190   | 0.7064            | 0.7285               | 0.7190            | 0.7211              | 0.6988           | 0.9068          |
-| Bagging1        | 0.7252   | 0.7059            | 0.7282               | 0.7252            | 0.7258              | 0.7043           | 0.9038          |
-| M\_L\_R0        | 0.7190   | 0.6999            | 0.7188               | 0.7190            | 0.7172              | 0.6970           | 0.9071          |
-| XGBoost0        | 0.7397   | 0.6990            | 0.7287               | 0.7397            | 0.7314              | 0.7033           | 0.9126          |
-| Random\_Forest0 | 0.7169   | 0.6972            | 0.7173               | 0.7169            | 0.7159              | 0.6919           | 0.9053          |
-| M\_L\_R1        | 0.7087   | 0.6959            | 0.7160               | 0.7087            | 0.7093              | 0.6900           | 0.9037          |
-| CatBoost1       | 0.7066   | 0.6930            | 0.7180               | 0.7066            | 0.7106              | 0.6894           | 0.9092          |
-| Random\_Forest1 | 0.7025   | 0.6869            | 0.7116               | 0.7025            | 0.7045              | 0.6809           | 0.9040          |
-| LightGBM0       | 0.7293   | 0.6821            | 0.7127               | 0.7293            | 0.7152              | 0.6827           | 0.9123          |
-| Bagging0        | 0.7231   | 0.6738            | 0.7138               | 0.7231            | 0.7131              | 0.6824           | 0.9040          |
-| CatBoost0       | 0.7231   | 0.6734            | 0.7089               | 0.7231            | 0.7101              | 0.6786           | 0.9093          |
-| Decision\_Tree1 | 0.6405   | 0.6521            | 0.6881               | 0.6405            | 0.6522              | 0.6357           | 0.8567          |
-| Decision\_Tree0 | 0.6612   | 0.6464            | 0.6904               | 0.6612            | 0.6726              | 0.6547           | 0.8380          |
+| Model                     | F1 Score (macro) | Accuracy | Balanced Accuracy | Precision (weighted) | Recall (weighted) | F1 Score (weighted) | ROC AUC (macro) |
+| ------------------------- | ---------------- | -------- | ----------------- | -------------------- | ----------------- | ------------------- | --------------- |
+| Adaptive_Boosting         | 0.7303           | 0.7459   | 0.7327            | 0.7456               | 0.7459            | 0.7437              | 0.9037          |
+| Adaptive_Boosting_Sampled | 0.7112           | 0.7293   | 0.7157            | 0.7316               | 0.7293            | 0.7277              | 0.9001          |
+| Random_Forest             | 0.7061           | 0.7252   | 0.7052            | 0.7256               | 0.7252            | 0.7245              | 0.9022          |
+| Random_Forest_Sampled     | 0.7035           | 0.7190   | 0.7050            | 0.7251               | 0.7190            | 0.7208              | 0.9041          |
+| Extra_Trees_Sampled       | 0.7011           | 0.7211   | 0.7075            | 0.7258               | 0.7211            | 0.7202              | 0.9003          |
+| Extra_Trees               | 0.6998           | 0.7293   | 0.6952            | 0.7215               | 0.7293            | 0.7238              | 0.9105          |
+| M_L_R_Sampled             | 0.6829           | 0.7066   | 0.6933            | 0.7135               | 0.7066            | 0.7063              | 0.8921          |
+| M_L_R                     | 0.6768           | 0.7004   | 0.6882            | 0.7055               | 0.7004            | 0.6996              | 0.8952          |
+| Decision_Tree             | 0.6603           | 0.6632   | 0.6622            | 0.6960               | 0.6632            | 0.6736              | 0.8467          |
+| Decision_Tree_Sampled     | 0.6482           | 0.6508   | 0.6543            | 0.6990               | 0.6508            | 0.6626              | 0.8445          |
+
 
 ### Final Decision
-For the dataset containing the three highly predictive cognitive scores (CDRSB, LDELTOTAL, mPACCdigit), ***Random_Forest1*** (**the RF trained with the hybrid sampling strategy**) was chosen as the main model, and ***Decision_Tree1*** (**the version with sampling**) was chosen as the reference XAI model. This choice is motivated by very high test metrics (balanced accuracy, F1, ROC-AUC) that show the best sensitive tradeoff between classes.
-**Model1.pkl and XAIModel1.pkl are respectively Random_Forest1 and Decision_Tree1.**
+***Extra_Trees*** (trained without hybrid sampling) was chosen as the main model, and ***Decision_Tree_Sampled*** (trained with sampling) as the XAI reference. This selection is based on superior test metrics, balancing class sensitivity.
 
-For the dataset where those three cognitive scores were removed, the model that maintained the best performance was ***XGBoost1*** (XGBoost with hybrid sampling), and, again, ***Decision_Tree1*** was chosen as the XAIModel (the version built on the dataset without the three scores). This selection also comes from comparing the metrics on the test set.
-**Model2.pkl and XAIModel2.pkl are respectively XGBoost1 and Decision_Tree1.**
+**Model.pkl and XAIModel.pkl correspond to Extra_Trees and Decision_Tree_Sampled, respectively.**
+
+For the dataset excluding the three cognitive scores, the best-performing model was ***Adaptive Boosting*** (unsampled), with ***Decision_Tree*** as the XAI reference.
+
+**AltModel.pkl and AltXAIModel.pkl correspond to Adaptive_Boosting and Decision_Tree in the alternative folder.**
 
 ### Comparison with the State of the Art
 The ADNIMERGE.csv file is widely used in the scientific literature, with hundreds of studies explicitly citing it as the source of ADNI tabular data. Despite this, I have not come across many studies that have formulated the problem as a multiclass classification with the four labels CN, EMCI, LMCI, and AD. Most machine learning models proposed in the literature focus on binary tasks, such as CN vs. AD, CN vs. MCI, or MCI vs. AD. However, it is still possible to propose a comparison with the state of the art starting from these experimental settings.
 
 Our results in short:
 
-| Model           | Accuracy | Balanced Accuracy | Precision (weighted) | Recall (weighted) | F1 Score (weighted) | F1 Score (macro) | ROC AUC (macro) |
-| --------------- | -------- | ----------------- | -------------------- | ----------------- | ------------------- | ---------------- | --------------- |
-| Model1          | 0.9256   | 0.9198            | 0.9271               | 0.9256            | 0.9258              | 0.9169           | 0.9865          |
-| Model2          | 0.7355   | 0.7210            | 0.7458               | 0.7355            | 0.7392              | 0.7172           | 0.9071          |
-| XAIModel1       | 0.8988   | 0.8930            | 0.9015               | 0.8988            | 0.8995              | 0.8862           | 0.9803          |
-| XAIModel2       | 0.6405   | 0.6521            | 0.6881               | 0.6405            | 0.6522              | 0.6357           | 0.8567          |
+| Model Name  | F1 Score (macro) | Accuracy | ROC AUC (macro) |
+| ----------- | ---------------- | -------- | --------------- |
+| Model       | 0.9376           | 0.9442   | 0.9867          |
+| XAIModel    | 0.9131           | 0.9236   | 0.9804          |
+| AltModel    | 0.7303           | 0.7459   | 0.9037          |
+| AltXAIModel | 0.6602           | 0.6632   | 0.8467          |
 
 - [Kauppi et al. (medRxiv, 2020)](https://www.medrxiv.org/content/10.1101/2020.11.09.20226746v3): Deep-learning risk-scoring pipeline using selected neurocognitive tests, achieving multiclass *A**U**C* ≈ 0.984.
 - [Alatrany et al. (Scientific Reports, 2024)](https://www.nature.com/articles/s41598-024-51985-w): Multimodal, explainability-oriented approach on NACC. SVM reaches multiclass *F*1 ≈ 90.7%. Note that the data source (NACC vs. ADNI) and feature set are not directly comparable.
@@ -418,19 +405,25 @@ Model1 is competitive with these works, Model2 favors robustness over dominant f
 
 ## Conclusions
 ### Real World Applications
-A CogniPredictAD application (in main.py) has been developed with customtkinter that allows you to select one of four previously saved models (Model1.pkl, Model2.pkl, XAIModel1.pkl, and XAIModel2.pkl), manually enter a set of clinical and cognitive measures, obtain a diagnostic prediction (labels 0, 1, 2, or 3 for CN, EMCI, LMCI, and AD, respectively), and display it. The user can confirm or dispute the diagnosis: both actions add a line to the data/NEWADNIMERGE.csv file (creating a folder/file if necessary), while an “Undo Last” command cancels the last saved entry. This application can be used by clinicians to collect data, evaluate prediction models, and ultimately help establish a diagnosis.
+A CogniPredictAD application (in main.py) has been developed with customtkinter that allows you to select one of four previously saved models (**Model.pkl**, **XAIModel.pkl**, **AltModel.pkl**, and **AltXAIModel.pkl**), manually enter a set of clinical and cognitive measures, obtain a diagnostic prediction (labels CN, EMCI, LMCI, and AD), and display it. The user can confirm or dispute the diagnosis: both actions add a line to the data/NEWADNIMERGE.csv file (creating a folder/file if necessary), while an “Undo Last” command cancels the last saved entry. This application can be used by clinicians to collect data, evaluate prediction models, and ultimately help establish a diagnosis.
 
 ### Final Considerations
-One of the main limitations of the dataset is that, after filtering for baseline visits with non-zero diagnoses, only 2,419 patients remain, a size that limits the ability to generalize the results to external populations. While these metrics showed very high performance on the test set (for Model 1: Balanced Accuracy = 0.9198, F1 macro = 0.9169, ROC AUC (macro) = 0.9865), these metrics should be interpreted with caution.
-Furthermore, three cognitive scores (CDRSB, LDELTOTAL, and mPACCdigit) provide a very strong diagnostic signal in this dataset: their presence largely explains the high effectiveness of Model 1 (Random Forest), while their removal leads to significantly lower metrics and a different distribution of important features, with XGBoost proving to be the best classifier in the pipeline without these variables. For these reasons, interpretable models (XAIModel1 and XAIModel2) and an alternative pipeline (Model2 and XAIModel2) that exclude the three scores were developed to assess the robustness and clinical plausibility of the predictions.
-Furthermore, many columns have missing values, and the missingness pattern is often not *Missing Completely At Random*. In fact, CSF and PET values are more often missing in healthy subjects or at certain visits. For example, *ABETA*, *TAU*, and *PTAU* have many missing values and are not so irrelevant in the diagnosis of Alzheimer’s disease. This forces us to impute *NULL* values and potentially increase noise in the dataset.
+One of the main limitations of the dataset is that, after filtering for baseline visits with non-zero diagnoses, only 2,419 patients remain, a size that limits the ability to generalize the results to external populations. While these metrics showed very high performance on the test set (for **Model.pkl**: Accuracy = 0.9442, F1 macro = 0.9376, ROC AUC (macro) = 0.9867), these metrics should be interpreted with caution.
+
+Furthermore, three cognitive scores (CDRSB, LDELTOTAL, and mPACCdigit) provide a very strong diagnostic signal in this dataset: their presence largely explains the high effectiveness of **Model.pkl** (Extra Trees), while their removal leads to significantly lower metrics and a different distribution of important features, with XGBoost proving to be the best classifier in the pipeline without these variables. For these reasons, interpretable models (XAIModel and AltXAIModel) and an alternative pipeline (AltModel and AltXAIModel) that exclude the three scores were developed to assess the robustness and clinical plausibility of the predictions.
+
+Many columns have missing values, and the missingness pattern is often not *MCAR* (Missing Completely At Random). In fact, CSF and PET values are more often missing in healthy subjects or at certain visits. For example, *ABETA*, *TAU*, and *PTAU* have many missing values and are not so irrelevant in the diagnosis of Alzheimer's disease. This forces us to impute *NULL* values and potentially increase noise in the dataset.
+
 Despite size limitations, the reliance on a few highly predictive cognitive scores, and the large amount of *NULL* values, the study retains methodological value and potential for application. The models can be useful as support tools (for example, risk stratification, imputation of missing diagnoses, or prioritized screening), not as a substitute for clinical assessment. Their use must be subject to external validation, calibration of the operating thresholds and post-deploy monitoring.
 
 ### Improvements for Future Works
 To improve the study, increasing the size and variability of the data is a priority: integrating future ADNI4 entries into ADNIMERGE and, if possible, compatible external cohorts would increase statistical power and generalizability.
-In this context, we could also introduce a new feature that identifies patients based on their geographic area of origin. Since ADNI participants are from the United States and Canada, their area would be classified as North America. If, for example, we were able to integrate a European dataset compatible with ADNI for predicting Alzheimer’s disease, we could analyze whether geographic area affects the likelihood of developing the disease. This approach could open the way to new and interesting lines of research.
+
+In this context, we could also introduce a new feature that identifies patients based on their geographic area of origin. Since ADNI participants are from the United States and Canada, their area would be classified as North America. If, for example, we were able to integrate a European dataset compatible with ADNI for predicting Alzheimer's disease, we could analyze whether geographic area affects the likelihood of developing the disease. This approach could open the way to new and interesting lines of research.
+
 It is also essential to harmonize the variables (mapping and units for imaging) and enrich the database with complementary modalities (genetics, PET, blood biomarkers) and longitudinal information, thus reducing reliance on a few cognitive scores.
-However, CogniPredictAD is already a good support tool for doctors in helping with the diagnosis of Alzheimer’s.
+
+However, CogniPredictAD is already a good support tool for doctors in helping with the diagnosis of Alzheimer's.
 
 
 

@@ -1,11 +1,14 @@
 \begin{abstract}
 	This report introduces CogniPredictAD, a \textit{Data Mining and Machine Learning} project designed to analyze clinical and biological parameters from the ADNI dataset, with the goal of predicting final clinical diagnoses (CN, EMCI, LMCI, AD) based on baseline data.
 	
-	The analysis includes a detailed examination of preprocessing techniques: advanced missing data management, normalizations, and feature engineering. We assess the models based on their balanced accuracy and present the results through various evaluations.
+	The analysis includes a detailed examination of preprocessing techniques: advanced missing data management, normalizations, and feature engineering. We assess the models based on their Macro F1 Score and present the results through various evaluations.
 	
-	Due to the ambiguity of the high predictivity of three values (CDRSB, LDELTOTAL, mPACCdigit), I built two families of models: with and without these features to reduce the risk of overfitting on ADNI. 
+	The modeling phase includes Decision Tree, Random Forest, Extra Trees, AdaBoost and Multinomial Logistic Regression (with and without sampling on the dataset). Hybrid sampling techniques, Grid Search for hyperparameter optimization, and cross-validation are applied. In the end the best performance is obtained by Extra Trees (without Hybrid Sampling) with Macro F1 Score $\approx$ 0.9376, Accuracy $\approx$ 0.9442, and ROC-AUC $\approx$ 0.9867.
 	
-	The modeling phase includes Decision Tree, Random Forest, Extra Trees, XGBoost, LightGBM, CatBoost, Multinomial Logistic Regression, and Bagging.  Hybrid sampling techniques, Grid Search for hyperparameter optimization, and cross-validation are applied. With the full set, the models achieve very high metrics (e.g., balanced accuracy $\approx$ 0.926, ROC-AUC $\approx$ 0.987), while by removing the three dominant features, the LightGBM with hybrid sampling retains the best balanced performance (balanced accuracy $\approx$ 0.721, ROC-AUC $\approx$ 0.907). For transparency, two optimized Decision Trees were also selected, and the trees and explanatory rules were saved. 
+	We decided, to improve explainability, to also keep Decision Tree (it proved better with Hybrid Sampling) which has Macro F1 Score $\approx$ 0.9055, Accuracy $\approx$ 0.9153, and ROC-AUC $\approx$ 0.9773.
+	
+	Due to the ambiguity of the high predictivity of three values (CDRSB, LDELTOTAL, mPACCdigit), I built two alternative models with the same pipeline as the main ones, but without those features.  
+	
 	
 	The conclusions highlight good predictive performance on the ADNIMERGE dataset, but caution against possible sample bias and the need for external validation (by adding additional patients to the dataset or through data integration with similar datasets) before any clinical use.
 \end{abstract}

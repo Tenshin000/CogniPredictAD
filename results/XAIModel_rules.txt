@@ -1,0 +1,64 @@
+IF CDRSB <= 0.04
+|   |--- EcogPtOrgan <= 2.25
+|   |   |--- MOCA <= 21.50
+|   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |--- THEN class = CN
+|   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |--- THEN class = CN
+|   |   |--- MOCA >  21.50
+|   |   |   |--- Entorhinal/ICV <= 0.00
+|   |   |   |   |--- EcogSPDivatt <= 2.20
+|   |   |   |   |   |--- THEN class = CN
+|   |   |   |   |--- EcogSPDivatt >  2.20
+|   |   |   |   |   |--- THEN class = CN
+|   |   |   |--- Entorhinal/ICV >  0.00
+|   |   |   |   |--- THEN class = CN
+|   |--- EcogPtOrgan >  2.25
+|   |   |--- THEN class = CN
+IF CDRSB >  0.04
+|   |--- mPACCdigit <= -10.81
+|   |   |--- CDRSB <= 2.00
+|   |   |   |--- MMSE <= 23.50
+|   |   |   |   |--- CDRSB <= 1.96
+|   |   |   |   |   |--- THEN class = AD
+|   |   |   |   |--- CDRSB >  1.96
+|   |   |   |   |   |--- THEN class = AD
+|   |   |   |--- MMSE >  23.50
+|   |   |   |   |--- LDELTOTAL <= 4.50
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |   |   |--- LDELTOTAL >  4.50
+|   |   |   |   |   |--- THEN class = EMCI
+|   |   |--- CDRSB >  2.00
+|   |   |   |--- CDRSB <= 3.01
+|   |   |   |   |--- TRABSCOR <= 79.00
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |   |   |--- TRABSCOR >  79.00
+|   |   |   |   |   |--- THEN class = AD
+|   |   |   |--- CDRSB >  3.01
+|   |   |   |   |--- EcogSPPlan <= 1.75
+|   |   |   |   |   |--- THEN class = AD
+|   |   |   |   |--- EcogSPPlan >  1.75
+|   |   |   |   |   |--- THEN class = AD
+|   |--- mPACCdigit >  -10.81
+|   |   |--- LDELTOTAL <= 8.50
+|   |   |   |--- PTEDUCAT <= 15.50
+|   |   |   |   |--- LDELTOTAL <= 4.50
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |   |   |--- LDELTOTAL >  4.50
+|   |   |   |   |   |--- THEN class = EMCI
+|   |   |   |--- PTEDUCAT >  15.50
+|   |   |   |   |--- MMSE <= 26.50
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |   |   |--- MMSE >  26.50
+|   |   |   |   |   |--- THEN class = LMCI
+|   |   |--- LDELTOTAL >  8.50
+|   |   |   |--- LDELTOTAL <= 11.50
+|   |   |   |   |--- CDRSB <= 0.50
+|   |   |   |   |   |--- THEN class = EMCI
+|   |   |   |   |--- CDRSB >  0.50
+|   |   |   |   |   |--- THEN class = EMCI
+|   |   |   |--- LDELTOTAL >  11.50
+|   |   |   |   |--- CDRSB <= 0.75
+|   |   |   |   |   |--- THEN class = CN
+|   |   |   |   |--- CDRSB >  0.75
+|   |   |   |   |   |--- THEN class = EMCI

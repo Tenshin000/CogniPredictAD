@@ -13,6 +13,9 @@ class OutlierDetector:
     """
     A class to perform outlier detection on a dataset.
     """
+    # ----------------------------#
+    #        INITIALIZATION       #
+    # ----------------------------# 
     def __init__(self):
         """
         Initialization.
@@ -36,7 +39,9 @@ class OutlierDetector:
             raise ValueError(f"Dataset does not contain columns: {missing}")
         return columns
 
-
+    # ----------------------------#
+    #     UNIVARIATE ANALYSIS     #
+    # ----------------------------# 
     def detect_by_iqr(self, dataset: pd.DataFrame, columns: Optional[List[str]] = None,
                   factor: float = 1.5, verbose: bool = True) -> Dict[str, Dict[str, List]]:
         """
@@ -77,7 +82,6 @@ class OutlierDetector:
                 for idx, val in zip(outlier_indices, outlier_values):
                     print(f"  Index: {idx}, Value: {val}")
 
-            # Grafico sempre mostrato
             plt.figure(figsize=(6, 4))
             sns.boxplot(x=dataset[col], color='skyblue')
             plt.title(f'Boxplot for {col} (IQR)')
@@ -100,78 +104,102 @@ class OutlierDetector:
         """
         cols = self._get_columns(dataset, columns)
         results = {}
-        z_scores = np.abs(zscore(dataset[cols], nan_policy='omit'))
 
-        for idx, col in enumerate(cols):
-            mask = z_scores[:, idx] > threshold
-            outlier_indices = np.where(mask)[0].tolist()
-            outlier_values = dataset.iloc[outlier_indices][col].tolist()
+        # Compute z-scores column-wise using pandas to have clearer NaN behavior
+        for col in cols:
+            ser = dataset[col]
+            mean = ser.mean(skipna=True)
+            std = ser.std(skipna=True, ddof=0)
+            if std == 0 or np.isnan(std):
+                # No Variation -> No Outliers
+                outlier_mask = pd.Series(False, index=ser.index)
+            else:
+                z = (ser - mean).abs() / std
+                outlier_mask = z > threshold
 
-            results[col] = {
-                "indices": outlier_indices,
-                "values": outlier_values
-            }
+            outlier_idx_labels = ser.index[outlier_mask].tolist() # original labels
+            outlier_values = ser[outlier_mask].tolist()
+
+            results[col] = {"indices": outlier_idx_labels, "values": outlier_values}
 
             if verbose:
-                print(f"[ Z-score Method ] Column: {col}")
-                print(f"Threshold: {threshold}")
-                print(f"Detected {len(outlier_indices)} outliers.")
-                for i, val in zip(outlier_indices, outlier_values):
-                    print(f"  Index: {i}, Value: {val}")
+                print(f"[ Z-score ] Column: {col}  Threshold: {threshold}")
+                print(f"Detected {len(outlier_idx_labels)} outliers.")
+                for idx_label, val in zip(outlier_idx_labels, outlier_values):
+                    print(f"  Index: {idx_label}, Value: {val}")
 
         return results
 
-
-    def detect_by_lof(self, dataset: pd.DataFrame, columns: Optional[List[str]] = None,
-                  n_neighbors_list: List[int] = [20], verbose: bool = True) -> Dict[int, Dict[str, List]]:
+    # ----------------------------#
+    #    MULTIVARIATE ANALYSIS    #
+    # ----------------------------# 
+    def detect_by_lof(self, dataset: pd.DataFrame, columns: Optional[List[str]] = None, n_neighbors: int = 20,
+                     impute_strategy: Optional[str] = None, verbose: bool = True) -> Dict[str, List]:
         """
         Detect outliers using the Local Outlier Factor (LOF) method.
         Produces scatter plots of LOF scores and highlights detected outliers.
 
         param dataset: DataFrame containing the data.
         param columns: List of column names to analyze. If None, all numeric columns are used.
-        param n_neighbors_list: List of neighbor sizes to try for LOF (default=[20]).
+        param n_neighbors: Number of neighbor points to use for LOF (default=20).
+        impute_strategy: None (default) -> do not impute, 'zero' -> fillna(0), 'median' -> fill with median
         param verbose: If True, prints detailed information about detected outliers.
 
-        return: Dictionary with n_neighbors as keys and dictionaries containing indices, values, and scores of outliers.
+        return: Dictionary containing indices, values, and scores of outliers.
         """
         cols = self._get_columns(dataset, columns)
-        X = dataset[cols].fillna(0)
-        results = {}
+        X_df = dataset[cols].copy()
 
-        for n_neighbors in n_neighbors_list:
-            lof = LocalOutlierFactor(n_neighbors=n_neighbors)
-            y_pred = lof.fit_predict(X)
-            scores = -lof.negative_outlier_factor_
+        # optional simple imputation (user can also pre-clean dataset)
+        if impute_strategy == 'zero':
+            X = X_df.fillna(0).values
+            idx_labels = X_df.index
+        elif impute_strategy == 'median':
+            X = X_df.fillna(X_df.median()).values
+            idx_labels = X_df.index
+        else:
+            # do not impute: drop rows with NaN for LOF (but remember original indices)
+            not_nan_mask = ~X_df.isna().any(axis=1)
+            X = X_df[not_nan_mask].values
+            idx_labels = X_df.index[not_nan_mask]
 
-            outlier_indices = np.where(y_pred == -1)[0].tolist()
-            outlier_values = dataset.iloc[outlier_indices][cols].values.tolist()
+        n_samples = X.shape[0]
 
-            results[n_neighbors] = {
-                "indices": outlier_indices,
-                "values": outlier_values,
-                "scores": scores[outlier_indices].tolist()
-            }
+        if n_samples == 0:
+            return {"indices": [], "values": [], "scores": []}
 
+        # ensure n_neighbors < n_samples
+        if n_neighbors >= n_samples:
+            n_neighbors_eff = max(1, n_samples - 1)
             if verbose:
-                print(f"[ LOF Method ] n_neighbors={n_neighbors}")
-                print(f"Detected {len(outlier_indices)} outliers.")
-                for idx, val, sc in zip(outlier_indices, outlier_values, scores[outlier_indices]):
-                    print(f"  Index: {idx}, Values: {val}, Score: {sc:.4f}")
+                print(f"Warning: requested n_neighbors={n_neighbors} >= n_samples={n_samples}. "
+                    f"Using n_neighbors={n_neighbors_eff} instead.")
+            n_neighbors = n_neighbors_eff
 
-            plt.figure(figsize=(6, 4))
-            plt.scatter(range(len(scores)), scores, c='blue', s=20, edgecolor='k')
-            plt.scatter(outlier_indices, np.array(scores)[outlier_indices], c='red', s=30, label='Outliers')
-            plt.xlabel('Data Point Index')
-            plt.ylabel('LOF Score')
-            plt.title(f'Local Outlier Factor Scores (n_neighbors={n_neighbors})')
-            plt.legend()
-            plt.show()
+        lof = LocalOutlierFactor(n_neighbors=n_neighbors)
+        y_pred = lof.fit_predict(X)
+        scores = -lof.negative_outlier_factor_
 
-        return results
+        outlier_positions = np.where(y_pred == -1)[0]
+        outlier_idx_labels = idx_labels[outlier_positions].tolist()
+        outlier_values = dataset.loc[outlier_idx_labels, cols].values.tolist()
+        outlier_scores = scores[outlier_positions].tolist()
 
-    def detect_by_dbscan(self, dataset: pd.DataFrame, columns: Optional[List[str]] = None,
-                     eps: float = 0.5, min_samples: Optional[int] = None, verbose: bool = True) -> Dict[str, List]:
+        if verbose:
+            print(f"[ LOF ] n_neighbors={n_neighbors}, detected {len(outlier_idx_labels)} outliers.")
+            for lbl, val, sc in zip(outlier_idx_labels, outlier_values, outlier_scores):
+                print(f"  Index: {lbl}, Values: {val}, Score: {sc:.4f}")
+
+        return {
+            "indices": outlier_idx_labels,
+            "values": outlier_values,
+            "scores": outlier_scores
+        }
+
+
+
+    def detect_by_dbscan(self, dataset: pd.DataFrame, columns: Optional[List[str]] = None, eps: float = 0.5, 
+                     min_samples: Optional[int] = None, impute_strategy: Optional[str] = None, verbose: bool = True) -> Dict[str, List]:
         """
         Detect outliers using the DBSCAN clustering algorithm.
         Points assigned to cluster -1 are considered outliers.
@@ -180,7 +208,8 @@ class OutlierDetector:
         param dataset: DataFrame containing the data.
         param columns: List of column names to analyze. If None, all numeric columns are used.
         param eps: Maximum distance between two samples for them to be considered neighbors (default=0.5).
-        param min_samples: Minimum number of points to form a cluster. If None, defaults to 2 × number of features.
+        param min_samples: Minimum number of points to form a cluster. If None, defaults to 2 x number of features.
+        impute_strategy: None (default) -> do not impute, 'zero' -> fillna(0), 'median' -> fill with median
         param verbose: If True, prints detailed information about detected outliers.
 
         return: Dictionary with keys:
@@ -189,32 +218,41 @@ class OutlierDetector:
             - "labels": List of cluster labels for all points (-1 = outlier).
         """
         cols = self._get_columns(dataset, columns)
-        X = dataset[cols].fillna(0)
+        X_df = dataset[cols].copy()
+
+        # imputation choices
+        if impute_strategy == 'zero':
+            X = X_df.fillna(0).values
+            idx_labels = X_df.index
+        elif impute_strategy == 'median':
+            X = X_df.fillna(X_df.median()).values
+            idx_labels = X_df.index
+        else:
+            # drop rows with NaN
+            not_nan_mask = ~X_df.isna().any(axis=1)
+            X = X_df[not_nan_mask].values
+            idx_labels = X_df.index[not_nan_mask]
 
         if min_samples is None:
-            min_samples = 2 * X.shape[1]
+            min_samples = max(1, 2 * X.shape[1])
+
+        if X.shape[0] == 0:
+            return {"indices": [], "values": [], "labels": []}
 
         db = DBSCAN(eps=eps, min_samples=min_samples)
         labels = db.fit_predict(X)
 
-        outlier_indices = np.where(labels == -1)[0].tolist()
-        outlier_values = dataset.iloc[outlier_indices][cols].values.tolist()
+        outlier_positions = np.where(labels == -1)[0]
+        outlier_idx_labels = idx_labels[outlier_positions].tolist()
+        outlier_values = dataset.loc[outlier_idx_labels, cols].values.tolist()
 
         if verbose:
-            print(f"[ DBSCAN Method ] eps={eps}, min_samples={min_samples}")
-            print(f"Detected {len(outlier_indices)} outliers.")
-            for idx, val in zip(outlier_indices, outlier_values):
-                print(f"  Index: {idx}, Values: {val}")
-
-        # 2D graph if possible
-        if X.shape[1] == 2:
-            plt.figure(figsize=(6, 4))
-            plt.scatter(X.iloc[:, 0], X.iloc[:, 1], c=labels, cmap='viridis', s=20)
-            plt.title(f'DBSCAN Clustering (eps={eps}, min_samples={min_samples})')
-            plt.show()
+            print(f"[ DBSCAN ] eps={eps}, min_samples={min_samples}, detected {len(outlier_idx_labels)} outliers.")
+            for lbl, val in zip(outlier_idx_labels, outlier_values):
+                print(f"  Index: {lbl}, Values: {val}")
 
         return {
-            "indices": outlier_indices,
+            "indices": outlier_idx_labels,
             "values": outlier_values,
             "labels": labels.tolist()
         }

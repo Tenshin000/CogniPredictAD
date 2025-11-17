@@ -1,0 +1,19 @@
+IF MMSE <= 26.50
+|   |--- FAQ <= 8.50
+|   |   |--- MMSE <= 23.50
+|   |   |   |--- THEN class = AD
+|   |   |--- MMSE >  23.50
+|   |   |   |--- THEN class = LMCI
+|   |--- FAQ >  8.50
+|   |   |--- THEN class = AD
+IF MMSE >  26.50
+|   |--- FAQ <= 0.50
+|   |   |--- EcogPtMem <= 2.11
+|   |   |   |--- THEN class = CN
+|   |   |--- EcogPtMem >  2.11
+|   |   |   |--- THEN class = EMCI
+|   |--- FAQ >  0.50
+|   |   |--- WholeBrain/ICV <= 0.66
+|   |   |   |--- THEN class = LMCI
+|   |   |--- WholeBrain/ICV >  0.66
+|   |   |   |--- THEN class = EMCI
