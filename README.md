@@ -40,7 +40,7 @@ After getting Data access from the Alzheimer's Disease Neuroimaging Initiative (
 - [Apolipoprotein E epsilon4 association with dementia in a population-based study: The Framingham study](https://pubmed.ncbi.nlm.nih.gov/8618665/)
 - [Outlier detection with Local Outlier Factor (LOF)](https://scikit-learn.org/stable/auto_examples/neighbors/plot_lof_outlier_detection.html)
 
-### Notebook 8 (Hyperparameter Tuning)
+### Notebook 8 (Explainability)
 - [Risk Score Stratification of Alzheimer's Disease and Mild Cognitive Impairment using Deep Learning](https://www.medrxiv.org/content/10.1101/2020.11.09.20226746v3.full)
 
 ## Installation
