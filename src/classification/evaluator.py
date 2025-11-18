@@ -21,14 +21,16 @@ from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.preprocessing import StandardScaler, label_binarize
 from typing import List, Optional, Dict, Tuple, Union
 
+
 class ADNIEvaluator:
     """
     ADNIEvaluator
     Helper to evaluate multiple classifier models on learn/train/test sets.
 
     The class can preload .pkl models from directories. It runs repeated stratified
-    cross-validation with optional preprocessing, computes train/validation/test
-    metrics and plots confusion matrices, ROC curves and violin plots.
+    outer cross-validation (unbiased per-fold samples) with optional preprocessing,
+    computes train/validation/test metrics and plots confusion matrices, ROC curves
+    and violin plots.
     """
     # ----------------------------#
     #        INITIALIZATION       #
@@ -163,57 +165,7 @@ class ADNIEvaluator:
                 return joblib.load(path)
             except Exception:
                 return None
-
-    # ----------------------------#
-    #        MODEL LOADING        #
-    # ----------------------------# 
-    def _load_models_from_dirs(self, dirs: List[str]):
-        """Load all .pkl models from a list of directories into self.models."""
-        for d in dirs:
-            if not os.path.isdir(d):
-                print(f"Skipping non-directory: {d}")
-                continue
-            for fname in sorted(f for f in os.listdir(d) if f.lower().endswith(".pkl")):
-                path = os.path.join(d, fname)
-                loaded = self._try_load(path)
-                if loaded is None:
-                    print(f"Skipping {path}: failed to load")
-                    continue
-                name = self._unique_name(os.path.splitext(fname)[0])
-                self.models[name] = loaded
-                self.model_paths[name] = path
-                print(f"Loaded model '{name}' from {path}")
-
-    # ----------------------------#
-    #     CORE EVALUATION (CV)    #
-    # ----------------------------#  
-    def _run_repeated_cv(self, clf, X: pd.DataFrame, y: pd.Series, cv_splitter: RepeatedStratifiedKFold,
-                        classes: np.ndarray) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[float]]:
-        """
-        Execute repeated stratified K-fold CV for a single classifier and return
-        (true_labels, predicted_labels, prob_matrix, per_fold_accuracies).
-        """
-        true_all = []
-        pred_all = []
-        prob_list = []
-        fold_accs = []
-
-        for train_idx, val_idx in cv_splitter.split(X, y):
-            X_tr, X_val = X.iloc[train_idx], X.iloc[val_idx]
-            y_tr, y_val = y.iloc[train_idx], y.iloc[val_idx]
-
-            fitted = self._safe_clone_and_fit(clf, X_tr, y_tr)
-            y_pred = fitted.predict(X_val)
-            prob_arr = self._get_probabilities(fitted, X_val, classes)
-
-            true_all.extend(list(y_val))
-            pred_all.extend(list(y_pred))
-            prob_list.append(prob_arr)
-            fold_accs.append(accuracy_score(y_val, y_pred))
-
-        prob_all = np.vstack(prob_list) if prob_list else np.empty((0, len(classes)))
-        return np.array(true_all), np.array(pred_all), prob_all, fold_accs
-
+            
     def _safe_roc_auc(self, y_true, prob, classes: np.ndarray) -> float:
         """Compute macro ROC AUC safely, returning nan on failure."""
         try:
@@ -235,6 +187,26 @@ class ADNIEvaluator:
             "ROC AUC (macro)": self._safe_roc_auc(y_true, prob, classes)
         }
 
+    # ----------------------------#
+    #        MODEL LOADING        #
+    # ----------------------------# 
+    def _load_models_from_dirs(self, dirs: List[str]):
+        """Load all .pkl models from a list of directories into self.models."""
+        for d in dirs:
+            if not os.path.isdir(d):
+                print(f"Skipping non-directory: {d}")
+                continue
+            for fname in sorted(f for f in os.listdir(d) if f.lower().endswith(".pkl")):
+                path = os.path.join(d, fname)
+                loaded = self._try_load(path)
+                if loaded is None:
+                    print(f"Skipping {path}: failed to load")
+                    continue
+                name = self._unique_name(os.path.splitext(fname)[0])
+                self.models[name] = loaded
+                self.model_paths[name] = path
+                print(f"Loaded model '{name}' from {path}")
+    
     # ----------------------------#
     #      PLOTTING HELPERS       #
     # ----------------------------# 
@@ -360,8 +332,11 @@ class ADNIEvaluator:
 
     def _evaluate_learn_cv(self, model_name: str, loaded, X_learn, y_learn, cv_splitter, classes):
         """
-        Build a CV pipeline (optional ADNIPreprocessor + optional scaler + final estimator)
-        and run repeated CV. Returns (fold_accuracies, crossval_metrics).
+        OUTER Repeated CV evaluation for the 'learn' set:
+        - For unbiased per-fold samples, this method uses cv_splitter as the outer CV splitter.
+        - For each outer fold it clones and fits a pipeline that includes ADNIPreprocessor (if needed)
+          and StandardScaler (for LogisticRegression), then evaluates on the outer validation fold.
+        Returns (fold_accuracies, crossval_metrics) where crossval_metrics aggregates outer-fold predictions.
         """
         if X_learn is None or y_learn is None:
             return [], None
@@ -373,16 +348,42 @@ class ADNIEvaluator:
         needs_scaling = isinstance(final_est, LogisticRegression)
         has_preprocessor = isinstance(loaded, Pipeline) and isinstance(list(loaded.named_steps.values())[0], ADNIPreprocessor)
 
+        # Build the per-fold pipeline to be fitted inside each outer fold
         steps = []
         if not has_preprocessor:
             steps.append(("pre", ADNIPreprocessor()))
         if needs_scaling:
             steps.append(("scl", StandardScaler()))
         steps.append(("clf", final_est))
-        cv_pipeline = Pipeline(steps)
+        cv_pipeline_template = Pipeline(steps)
 
-        true_cv, pred_cv, prob_cv, fold_accs = self._run_repeated_cv(cv_pipeline, X_learn, y_learn, cv_splitter, classes)
-        return fold_accs, self._metrics_dict(true_cv, pred_cv, prob_cv, classes, "CrossVal")
+        true_all = []
+        pred_all = []
+        prob_list = []
+        fold_accs = []
+
+        # Outer loop: each split of cv_splitter acts as an independent validation fold
+        for train_idx, val_idx in cv_splitter.split(X_learn, y_learn):
+            X_tr, X_val = X_learn.iloc[train_idx], X_learn.iloc[val_idx]
+            y_tr, y_val = y_learn.iloc[train_idx], y_learn.iloc[val_idx]
+
+            # Clone the cv pipeline (so parameters are reset) and fit on the outer-train
+            pipeline_to_fit = clone(cv_pipeline_template)
+            pipeline_to_fit.fit(X_tr, y_tr)
+
+            # Predict on outer validation
+            y_pred = pipeline_to_fit.predict(X_val)
+            prob_arr = self._get_probabilities(pipeline_to_fit, X_val, classes)
+
+            # Collect predictions and fold metrics
+            true_all.extend(list(y_val))
+            pred_all.extend(list(y_pred))
+            prob_list.append(prob_arr)
+            fold_accs.append(accuracy_score(y_val, y_pred))
+
+        prob_all = np.vstack(prob_list) if prob_list else np.empty((0, len(classes)))
+        crossval_metrics = self._metrics_dict(np.array(true_all), np.array(pred_all), prob_all, classes, "CrossVal")
+        return fold_accs, crossval_metrics
 
     def _evaluate_test_direct(self, model_name: str, working, loaded, X_test, y_test, X_train, y_train, X_learn, y_learn, classes):
         """
@@ -439,12 +440,12 @@ class ADNIEvaluator:
                         X_learn: Optional[pd.DataFrame] = None, y_learn: Optional[pd.Series] = None,
                         X_train: Optional[pd.DataFrame] = None, y_train: Optional[pd.Series] = None,
                         X_test: Optional[pd.DataFrame] = None, y_test: Optional[pd.Series] = None,
-                        cv_splits: int = 5, cv_repeats: int = 3,
+                        cv_splits: int = 5, cv_repeats: int = 5,
                         display_individual_tables: bool = True,
                         plot_roc: bool = True,
                         save_results_dir: Optional[str] = None):
         """
-        Evaluate available models over Learn (CV), Train, and Test.
+        Evaluate available models over Learn (outer-CV), Train, and Test.
 
         Returns a dictionary containing per-model tables, per-class test DataFrames,
         confusion matrices, and a test comparison table.
@@ -481,7 +482,7 @@ class ADNIEvaluator:
             # Train evaluation (try direct predict, otherwise fit)
             working, train_metrics = self._evaluate_train_direct(model_name, loaded, X_train, y_train, classes)
 
-            # Cross-validation on learn set
+            # OUTER Cross-validation on learn set (unbiased per-fold samples)
             fold_accs, cv_metrics = self._evaluate_learn_cv(model_name, loaded, X_learn, y_learn, cv_splitter, classes)
             if fold_accs:
                 accuracies_per_model[model_name] = fold_accs

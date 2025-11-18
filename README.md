@@ -78,10 +78,10 @@ pip install -e .
 - **notebooks:** Collection of Jupyter notebooks that implement the entire flow. **The heart of the project is located in the *notebooks* folder. Most of the explanations and code are there, and I recommend reading them carefully to get a clear understanding of the project.** These include preliminary exploration (01), dataset preparation (02), data exploration (03), preprocessing (04), data exploration for classification (05), tuning (06), classifier training (07), explainability (08), model evaluation (09), and creation of operational models (10);
 - **results**: Contains all the models produced. In particular, it contains the final models Model.pkl and AltModel.pkl and the interpretable models XAIModel.pkl and AltXAIModel.pkl;
 - **src**: Reusable source code:
-  - **classification** contains classifier.py and grid.py (ADNIClassifier class, functions for training, repeated CV, model saving, and evaluation);
-  - **preprocessing** contains cleaner, transformer, KNN imputer, outlier handling, and attribute selection (all routines used to build train/test and fill missing values);
+  - **classification** contains classifier.py, evaluator.py, xai_recover.py and grid.py;
+  - **preprocessing** contains cleaner, transformer, KNN imputer, outlier handling, and preprocessor (all routines used to build train/test and fill missing values);
   - **visualization** contains explainer.py and visualizer.py (SHAP wrappers, permutation explainer, plotting, and tree/rule export). The rule export and tree rendering functions are implemented here.
-- Root file (CogniPredictAD): Contains the main documents and the physician app in main.py.
+- Root file (CogniPredictAD): Contains the main documents and the medic app in app.py.
 
 
 ## Introduction
@@ -264,13 +264,11 @@ At the end of the Grid Search, the optimal parameters found for each model were 
 
 ## Classification
 ### Building Models
-From the **Grid Search**, the **best estimators**, their **parameters**, and **scores** were collected for each **model**. These best-estimators were saved, then retrained and evaluated using **5-fold cross-validation**, producing several outputs: confusion matrices, per-class metrics, macro F1 score, accuracy, ROC-AUC, and repeated evaluations to assess stability.
+From the **Grid Search** the saved best estimators were evaluated with repeated stratified cross-validation and aggregated metrics (confusion matrices, per-class scores, macro F1, accuracy, ROC-AUC). Cross-validated rankings place ensemble methods at the top: adaptive boosting achieved the highest macro F1 (≈0.9118), followed closely by random forest (≈0.9105) and extra trees (≈0.9083). 
 
-Cross-validated rankings indicate that ensemble methods are top performers, with only small margins separating them: adaptive boosting, random forest, and extra trees show nearly equivalent CV performance. Logistic regression and shallow, un-sampled decision trees lag behind on macro F1.
+Pairwise comparisons using the **Wilcoxon signed-rank test** on **outer-fold** *F1_macro* show that many comparisons involving \emph{Multinomial Logistic Regression} versus ensemble methods yield highly significant p-values (p≈5.96×10⁻⁸ in the table), indicating consistent CV superiority of the ensembles over logistic regression. **By contrast, many ensemble–ensemble comparisons do not reach statistical significance (p≥0.05), so those classifiers cannot be reliably distinguished on the CV folds alone.**
 
-Pairwise statistical comparison across CV folds was performed using the **Wilcoxon signed-rank test** on model F1_macro scores to determine whether observed differences were reproducible. The results show many non-significant comparisons and a minority with *p*-values below conventional thresholds. Specifically, twelve pairwise comparisons yielded *p* \< 0.05, while numerous others returned *p* ≥ 0.05, several exceeding *p* = 0.2, and many near or above *p* = 0.5. The smallest observed *p*-values are on the order of 1 × 10<sup>−3</sup>, indicating a few consistent differences across CV folds.
-
-**However, where *p* \< 0.05, the differences in macro F1 are small, implying negligible practical effect despite statistical significance.** Thus, Wilcoxon analysis suggests that CV ranking alone is insufficient for definitive model selection, and an independent evaluation on the test set is required to determine the best model.
+Importantly, where the Wilcoxon test does indicate significance, the observed macro-F1 differences are very small; thus the results point to negligible practical effect sizes despite statistical significance in some pairs. Consequently, cross-validation ranking alone is insufficient to declare a single "best" model. **An unbiased final choice should be made and reported on an independent hold-out test set that was not used during training or cross-validation.**
 
 ### Explainability
 SHAP summary plots were generated for each model.

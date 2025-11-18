@@ -1,16 +1,14 @@
 \section{Classification}
 \subsection{Building Models}
-From the \textbf{Grid Search}, the \textbf{best estimators}, their \textbf{parameters}, and \textbf{scores} were collected for each \textbf{model}. These best-estimators were saved, then retrained and evaluated using \textbf{5-fold cross-validation}, producing several outputs: confusion matrices, per-class metrics, macro F1 score, accuracy, ROC-AUC, and repeated evaluations to assess stability.
+From the \textbf{Grid Search} the saved best estimators were evaluated with repeated stratified cross-validation and aggregated metrics (confusion matrices, per-class scores, macro F1, accuracy, ROC-AUC). Cross-validated rankings place ensemble methods at the top: adaptive boosting achieved the highest macro F1 ($\approx 0.9118$), followed closely by random forest ($\approx 0.9105$) and extra trees ($\approx 0.9083$). 
 
 \vspace{2mm}
 
-Cross-validated rankings indicate that ensemble methods are top performers, with only small margins separating them: adaptive boosting, random forest, and extra trees show nearly equivalent CV performance. Logistic regression and shallow, un-sampled decision trees lag behind on macro F1.
+Pairwise comparisons using the \textbf{Wilcoxon signed-rank test} on \textbf{outer-fold} \textit{F1\_macro} show that many comparisons involving \texttt{Multinomial Logistic Regression} versus ensemble methods yield highly significant p-values ($p \approx 5.96\!\times\!10^{-8}$ in the table), indicating consistent CV superiority of the ensembles over logistic regression.\textbf{By contrast, many ensemble–ensemble comparisons do not reach statistical significance} ($p \geq 0.05$), so those classifiers cannot be reliably distinguished on the CV folds alone.
 
 \vspace{2mm}
 
-Pairwise statistical comparison across CV folds was performed using the \textbf{Wilcoxon signed-rank test} on model F1\_macro scores to determine whether observed differences were reproducible. The results show many non-significant comparisons and a minority with $p$-values below conventional thresholds. Specifically, twelve pairwise comparisons yielded $p<0.05$, while numerous others returned $p\geq0.05$, several exceeding $p=0.2$, and many near or above $p=0.5$. The smallest observed $p$-values are on the order of $1\!\times\!10^{-3}$, indicating a few consistent differences across CV folds.  
-
-\textbf{However, where $p<0.05$, the differences in macro F1 are small, implying negligible practical effect despite statistical significance.} Thus, Wilcoxon analysis suggests that CV ranking alone is insufficient for definitive model selection, and an independent evaluation on the test set is required to determine the best model.
+Importantly, where the Wilcoxon test does indicate significance, the observed macro-F1 differences are very small. Thus the results point to negligible practical effect sizes despite statistical significance in some pairs. Consequently, cross-validation ranking alone is insufficient to declare a single "best" model. \textbf{An unbiased final choice should be made and reported on an independent hold-out testing set.} 
 
 \subsection{Explainability}
 SHAP\footnote{SHapley Additive exPlanations: A Python library for the explainability of Machine Learning models} summary plots were generated for each model.
@@ -29,7 +27,7 @@ Sampling distributes importance to secondary predictors (e.g., hippocampus/ICV r
 
 \vspace{2mm}
 
-Decision tree diagrams and exported rule files show that class separation typically relies on thresholds of a few key features (often one of the three clinical scores, or combinations of biomarkers and cognitive tests). The resulting rules are easily interpretable and suitable for communicating “if $\to$ then” statements to clinical staff.
+Decision tree diagrams and exported rule files show that class separation typically relies on thresholds of a few key features (often one of the three clinical scores, or combinations of biomarkers and cognitive tests). The resulting rules are easily interpretable and suitable for communicating "if $\to$ then" statements to clinical staff.
 
 \subsection{Results}
 Models were evaluated on the training set, 5-fold CV, and the testing set. The final evaluation focused primarily on explainability and test set results, including: \textit{F1 Score (macro), Accuracy, Balanced Accuracy, Precision (weighted), Recall (weighted), F1 Score (weighted), and ROC AUC (macro)}. Evaluation plots and confusion matrices are included in the following section (\textit{Tables and Images}) alongside evaluation tables for the test set.

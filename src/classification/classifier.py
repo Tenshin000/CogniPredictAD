@@ -362,43 +362,6 @@ class ADNIClassifier:
         return os.path.join(base_dir, f"{clean_name}.pkl")
     
     # ----------------------------#
-    #     CORE EVALUATION (CV)    #
-    # ----------------------------# 
-    def _run_repeated_cv(self, clf, X, y, cv_splitter, classes):
-        """
-        Run repeated stratified Cross Validation for a single classifier. 
-        Return: true_all (np.array), pred_all (np.array), prob_all (np.ndarray), fold_accuracies (list)
-
-        NOTE: 'classes' must be provided to guarantee consistent ordering of probability columns.
-        """
-        true_all = []
-        pred_all = []
-        prob_all_list = []
-        fold_accuracies = []
-
-        for train_idx, val_idx in cv_splitter.split(X, y):
-            X_tr, X_val = X.iloc[train_idx], X.iloc[val_idx]
-            y_tr, y_val = y.iloc[train_idx], y.iloc[val_idx]
-
-            # Clone and Fit on fold
-            fitted = self._safe_clone_and_fit(clf, X_tr, y_tr)
-
-            # Predict and Probabilities (use the external 'classes' to align probabilities)
-            y_pred = fitted.predict(X_val)
-            prob_arr = self._get_probabilities(fitted, X_val, classes)
-
-            true_all.extend(y_val)
-            pred_all.extend(y_pred)
-            prob_all_list.append(prob_arr)
-
-            fold_acc = accuracy_score(y_val, y_pred)
-            fold_accuracies.append(fold_acc)
-
-        # Stack probabilities and arrays
-        prob_all = np.vstack(prob_all_list) if len(prob_all_list) > 0 else np.empty((0, len(classes)))
-        return np.array(true_all), np.array(pred_all), prob_all, fold_accuracies
-
-    # ----------------------------#
     #      PLOTTING HELPERS       #
     # ----------------------------# 
     def _plot_roc_per_class(self, roc_dict, classes):
@@ -532,14 +495,14 @@ class ADNIClassifier:
     def _wilcoxon_pairwise(self, scores_per_model):
         """
         Perform pairwise Wilcoxon signed-rank tests between models and print results
-        in a readable table.
+        in a readable table
 
         Input:
             scores_per_model : dict
-                Dictionary mapping model_name -> list of per-fold F1 macro scores
+                Dictionary mapping model_name -> list of outer-fold F1 macro scores
 
         Output:
-            dict : mapping "ModelA vs ModelB" -> {statistic, p_value, significance, winner}
+            DataFrame of pairwise Wilcoxon results (Model A, Model B, Statistic, P-value)
         """
         model_names = list(scores_per_model.keys())
         results = []
@@ -550,7 +513,7 @@ class ADNIClassifier:
                 model_a = model_names[i]
                 model_b = model_names[j]
                 try:
-                    stat, p = wilcoxon(scores_per_model[model_a], scores_per_model[model_b])
+                    stat, p = wilcoxon(scores_per_model[model_a], scores_per_model[model_b], zero_method="wilcox", alternative="two-sided", mode='auto')
                 except Exception:
                     # If test fails (e.g., zero differences), return NaN
                     stat, p = np.nan, np.nan
@@ -572,16 +535,18 @@ class ADNIClassifier:
     # ----------------------------#
     def fit_evaluate_store_models(self, X_train: pd.DataFrame, y_train: pd.Series,
                                   output_dir: str = "../results/all_models",
-                                  cv_splits: int = 5, cv_repeats: int = 3):
+                                  cv_splits: int = 5, cv_repeats: int = 5):
         """
-        Train, evaluate, and store multiple classifiers using Repeated Stratified CV.  
-        Generates metrics, per-class reports, confusion matrices, ROC curves, violin plots, and Wilcoxon tests on F1 macro.
+        Train, evaluate, and store multiple classifiers using Nested-style evaluation:
+        - Outer RepeatedStratifiedKFold is used to produce unbiased performance samples for comparison.
+        - Each outer-fold training subset is used to fit (clone.fit) the given pipeline and evaluated on the outer-fold validation subset.
+        Generates metrics, per-class reports, confusion matrices, ROC curves, violin plots, and Wilcoxon tests on outer-fold F1 macro.
         """
         # Ensure output directory exists
         self._ensure_dir(output_dir)
 
-        # Initialize repeated stratified K-Fold CV
-        cv_splitter = RepeatedStratifiedKFold(n_splits=cv_splits, n_repeats=cv_repeats, random_state=42)
+        # Outer CV: used to obtain unbiased performance samples for EACH model (this plays the role of the outer loop of nested CV)
+        outer_cv = RepeatedStratifiedKFold(n_splits=cv_splits, n_repeats=cv_repeats, random_state=42)
 
         # Determine the set of classes present in y_train
         classes = [c for c in ["CN", "EMCI", "LMCI", "AD"] if c in y_train.values]
@@ -593,30 +558,54 @@ class ADNIClassifier:
         confusion_norm_dict = {}
         roc_dict = {}
         accuracies_per_model = {}
-        f1_macro_per_model = {}  # store per-fold F1 macro for Wilcoxon
+        f1_macro_per_model = {}  # store per-outer-fold F1 macro for Wilcoxon
 
+        # For each classifier, run outer-fold evaluation (this yields multiple independent scores per model)
         for clf_name, clf in self.classifiers.items():
             print(f"Training & Evaluating: {clf_name}")
 
-            # --- Repeated CV evaluation ---
-            true_all, pred_all, prob_all, fold_accuracies = self._run_repeated_cv(
-                clf, X_train, y_train, cv_splitter, classes
-            )
+            # Containers for this classifier across all outer folds
+            true_all = []
+            pred_all = []
+            prob_all_list = []
+            fold_accuracies = []
+            outer_fold_f1 = []
+
+            # Outer CV loop: fit on X_tr (outer train), evaluate on X_val (outer test)
+            for train_idx, val_idx in outer_cv.split(X_train, y_train):
+                X_tr, X_val = X_train.iloc[train_idx], X_train.iloc[val_idx]
+                y_tr, y_val = y_train.iloc[train_idx], y_train.iloc[val_idx]
+
+                # Clone and Fit on outer-fold training portion
+                fitted = self._safe_clone_and_fit(clf, X_tr, y_tr)
+
+                # Predict and Probabilities (align probabilities with provided 'classes')
+                y_pred = fitted.predict(X_val)
+                prob_arr = self._get_probabilities(fitted, X_val, classes)
+
+                # Collect
+                true_all.extend(y_val)
+                pred_all.extend(y_pred)
+                prob_all_list.append(prob_arr)
+
+                # Per-outer-fold accuracy and F1 (one score per outer fold)
+                fold_acc = accuracy_score(y_val, y_pred)
+                fold_f1 = f1_score(y_val, y_pred, average="macro")
+                fold_accuracies.append(fold_acc)
+                outer_fold_f1.append(fold_f1)
+
+            # Aggregate probabilities
+            prob_all = np.vstack(prob_all_list) if len(prob_all_list) > 0 else np.empty((0, len(classes)))
+
+            # Save for violin plots and Wilcoxon
             accuracies_per_model[clf_name] = fold_accuracies
+            f1_macro_per_model[clf_name] = outer_fold_f1
 
-            # Compute per-fold F1 macro scores
-            fold_f1_macro = []
-            for i, (train_idx, val_idx) in enumerate(cv_splitter.split(X_train, y_train)):
-                y_val = y_train.iloc[val_idx]
-                y_pred = pred_all[val_idx] if isinstance(pred_all, np.ndarray) else np.array(pred_all)[val_idx]
-                fold_f1_macro.append(f1_score(y_val, y_pred, average="macro"))
-            f1_macro_per_model[clf_name] = fold_f1_macro
-
-            # Compute global metrics
+            # Compute global metrics using concatenated outer-fold predictions (this is a valid estimate aggregated across outer folds)
             roc_auc_macro = np.nan
             try:
                 roc_auc_macro = roc_auc_score(
-                    label_binarize(true_all, classes=classes), prob_all,
+                    label_binarize(np.array(true_all), classes=classes), prob_all,
                     average="macro", multi_class="ovr"
                 )
             except Exception:
@@ -624,18 +613,18 @@ class ADNIClassifier:
 
             clf_metrics = {
                 "Model": clf_name,
-                "F1 Score (macro)": f1_score(true_all, pred_all, average="macro"),
-                "Accuracy": accuracy_score(true_all, pred_all),
-                "Balanced Accuracy": balanced_accuracy_score(true_all, pred_all),
-                "Precision (weighted)": precision_score(true_all, pred_all, average="weighted", zero_division=0),
-                "Recall (weighted)": recall_score(true_all, pred_all, average="weighted"),
-                "F1 Score (weighted)": f1_score(true_all, pred_all, average="weighted"),
+                "F1 Score (macro)": f1_score(np.array(true_all), np.array(pred_all), average="macro"),
+                "Accuracy": accuracy_score(np.array(true_all), np.array(pred_all)),
+                "Balanced Accuracy": balanced_accuracy_score(np.array(true_all), np.array(pred_all)),
+                "Precision (weighted)": precision_score(np.array(true_all), np.array(pred_all), average="weighted", zero_division=0),
+                "Recall (weighted)": recall_score(np.array(true_all), np.array(pred_all), average="weighted"),
+                "F1 Score (weighted)": f1_score(np.array(true_all), np.array(pred_all), average="weighted"),
                 "ROC AUC (macro)": roc_auc_macro
             }
             metrics_list.append(clf_metrics)
 
-            # --- Per-class metrics ---
-            class_report = classification_report(true_all, pred_all, labels=classes, output_dict=True, zero_division=0)
+            # --- Per-class metrics (aggregated across outer folds) ---
+            class_report = classification_report(np.array(true_all), np.array(pred_all), labels=classes, output_dict=True, zero_division=0)
             for cls in classes:
                 rep = class_report.get(str(cls), {})
                 per_class_metrics_list.append({
@@ -647,8 +636,8 @@ class ADNIClassifier:
                     "Support": rep.get("support", 0)
                 })
 
-            # --- Confusion matrices ---
-            cm = confusion_matrix(true_all, pred_all, labels=classes)
+            # --- Confusion matrices (aggregated across outer folds) ---
+            cm = confusion_matrix(np.array(true_all), np.array(pred_all), labels=classes)
             confusion_dict[clf_name] = cm
             row_sums = cm.sum(axis=1, keepdims=True)
             with np.errstate(divide="ignore", invalid="ignore"):
@@ -656,8 +645,8 @@ class ADNIClassifier:
                 cm_norm = np.nan_to_num(cm_norm)
             confusion_norm_dict[clf_name] = cm_norm
 
-            # --- ROC One-vs-Rest per class ---
-            y_true_bin = label_binarize(true_all, classes=classes)
+            # --- ROC One-vs-Rest per class (aggregated across outer folds) ---
+            y_true_bin = label_binarize(np.array(true_all), classes=classes)
             fpr_dict, tpr_dict, auc_dict = {}, {}, {}
             for i, cls in enumerate(classes):
                 if y_true_bin[:, i].sum() == 0:
@@ -675,6 +664,7 @@ class ADNIClassifier:
                 auc_dict[cls] = auc_val
             roc_dict[clf_name] = (fpr_dict, tpr_dict, auc_dict)
 
+            # --- Refit on full training set and save final model (same behavior as before) ---
             final_clf = clone(clf)
 
             sample_dimension = max(len(X_train) // len(y_train.unique()), 500)
@@ -713,20 +703,20 @@ class ADNIClassifier:
             except Exception:
                 joblib.dump(pipeline_to_save, model_path)
                 
-        # --- Assemble results DataFrames ---
+        # --- Assemble results DataFrames --- (same structure as original)
         results_df = pd.DataFrame(metrics_list).sort_values("F1 Score (macro)", ascending=False)
         per_class_df = pd.DataFrame(per_class_metrics_list)
 
         display(results_df)
         display(per_class_df)
 
-        # --- Plots ---
+        # --- Plots --- (same plotting helpers used)
         self._plot_roc_per_class(roc_dict, classes)
         self._plot_confusion_matrices(confusion_dict, title_prefix="Confusion Matrix")
         self._plot_confusion_matrices(confusion_norm_dict, title_prefix="Normalized Confusion Matrix")
         self._plot_violin(accuracies_per_model)
 
-        # --- Wilcoxon pairwise test ---
+        # --- Wilcoxon pairwise test on OUTER-FOLD F1 macro scores (unbiased samples) ---
         wilcoxon_results_df = self._wilcoxon_pairwise(f1_macro_per_model)
         display(wilcoxon_results_df)
 
