@@ -46,12 +46,13 @@ After getting Data access from the Alzheimer's Disease Neuroimaging Initiative (
 ## Installation
 ### With venv
 ```bash
-cd CogniPredictAD
 python -m venv CogniPredictAD
 # On Linux/macOS:
 source CogniPredictAD/bin/activate
 # On Windows (PowerShell):
 CogniPredictAD\Scripts\Activate.ps1
+# Then:
+cd CogniPredictAD
 pip install --upgrade pip
 pip install -e .
 ```
