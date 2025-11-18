@@ -311,37 +311,37 @@ Performance metrics reflect the expected drop: the best alternative model was an
 <figure id="fig:Evaluation with CDRSB, LDELTOTAL, and mPACCdigit" data-latex-placement="H">
 <p><img src="doc/images/1_Evaluation.png" style="width:65.0%" alt="image" />
 <span id="fig:Evaluation with CDRSB, LDELTOTAL, and mPACCdigit" data-label="fig:Evaluation with CDRSB, LDELTOTAL, and mPACCdigit"></span></p>
-<figcaption>Evaluation of Balanced Accuracies with CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/1)</figcaption>
+<figcaption>Evaluation of Balanced Accuracies with CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models)</figcaption>
 </figure>
 
 <figure id="fig:Evaluation without CDRSB, LDELTOTAL, and mPACCdigit" data-latex-placement="H">
 <p><img src="doc/images/2_Evaluation.png" style="width:65.0%" alt="image" />
 <span id="fig:Evaluation without CDRSB, LDELTOTAL, and mPACCdigit" data-label="fig:Evaluation without CDRSB, LDELTOTAL, and mPACCdigit"></span></p>
-<figcaption>Evaluation of Balanced Accuracies without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/2)</figcaption>
+<figcaption>Evaluation of Balanced Accuracies without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/alternative)</figcaption>
 </figure>
 
 <figure id="fig:Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit" data-latex-placement="H">
 <p><img src="doc/images/1_Confusion_Matrix.png" style="width:100.0%" alt="image" />
 <span id="fig:Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit" data-label="fig:Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit"></span></p>
-<figcaption>Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/1)</figcaption>
+<figcaption>Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models)</figcaption>
 </figure>
 
 <figure id="fig:Normalized Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit" data-latex-placement="H">
 <p><img src="doc/images/1_Confusion_Matrix_Normalized.png" style="width:100.0%" alt="image" />
 <span id="fig:Normalized Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit" data-label="fig:Normalized Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit"></span></p>
-<figcaption>Normalized Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/1)</figcaption>
+<figcaption>Normalized Confusion Matrix with CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models)</figcaption>
 </figure>
 
 <figure id="fig:Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit" data-latex-placement="H">
 <p><img src="doc/images/2_Confusion_Matrix.png" style="width:100.0%" alt="image" />
 <span id="fig:Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit" data-label="fig:Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit"></span></p>
-<figcaption>Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/2)</figcaption>
+<figcaption>Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/alternative)</figcaption>
 </figure>
 
 <figure id="fig:Normalized Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit" data-latex-placement="H">
 <p><img src="doc/images/2_Confusion_Matrix_Normalized.png" style="width:100.0%" alt="image" />
 <span id="fig:Normalized Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit" data-label="fig:Normalized Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit"></span></p>
-<figcaption>Normalized Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/2)</figcaption>
+<figcaption>Normalized Confusion Matrix without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all_models/alternative)</figcaption>
 </figure>
 
 *M_L_R is for Multinomial_Logistic_Regression.*
