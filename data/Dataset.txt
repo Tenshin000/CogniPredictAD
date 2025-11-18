@@ -1,2 +1,14 @@
 If you want the dataset you have to go to the ADNI site: https://adni.loni.usc.edu/data-samples/adni-data/
 And compile the request: https://ida.loni.usc.edu/collaboration/access/appLicense.jsp;jsessionid=EA636FFF48660A2D55B1228B9E2CEBE1
+
+C:.
+    ADNIMERGE.csv
+    ADNIMERGE_DICT.csv
+    Dataset.txt
+    learning_set.csv
+    NEWADNIMERGE.csv
+    pretest.csv
+    pretrain.csv
+    sampled.csv
+    test.csv
+    train.csv
