@@ -9,8 +9,8 @@
 \contentsline {subsection}{\numberline {6.2}Transformations and Normalizations}{5}{subsection.6.2}%
 \contentsline {subsection}{\numberline {6.3}Feature Reduction and Selection}{5}{subsection.6.3}%
 \contentsline {subsection}{\numberline {6.4}Class Balancing}{5}{subsection.6.4}%
-\contentsline {subsection}{\numberline {6.5}Some Considerations}{5}{subsection.6.5}%
-\contentsline {subsubsection}{\numberline {6.5.1}Correlation}{5}{subsubsection.6.5.1}%
+\contentsline {subsection}{\numberline {6.5}Some Considerations}{6}{subsection.6.5}%
+\contentsline {subsubsection}{\numberline {6.5.1}Correlation}{6}{subsubsection.6.5.1}%
 \contentsline {subsubsection}{\numberline {6.5.2}Normalization}{6}{subsubsection.6.5.2}%
 \contentsline {subsubsection}{\numberline {6.5.3}Binning}{6}{subsubsection.6.5.3}%
 \contentsline {subsection}{\numberline {6.6}Final Dataset}{6}{subsection.6.6}%

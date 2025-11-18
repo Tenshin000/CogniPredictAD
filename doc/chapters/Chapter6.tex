@@ -1,8 +1,10 @@
 \section{Data Preprocessing}
 The \textbf{Preprocessing phase} reshaped the learning set into a modelling-ready multiclass table by applying \textbf{structured imputation}, \textbf{biologically informed transformations}, \textbf{feature reduction}, and \textbf{controlled class balancing}. The objective was to obtain a compact, coherent, and statistically stable representation suitable for diagnostic classification.
 
+\vspace{2mm}
+
 \subsection{Cleaning and Imputation}
-Missingness was evaluated across modalities. Continuous and discrete gaps were imputed using a \textbf{KNN-based} strategy that preserved local structure and maintained integer semantics where appropriate. This procedure ensured numerical coherence while avoiding distortions in clinically sensitive variables. 
+Missingness was evaluated across modalities. Continuous and discrete gaps were imputed using a \textbf{KNN-based}\footnote{K-Nearest Neighbors} strategy that preserved local structure and maintained integer semantics where appropriate. This procedure ensured numerical coherence while avoiding distortions in clinically sensitive variables. 
 
 \subsection{Transformations and Normalizations}
 Two families of transformations were central:
@@ -13,11 +15,17 @@ Two families of transformations were central:
 
 Furthermore, \textbf{demographic and categorical predictors} were \textbf{encoded} into low-cardinality representations to enhance interpretability and compatibility with tabular models.
 
+\vspace{5mm}
+
 \subsection{Feature Reduction and Selection}
-Redundant or low-information variables were removed through a combination of statistical and conceptual criteria. Highly overlapping cognitive scales were consolidated: \textbf{ADAS11} and \textbf{ADASQ4} were \textbf{discarded} in favour of \textbf{ADAS13}, which subsumes their information almost entirely. \textbf{Global Ecog scores were removed}, while the domain-specific components were retained for their finer discriminative value. When two composite scores were strongly correlated, the version with greater mutual information regarding diagnosis was preferred. Demographic attributes with negligible variability were excluded to avoid noise and spurious effects.
+Redundant or low-information variables were removed through a combination of statistical and conceptual criteria. Highly overlapping cognitive scales were consolidated: \textbf{ADAS11} and \textbf{ADASQ4} were \textbf{discarded} in favour of \textbf{ADAS13}, which subsumes their information almost entirely. \textbf{Global Ecog scores were removed}, while the domain-specific components were retained for their finer discriminative value. When two composite scores were strongly correlated, the version with greater mutual information regarding diagnosis was preferred. Demographic attributes with negligible variability were excluded to avoid noise and spurious effects. 
+
+\vspace{5mm}
 
 \subsection{Class Balancing}
 To address the residual \textbf{class imbalance}, a \textbf{hybrid sampling pipeline} was implemented. \textbf{Majority classes} were modestly \textbf{under-sampled} with \textbf{Random Undersampler}, while \textbf{minority classes} were synthetically \textbf{oversampled} using \textbf{SMOTENC}, which preserves mixed continuous–categorical structure. All diagnostic groups (\textbf{DX}) were brought to comparable sample sizes, producing a balanced dataset suitable for unbiased model comparison.
+
+\newpage
 
 \subsection{Some Considerations}
 \subsubsection{Correlation}
@@ -29,7 +37,7 @@ This choice was motivated by two main reasons:
 \end{enumerate}
 
 \subsubsection{Normalization}
-During the data preparation process, no global normalization or standardization was applied to all variables. 
+During the data preprocessing process, no global normalization or standardization was applied to all variables. 
 
 This choice was driven by one reason: I wanted to \textbf{preserve the clinical interpretability}. Maintaining variables in their original units facilitates the medical interpretation of the results and comparability with clinical reference values. Normalization would have made it more difficult to attribute direct clinical significance to the transformed values.
 
@@ -39,7 +47,7 @@ Binning was not applied because it would have reduced the useful information and
 \newcolumn
 
 \subsection{Final Dataset}
-The resulting dataset contains a focused and interpretable feature set spanning demographic characteristics, genetic risk, cognitive performance, functional assessments, CSF ratios, and ICV-normalized MRI measures. Its structure is explicitly tailored for multimodal diagnostic modelling, reducing redundancy while retaining clinically meaningful variability.
+The resulting dataset contains a focused and interpretable feature set spanning demographic characteristics, genetic risk, cognitive performance, functional assessments, CSF ratios, and ICV-normalized MRI measures. Its structure is explicitly tailored for multiclass diagnostic modelling, reducing redundancy while retaining clinically meaningful variability.
 
 The preprocessing decisions emphasise interpretability, biological plausibility, robustness to noise, and balanced class representation. These principles ensure that the subsequent modelling pipeline operates on data that are both statistically reliable and clinically coherent.
 
@@ -55,7 +63,7 @@ The preprocessing decisions emphasise interpretability, biological plausibility,
 			\toprule
 			\textbf{Attribute} & \textbf{Description} & \textbf{Category} \\
 			\midrule
-			DX                    & Clinical diagnosis at the time of visit: CN, SMC, EMCI, LMCI, AD                   & Diagnosis             \\
+			DX                    & Clinical diagnosis at the time of visit: CN, EMCI, LMCI, AD                   & Diagnosis             \\
 			AGE                   & Participant's age at time of visit                                                 & Demographics          \\
 			PTGENDER              & Participant's gender (Male/Female)                                                 & Demographics          \\
 			PTEDUCAT              & Years of formal education completed                                                & Demographics          \\

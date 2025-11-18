@@ -1,13 +1,13 @@
 \section{Conclusions}
 \subsection{Real World Applications}
-A CogniPredictAD application (in main.py) has been developed with customtkinter that allows you to select one of four previously saved models (\textbf{Model.pkl}, \textbf{XAIModel.pkl}, \textbf{AltModel.pkl}, and \textbf{AltXAIModel.pkl}), manually enter a set of clinical and cognitive measures, obtain a diagnostic prediction (labels CN, EMCI, LMCI, and AD), and display it. The user can confirm or dispute the diagnosis: both actions add a line to the data/NEWADNIMERGE.csv file (creating a folder/file if necessary), while an “Undo Last” command cancels the last saved entry. This application can be used by clinicians to collect data, evaluate prediction models, and ultimately help establish a diagnosis.
+A CogniPredictAD application (in \texttt{app.py}) has been developed with \textit{customtkinter} that allows you to select one of four previously saved models (\textbf{Model.pkl}, \textbf{XAIModel.pkl}, \textbf{AltModel.pkl}, and \textbf{AltXAIModel.pkl}), manually enter a set of clinical and cognitive measures, obtain a diagnostic prediction (labels CN, EMCI, LMCI, and AD), and display it. The user can confirm or dispute the diagnosis: both actions add a line to the data/NEWADNIMERGE.csv file (creating a folder/file if necessary), while an “Undo Last” command cancels the last saved entry. This application can be used by clinicians to collect data, evaluate prediction models, and ultimately help establish a diagnosis.
 
 \subsection{Final Considerations}
 One of the main limitations of the dataset is that, after filtering for baseline visits with non-zero diagnoses, only 2,419 patients remain, a size that limits the ability to generalize the results to external populations. While these metrics showed very high performance on the test set (for \textbf{Model.pkl}: Accuracy = $0.9442$, F1 macro = $0.9376$, ROC AUC (macro) = $0.9867$), these metrics should be interpreted with caution.
 
 \vspace{2mm}
 
-Furthermore, three cognitive scores (CDRSB, LDELTOTAL, and mPACCdigit) provide a very strong diagnostic signal in this dataset: their presence largely explains the high effectiveness of \textbf{Model.pkl} (Extra Trees), while their removal leads to significantly lower metrics and a different distribution of important features, with XGBoost proving to be the best classifier in the pipeline without these variables. For these reasons, interpretable models (XAIModel and AltXAIModel) and an alternative pipeline (AltModel and AltXAIModel) that exclude the three scores were developed to assess the robustness and clinical plausibility of the predictions.
+Furthermore, three cognitive scores (CDRSB, LDELTOTAL, and mPACCdigit) provide a very strong diagnostic signal in this dataset: their presence largely explains the high effectiveness of \textbf{Model.pkl} (Extra Trees), while their removal leads to significantly lower metrics and a different distribution of important features, with AdaBoost proving to be the best classifier in the pipeline without these variables. For these reasons, interpretable models (XAIModel and AltXAIModel) and an alternative pipeline (AltModel and AltXAIModel) that exclude the three scores were developed to assess the robustness and clinical plausibility of the predictions.
 
 \vspace{2mm}
 
@@ -26,4 +26,14 @@ In this context, we could also introduce a new feature that identifies patients 
 
 It is also essential to harmonize the variables (mapping and units for imaging) and enrich the database with complementary modalities (genetics, PET, blood biomarkers) and longitudinal information, thus reducing reliance on a few cognitive scores.
 
-However, CogniPredictAD is already a good support tool for doctors in helping with the diagnosis of Alzheimer's. 
+\vspace{2mm}
+
+Additionally, implementing a \textbf{Neural-Network pipeline} would provide a valuable benchmark against the traditional algorithms used here. A practical approach is to start with a fully connected network for tabular inputs (standardized features, embedding layers for categoricals, dropout and batch-normalization) and to extend to modality-specific architectures where appropriate (CNN backbones for imaging, LSTM/GRU or Transformer encoders for longitudinal series) with a late fusion layer for multimodal integration. Train with class-weighted loss or focal loss and balanced/stratified minibatches to address label imbalance, use nested cross-validation, early stopping and learning-rate schedulers for robust model selection, and apply calibration (e.g. temperature scaling) before clinical use.
+
+\vspace{2mm}
+
+\textit{However, CogniPredictAD is already a good support tool for doctors in helping with the diagnosis of Alzheimer's. }
+
+\newcolumn
+
+\text{ }

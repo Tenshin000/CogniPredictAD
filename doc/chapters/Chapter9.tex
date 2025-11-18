@@ -4,7 +4,7 @@ From the \textbf{Grid Search}, the \textbf{best estimators}, their \textbf{param
 
 \vspace{2mm}
 
-Cross-validated rankings indicate that ensemble methods are top performers, with only small margins separating them: adaptive boosting, random forest, and extra trees show nearly equivalent CV performance. Logistic regression and shallow, un-sampled decision trees lag behind on macro F1 and balanced accuracy.
+Cross-validated rankings indicate that ensemble methods are top performers, with only small margins separating them: adaptive boosting, random forest, and extra trees show nearly equivalent CV performance. Logistic regression and shallow, un-sampled decision trees lag behind on macro F1.
 
 \vspace{2mm}
 
@@ -32,7 +32,7 @@ Sampling distributes importance to secondary predictors (e.g., hippocampus/ICV r
 Decision tree diagrams and exported rule files show that class separation typically relies on thresholds of a few key features (often one of the three clinical scores, or combinations of biomarkers and cognitive tests). The resulting rules are easily interpretable and suitable for communicating “if $\to$ then” statements to clinical staff.
 
 \subsection{Results}
-Models were evaluated on the training set, 5-fold CV, and the test set. The final evaluation focused primarily on explainability and test set results, including: \textit{F1 Score (macro), Accuracy, Balanced Accuracy, Precision (weighted), Recall (weighted), F1 Score (weighted), and ROC AUC (macro)}. Evaluation plots and confusion matrices are included in the following pages alongside evaluation tables for the test set.
+Models were evaluated on the training set, 5-fold CV, and the testing set. The final evaluation focused primarily on explainability and test set results, including: \textit{F1 Score (macro), Accuracy, Balanced Accuracy, Precision (weighted), Recall (weighted), F1 Score (weighted), and ROC AUC (macro)}. Evaluation plots and confusion matrices are included in the following section (\textit{Tables and Images}) alongside evaluation tables for the test set.
 
 An Extra Trees classifier trained without hybrid sampling (\texttt{Extra\_Trees}) achieved the best test performance: a \textbf{macro F1 $\approx$ 0.9376}, \textbf{accuracy $\approx$ 0.9442}, and \textbf{ROC AUC $\approx$ 0.9867}.  
 
@@ -43,11 +43,11 @@ As shown in the explainability section, the cognitive scores \textit{CDRSB}\foot
 
 \vspace{2mm}
 
-While this improves model accuracy, it raises a concern of feature dominance: \textbf{a small number of variables may disproportionately drive predictions, while many others contribute minimally}, potentially leading to local overfitting. Models may appear highly effective on the ADNI dataset but lose performance on more heterogeneous populations or external data.
+While this improves model accuracy, it raises a concern of feature dominance: \textbf{a small number of features may disproportionately drive predictions, while many others contribute minimally}, potentially leading to local overfitting. Models may appear highly effective on the ADNI dataset but lose performance on more heterogeneous populations or external data.
 
 \vspace{2mm}
 
-\textbf{However, these three variables may genuinely be strong predictors of Alzheimer's diagnosis.} The issue may reflect dataset bias rather than a flaw in the cognitive measures themselves.
+\textbf{However, these three features may genuinely be strong predictors of Alzheimer's diagnosis.} The issue may reflect dataset bias rather than a flaw in the cognitive measures themselves.
 
 \vspace{2mm}
 
@@ -60,20 +60,19 @@ Feature-attribution analyses (permutation importance and SHAP) showed a reconfig
 \vspace{2mm}
 
 Performance metrics reflect the expected drop: the best alternative model was an Adaptive Boosting ensemble (macro F1 $\approx$ 0.7303, accuracy $\approx$ 0.7459, macro ROC AUC $\approx$ 0.9037). Pairwise Wilcoxon tests showed few significant differences, and effect sizes were small, highlighting that statistical significance does not always indicate practical superiority.
-
 \begin{itemize}
 	\item The system remains usable without the dominant cognitive measures if remaining cognitive and functional assessments are reliably collected.
 	\item Ensemble models continue to offer the best discrimination, while sampled shallow trees provide a defensible, interpretable fallback.
 \end{itemize}
 
 \subsection{Final Decision}
-\textbf{\textit{Extra\_Trees}} (trained without hybrid sampling) was chosen as the main model, and \textbf{\textit{Decision\_Tree\_Sampled}} (trained with sampling) as the XAI reference. This selection is based on superior test metrics, balancing class sensitivity.  
+\textbf{\texttt{Extra\_Trees}} (trained without hybrid sampling) was chosen as the main model, and \textbf{\texttt{Decision\_Tree\_Sampled}} (trained with sampling) as the XAI reference. This selection is based on superior test metrics, balancing class sensitivity.  
 
 \textbf{Model.pkl and XAIModel.pkl correspond to Extra\_Trees and Decision\_Tree\_Sampled, respectively.}
 
 \vspace{2mm}
 
-For the dataset excluding the three cognitive scores, the best-performing model was \textbf{\textit{Adaptive Boosting}} (unsampled), with \textbf{\textit{Decision\_Tree}} as the XAI reference.  
+For the dataset excluding the three cognitive scores, the best-performing model was \textbf{\texttt{Adaptive Boosting}} (unsampled), with \textbf{\texttt{Decision\_Tree}} as the XAI reference.  
 
 \textbf{AltModel.pkl and AltXAIModel.pkl correspond to Adaptive\_Boosting and Decision\_Tree in the alternative folder.}
 
@@ -99,14 +98,11 @@ Our results in short:
 
 \begin{itemize}
 	\item \href{https://www.medrxiv.org/content/10.1101/2020.11.09.20226746v3}{Kauppi et al. (medRxiv, 2020)}: Deep-learning risk-scoring pipeline using selected neurocognitive tests, achieving multiclass $AUC \approx 0.984$.
-	\item \href{https://www.nature.com/articles/s41598-024-51985-w}{Alatrany et al. (Scientific Reports, 2024)}: Multimodal, explainability-oriented approach on NACC. SVM reaches multiclass $F1 \approx 90.7\%$. Note that the data source (NACC vs. ADNI) and feature set are not directly comparable.
+	\item \href{https://www.nature.com/articles/s41598-024-51985-w}{Alatrany et al. (Scientific Reports, 2024)}: Multimodal, explainability-oriented approach on NACC. SVM reaches multiclass $F1 \approx 90.7\%$. \textbf{Note that the data source (NACC vs. ADNI) and feature set are not directly comparable.}
 	\item \href{https://adni.loni.usc.edu/adni-publications/Cuingnet_Neuroimage_2010-1.pdf}{Cuingnet et al. (NeuroImage, 2010)}: Historical ADNI benchmark (MRI-based). Multiclass performance typically $70$--$90\%$ accuracy, lower than binary tasks.
 \end{itemize}
 
 \textbf{Model} is competitive with these works, \textbf{AltModel} favors robustness over dominant features, and \textbf{XAIModels} illustrate the trade-off between interpretability and accuracy. \textbf{Model} cannot be claimed superior without identical splits/preprocessing or formal statistical tests.
-
-The following pages contain the graphs and tables that led to the final evaluation. 
-
 
 \newpage
 
@@ -171,11 +167,12 @@ The following pages contain the graphs and tables that led to the final evaluati
 \vspace{4mm}
 
 \begin{table}[H]
+	\tiny 
 	\centering
-	\caption{With CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models/1)}
+	\caption{With CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models)}
 	\begin{tabularx}{\textwidth}{lccccccc}
 		\toprule
-		Model & F1 Score (macro) & Accuracy & Balanced Accuracy & Precision (weighted) & Recall (weighted) & F1 Score (weighted) & ROC AUC (macro) \\
+		Model & F1 Score (macro) & Accuracy & Balanced Accuracy & Precision (w) & Recall (w) & F1 Score (w) & ROC AUC \\
 		\midrule
 		Extra\_Trees & 0.9376 & 0.9442 & 0.9408 & 0.9448 & 0.9442 & 0.9443 & 0.9867 \\
 		Extra\_Trees\_Sampled & 0.9359 & 0.9421 & 0.9411 & 0.9435 & 0.9421 & 0.9425 & 0.9890 \\
@@ -194,11 +191,12 @@ The following pages contain the graphs and tables that led to the final evaluati
 \vspace{4mm}
 
 \begin{table}[H]
+	\tiny
 	\centering
-	\caption{Without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models/2)}
+	\caption{Without CDRSB, LDELTOTAL, and mPACCdigit (from folder results/all\_models/alternative)}
 	\begin{tabularx}{\textwidth}{lccccccc}
 		\toprule
-		Model & F1 Score (macro) & Accuracy & Balanced Accuracy & Precision (weighted) & Recall (weighted) & F1 Score (weighted) & ROC AUC (macro) \\
+		Model & F1 Score (macro) & Accuracy & Balanced Accuracy & Precision (w) & Recall (w) & F1 Score (w) & ROC AUC \\
 		\midrule
 		Adaptive\_Boosting & 0.7303 & 0.7459 & 0.7327 & 0.7456 & 0.7459 & 0.7437 & 0.9037 \\
 		Adaptive\_Boosting\_Sampled & 0.7112 & 0.7293 & 0.7157 & 0.7316 & 0.7293 & 0.7277 & 0.9001 \\

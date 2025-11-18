@@ -1,9 +1,9 @@
 \section{Hyperparameter Tuning}
-Each \textbf{classification algorithm} is \textbf{embedded} in a \textbf{pipeline} that handles \textbf{preprocessing}. We have created an additional pipeline with a \textbf{rebalancing strategy} combining \textbf{RandomUnderSampler} for \textbf{majority classes} and \textbf{SMOTENC} for \textbf{minority ones}. Categorical indices for SMOTENC are explicitly computed relative to \textit{PTGENDER} and \textit{APOE4}. 
+Each \textbf{classification algorithm} is \textbf{embedded} in a \textbf{pipeline} that handles \textbf{preprocessing}. We have created an additional pipeline with a \textbf{rebalancing strategy} combining \textbf{Random Under Sampler} for \textbf{majority classes} and \textbf{SMOTENC} for \textbf{minority ones}. Categorical indices for SMOTENC are explicitly computed relative to \textit{PTGENDER} and \textit{APOE4}. 
 
 \vspace{2mm}
 
-To optimize the performance of the classifiers, the \textbf{hyperparameter tuning} is carried out through exhaustive \textbf{Grid Search} with \textbf{5-fold cross-validation}. The chosen metric is the \textbf{macro-averaged F1 score}, an appropriate criterion when class imbalance is present and when resampling modifies the empirical class distribution.
+To optimize the performance of the classifiers, the \textbf{hyperparameter tuning} is carried out through exhaustive \textbf{Grid Search} with \textbf{5-fold cross-validation}. The chosen metric is the \textbf{macro-averaged F1 score}, an appropriate criterion when class imbalance is present. \textit{Macro F1} is a stable metric that directly exposes failures on minority classes while avoiding dominance by majority-class performance. 
 
 \vspace{2mm} 
 
