@@ -11,18 +11,18 @@ Furthermore, three cognitive scores (CDRSB, LDELTOTAL, and mPACCdigit) provide a
 
 \vspace{2mm}
 
-Many columns have missing values, and the missingness pattern is often not \textit{MCAR}\footnote{Missing Completely At Random}. In fact, CSF and PET values are more often missing in healthy subjects or at certain visits. For example, \textit{ABETA}, \textit{TAU}, and \textit{PTAU} have many missing values and are not so irrelevant in the diagnosis of Alzheimer's disease. This forces us to impute \textit{NULL} values and potentially increase noise in the dataset.
+Many columns have missing values, and the missingness pattern is often not \textit{MCAR}\footnote{Missing Completely At Random}. In fact, CSF and PET values are more often missing in healthy subjects or at certain visits. For example, \textit{ABETA}, \textit{TAU}, and \textit{PTAU} have many missing values and are not so irrelevant in the diagnosis of Alzheimer's disease. This forces us to impute \textit{NULL} values and potentially increases noise in the dataset.
 
 \vspace{2mm}
 
-Despite size limitations, the reliance on a few highly predictive cognitive scores, and the large amount of \textit{NULL} values, the study retains methodological value and potential for application. The models can be useful as support tools (for example, risk stratification, imputation of missing diagnoses, or prioritized screening), not as a substitute for clinical assessment. Their use must be subject to external validation, calibration of the operating thresholds and post-deploy monitoring.
+Despite size limitations, reliance on a few highly predictive cognitive scores, and the large amount of \textit{NULL} values, the study retains methodological value and potential for application. The models can be useful as support tools (for example, risk stratification, imputation of missing diagnoses, or prioritized screening), not as a substitute for clinical assessment. Their use must be subject to external validation, calibration of the operating thresholds and post-deploy monitoring.
 
 \subsection{Improvements for Future Works}
 To improve the study, increasing the size and variability of the data is a priority: integrating future ADNI4\footnote{ADNI4 is the most recent phase of the ADNI study and was initiated in 2022. Previous phases were ADNI1 (2004–2009), ADNIGO (2009–2010), ADNI2 (2011–2016), and ADNI3 (2016–2022).} entries into ADNIMERGE and, if possible, compatible external cohorts would increase statistical power and generalizability.
 
 \vspace{2mm}
 
-In this context, we could also introduce a new feature that identifies patients based on their geographic area of origin. Since ADNI participants are from the United States and Canada, their area would be classified as North America. If, for example, we were able to integrate a European dataset compatible with ADNI for predicting Alzheimer's disease, we could analyze whether geographic area affects the likelihood of developing the disease. This approach could open the way to new and interesting lines of research.
+In this context, we could also introduce a new feature that identifies patients based on their geographic area of origin. Since ADNI participants are from the United States and Canada, their area would be classified as North America. If, for example, we were able to  a European dataset compatible with ADNI for predicting Alzheimer's disease, we could analyze whether geographic area affects the likelihood of developing the disease. This approach could open the way to new and interesting lines of research.
 
 It is also essential to harmonize the variables (mapping and units for imaging) and enrich the database with complementary modalities (genetics, PET, blood biomarkers) and longitudinal information, thus reducing reliance on a few cognitive scores.
 
