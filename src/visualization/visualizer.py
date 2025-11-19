@@ -6,12 +6,26 @@ import seaborn as sns
 
 class Visualizer:
     """
-    Visualizer is a plotting class for exploratory data analysis (EDA).
+    Visualizer
+    ----------
+    Lightweight plotting utility for exploratory data analysis (EDA) built on seaborn/matplotlib.
 
+    Key Features:
+      - Validate requested columns against the provided DataFrame.
+      - Provide common plot types used in EDA: line, scatter, histogram, bar, box, violin, KDE,
+        pair plots, correlation heatmap, joint plots, count plots, strip/swarm, pie, area, hexbin,
+        and a scatter matrix.
+      - Attempt sensible column inference when arguments are omitted (e.g., choose a numeric
+        column if only one numeric column exists), and raise helpful errors otherwise.
+      - Keep a copy of the dataset to avoid mutating user data.
     Usage:
-        viz = Visualizer(dataset)
-        viz.histogram(x="AGE", title="Age distribution", xlabel="age", ylabel="Patient Count")
-        viz.scatter_plot(x="height", y="weight", hue="gender", title="Height vs Weight")
+      viz = Visualizer(df)
+      viz.histogram(x="AGE")
+    Notes:
+      - Methods generally accept optional title/xlabel/ylabel and return the matplotlib Axes
+        when return_ax=True to allow further customization by the caller.
+      - Column inference heuristics are conservative and will raise explicit errors when the
+        requested columns are not present or insufficient for the requested plot.
     """
     # ----------------------------#
     #        INITIALIZATION       #
@@ -66,18 +80,18 @@ class Visualizer:
 
     def _validate_columns(self, cols: Optional[Sequence[str]], dtype: Optional[str] = None, min_count: int = 1) -> List[str]:
         """
-        Ensure cols (list) are present; if None, try to infer columns with dtype.
+        Ensure cols (list) are present. If None, try to infer columns with dtype.
         """
         if cols is None:
             if dtype == 'numeric':
                 numerics = self.dataset.select_dtypes(include=[np.number]).columns.tolist()
                 if len(numerics) < min_count:
-                    raise ValueError(f"Need at least {min_count} numeric columns; found {len(numerics)}")
+                    raise ValueError(f"Need at least {min_count} numeric columns. Found {len(numerics)}")
                 return numerics[:max(min_count, len(numerics))]
             elif dtype == 'categorical':
                 cats = self.dataset.select_dtypes(include=['object', 'category', 'bool']).columns.tolist()
                 if len(cats) < min_count:
-                    raise ValueError(f"Need at least {min_count} categorical columns; found {len(cats)}")
+                    raise ValueError(f"Need at least {min_count} categorical columns. Found {len(cats)}")
                 return cats[:min_count]
             else:
                 cols_found = list(self.dataset.columns[:min_count])

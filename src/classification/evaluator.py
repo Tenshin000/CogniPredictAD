@@ -19,24 +19,36 @@ from sklearn.metrics import (
 )
 from sklearn.model_selection import RepeatedStratifiedKFold
 from sklearn.preprocessing import StandardScaler, label_binarize
-from typing import List, Optional, Dict, Tuple, Union
+from typing import List, Optional, Dict, Union
 
 
 class ADNIEvaluator:
     """
     ADNIEvaluator
-    Helper to evaluate multiple classifier models on learn/train/test sets.
+    ----------------
+    Utility class to evaluate one or more prebuilt classifier objects (pickled models)
+    across Learn (outer CV), Train and Test splits. Designed for reproducible, per-fold
+    evaluation with helpful visualizations and summary tables.
 
-    The class can preload .pkl models from directories. It runs repeated stratified
-    outer cross-validation (unbiased per-fold samples) with optional preprocessing,
-    computes train/validation/test metrics and plots confusion matrices, ROC curves
-    and violin plots.
+    Key Features:
+      - Load models from directories (pickles or joblib files).
+      - For each model: attempt direct predictions, if impossible, clone+fit on available
+        data for train/test evaluation.
+      - Run an outer repeated stratified CV on a 'learn' dataset, cloning and fitting
+        a fresh pipeline per outer fold (so each fold is unbiased).
+      - Collect metrics (F1 macro/weighted, accuracy, balanced accuracy, precision, recall,
+        ROC AUC macro) for Train / CrossVal / Test splits.
+      - Produce per-class reports, confusion matrices (raw and normalized), ROC curves,
+        violin plots for per-fold accuracies, and a summary comparison table.
+    
+    Public API:
+        evaluate_models
     """
     # ----------------------------#
     #        INITIALIZATION       #
     # ----------------------------# 
     def __init__(self, model_dirs: Optional[Union[str, List[str]]] = None, sampling_title: bool = False):
-        # Store loaded models and their source paths.
+        """Store loaded models and their source paths for evaluation."""
         self.models: Dict[str, object] = {}
         self.model_paths: Dict[str, str] = {}
         # If True use "_Sampled" suffixing scheme, else use "_Alternative"
@@ -51,19 +63,22 @@ class ADNIEvaluator:
     #          UTILITIES          #
     # ----------------------------# 
     def _softmax(self, arr: np.ndarray) -> np.ndarray:
-        """Compute row-wise softmax for a 2D array in a numerically-stable way."""
+        """
+        Compute the softmax function on rows of an array to convert values (score/decision) into normalized probabilities.
+        """
         e = np.exp(arr - np.max(arr, axis=1, keepdims=True))
         return e / np.sum(e, axis=1, keepdims=True)
 
     def _get_probabilities(self, fitted_clf, X: pd.DataFrame, classes: np.ndarray) -> np.ndarray:
         """
-        Produce a (n_samples, n_classes) probability matrix aligned to `classes`.
+        Produce a (n_samples, n_classes) probability matrix aligned to "classes".
 
         Attempts, in order:
-        1. predict_proba (align and renormalize columns to `classes`).
+        1. predict_proba (align and renormalize columns to "classes").
         2. decision_function (softmax over scores).
         3. Fallback to one-hot from predict.
-        Returns tiny non-zero values for missing classes where needed.
+
+        Returns calibrated probabilities whenever possible to ensure reliable ROC AUC.
         """
         # Try predict_proba on estimator or final step of an imblearn Pipeline
         if hasattr(fitted_clf, "predict_proba"):
@@ -113,7 +128,7 @@ class ADNIEvaluator:
         return one_hot
 
     def _safe_clone_and_fit(self, clf, X_train: pd.DataFrame, y_train: pd.Series):
-        """Clone an estimator and fit it on X_train/y_train. Returns the fitted clone."""
+        """Clone (sklearn.base.clone) an estimator and fit it on X_train/y_train. Returns the fitted clone."""
         cloned = clone(clf)
         cloned.fit(X_train, y_train)
         return cloned
@@ -186,10 +201,7 @@ class ADNIEvaluator:
             "F1 Score (weighted)": f1_score(y_true, y_pred, average="weighted"),
             "ROC AUC (macro)": self._safe_roc_auc(y_true, prob, classes)
         }
-
-    # ----------------------------#
-    #        MODEL LOADING        #
-    # ----------------------------# 
+    
     def _load_models_from_dirs(self, dirs: List[str]):
         """Load all .pkl models from a list of directories into self.models."""
         for d in dirs:
@@ -215,6 +227,9 @@ class ADNIEvaluator:
         Plot ROC curves per class for all models in roc_dict.
 
         roc_dict format: {model_name: (fpr_dict, tpr_dict, auc_dict)} where each dict maps class->array.
+        - Creates a subplot per class (two columns layout).
+        - For missing data for a model/class the function shows the diagonal baseline and AUC=nan label.
+        - Displays all model curves per-class for easy comparison.
         """
         if not classes:
             return
@@ -231,6 +246,7 @@ class ADNIEvaluator:
                 tpr = tpr_d.get(cls, np.array([]))
                 auc_v = auc_d.get(cls, np.nan)
                 if fpr.size == 0 or tpr.size == 0:
+                    # No ROC data available: show diagonal baseline and indicate missing AUC
                     fpr, tpr = np.array([0.0, 1.0]), np.array([0.0, 1.0])
                     label = f"{name} (AUC=nan)"
                 else:
@@ -241,19 +257,25 @@ class ADNIEvaluator:
             ax.set_xlim([-0.01, 1.01]); ax.set_ylim([-0.01, 1.01])
             ax.set_xlabel("False Positive Rate"); ax.set_ylabel("True Positive Rate")
             ax.set_title(f"ROC Curve - Class {cls} (One-vs-Rest)")
-            ax.legend(loc="lower right", fontsize="small"); ax.grid(alpha=0.2)
+            ax.legend(loc="lower right", fontsize="small")
+            ax.grid(alpha=0.2)
 
-        # Remove any unused axes
+        # Remove any unused axes (when classes is not exactly n_rows*n_cols)
         total = axes.size
         for j in range(len(classes), total):
             fig.delaxes(axes[j])
 
-        plt.tight_layout(); plt.show()
+        plt.tight_layout()
+        plt.show()
 
     def _plot_confusion_matrices(self, cm_dict: Dict[str, np.ndarray], title_prefix: str = "Confusion Matrix"):
         """
         Plot confusion matrices (either raw counts or normalized) from cm_dict.
         Each value in cm_dict is an (n_classes, n_classes) array.
+
+        - Arranges matrices in a grid of up to 3 columns.
+        - Uses seaborn heatmap with annotation. Chooses integer format when values are integral.
+        - Adds consistent axis labels and titles.
         """
         if not cm_dict:
             return
@@ -262,8 +284,6 @@ class ADNIEvaluator:
         n_cols = 3
         n_rows = (n_models + n_cols - 1) // n_cols
         first_shape = next(iter(cm_dict.values())).shape
-        n_classes = first_shape[0]
-
 
         fig, axes = plt.subplots(n_rows, n_cols, figsize=(17, 17))
         axes = np.array(axes).reshape(-1)
@@ -293,7 +313,11 @@ class ADNIEvaluator:
         plt.show()
 
     def _plot_violin(self, accuracies_per_model: Dict[str, List[float]]):
-        """Create a violin plot showing accuracy distributions across CV folds for each model."""
+        """Create a violin plot showing accuracy distributions across CV folds for each model.
+
+        Input structure: { model_name: [acc_fold1, acc_fold2, ...] }
+        Produces a seaborn violinplot with quartiles shown inside.
+        """
         rows = []
         for name, accs in accuracies_per_model.items():
             for a in accs:
@@ -303,16 +327,26 @@ class ADNIEvaluator:
         df = pd.DataFrame(rows)
         plt.figure(figsize=(12, 8))
         sns.violinplot(x="Model", y="Accuracy", data=df, inner="quartile")
-        plt.xlabel("Model"); plt.ylabel("Accuracy"); plt.title("Model Accuracy Comparison (per-fold distributions)")
-        plt.xticks(rotation=45); plt.tight_layout(); plt.show()
+        plt.xlabel("Model")
+        plt.ylabel("Accuracy")
+        plt.title("Model Accuracy Comparison (per-fold distributions)")
+        plt.xticks(rotation=45)
+        plt.tight_layout() 
+        plt.show()
 
     # ----------------------------#
     #     EVALUATION HELPERS      #
     # ----------------------------# 
     def _evaluate_train_direct(self, model_name: str, loaded, X_train, y_train, classes):
         """
-        Try predicting with loaded model on X_train; if that fails,
+        Try predicting with loaded model on X_train, if that fails,
         clone+fit on full train and return metrics for the Train split.
+
+        Returns:
+            (working_estimator, train_metrics_dict)
+        Notes:
+            - If X_train/y_train are None, returns (loaded, None).
+            - The working estimator is the object that can produce predictions (may be a clone).
         """
         if X_train is None or y_train is None:
             return loaded, None
@@ -336,7 +370,10 @@ class ADNIEvaluator:
         - For unbiased per-fold samples, this method uses cv_splitter as the outer CV splitter.
         - For each outer fold it clones and fits a pipeline that includes ADNIPreprocessor (if needed)
           and StandardScaler (for LogisticRegression), then evaluates on the outer validation fold.
-        Returns (fold_accuracies, crossval_metrics) where crossval_metrics aggregates outer-fold predictions.
+
+        Returns:
+            fold_accs: list of per-fold accuracy values (useful for violin/boxplots)
+            crossval_metrics: aggregated metrics dictionary for the combined outer-fold predictions
         """
         if X_learn is None or y_learn is None:
             return [], None
@@ -389,6 +426,11 @@ class ADNIEvaluator:
         """
         Try predicting on test with 'working'. If predict fails, try to fit on train/learn and retry.
         Returns (working_estimator, test_metrics, y_test_pred, prob_test).
+
+        Behavior:
+          - Prefer using the already-available working estimator (e.g., that used for Train).
+          - If it cannot predict, attempt to obtain a fitted estimator by cloning+fitting
+            on X_train (preferred) or X_learn (fallback). If none available, raises.
         """
         if X_test is None or y_test is None:
             raise ValueError("X_test and y_test are required for test evaluation.")
@@ -417,7 +459,11 @@ class ADNIEvaluator:
     #   PLOT AND REPORT HELPERS   #
     # ----------------------------# 
     def _prepare_per_class_test(self, model_name: str, y_test, y_test_pred, classes):
-        """Prepare a per-class table (precision/recall/f1/support) for the test split."""
+        """Prepare a per-class table (precision/recall/f1/support) for the test split.
+
+        Returns a DataFrame with one row per class including support (count of true samples).
+        Uses sklearn.classification_report with zero_division=0 to avoid exceptions.
+        """
         report = classification_report(y_test, y_test_pred, labels=classes, output_dict=True, zero_division=0)
         rows = []
         for cls in classes:
@@ -445,10 +491,30 @@ class ADNIEvaluator:
                         plot_roc: bool = True,
                         save_results_dir: Optional[str] = None):
         """
-        Evaluate available models over Learn (outer-CV), Train, and Test.
+        Evaluate available models on Learn (outer CV), Train, and Test splits, and produce summaries and visualizations.
 
-        Returns a dictionary containing per-model tables, per-class test DataFrames,
-        confusion matrices, and a test comparison table.
+        Workflow:
+            1. Optionally load models from a provided models_dir, otherwise use preloaded self.models.
+            2.  Build a consistent class list from any provided label arrays (y_learn, y_train, y_test).
+            3. Run repeated stratified outer cross-validation on X_learn (RepeatedStratifiedKFold) to obtain unbiased
+                per-fold predictions and fold-level performance samples.
+            4. For each model:
+                a. Attempt direct Train/Test prediction, if unavailable, clone+fit on the available training data.
+                b. Perform Outer-CV evaluation on the Learn set (fit a fresh pipeline per outer fold).
+                c. Aggregate fold predictions to compute overall metrics and per-class reports.
+                d. Prepare confusion matrices and one-vs-rest ROC data per class.
+            5. Produce visualizations (per-class ROC plots, confusion matrices raw and normalized, violin plots,
+                and a horizontal F1 comparison barplot) depending on flags.
+            6. Optionally save the aggregated test comparison table to disk.
+
+        Returns:
+            dict containing:
+                - per_model_tables: dict of per-model DataFrames indexed by Split ("Train","CrossVal","Test")
+                - per_class_test: dict of per-model per-class DataFrames for the Test split
+                - bar_plot_data: flattened DataFrame used to build the F1 macro comparison/plots
+                - confusion_matrices: dict of raw confusion matrices for the Test set
+                - confusion_matrices_norm: dict of confusion matrices normalized by true-row for the Test set
+                - test_comparison: aggregated test comparison DataFrame sorted by "F1 Score (macro)"
         """
         if X_test is None or y_test is None:
             raise ValueError("X_test and y_test are required.")
@@ -463,7 +529,7 @@ class ADNIEvaluator:
         else:
             raise ValueError("No models available. Provide models_dir or preload via __init__.")
 
-        # Build class ordering from available label sources
+        # Build class ordering from available label sources (learn / train / test). Ensures consistent class order.
         label_sources = [np.asarray(arr) for arr in (y_learn, y_train, y_test) if arr is not None]
         classes = np.unique(np.concatenate(label_sources)) if label_sources else np.array([])
 
@@ -573,7 +639,8 @@ class ADNIEvaluator:
                 ax.barh(y_pos + (i - 1) * height, vals, height, label=split)
             ax.set_xlabel('F1 Score (macro)'); ax.set_yticks(y_pos); ax.set_yticklabels(models_ordered)
             ax.set_title('F1 Score (macro) by Model and Split'); ax.legend(); ax.set_xlim(0, 1)
-            plt.tight_layout(); plt.show()
+            plt.tight_layout()
+            plt.show()
 
         # Confusion matrices: raw and normalized
         if confusion_dict:
@@ -591,7 +658,9 @@ class ADNIEvaluator:
         test_rows = []
         for mname, table in per_model_tables.items():
             if 'Test' in table.index:
-                tr = table.loc['Test'].to_dict(); tr['Model'] = mname; test_rows.append(tr)
+                tr = table.loc['Test'].to_dict()
+                tr['Model'] = mname
+                test_rows.append(tr)
             else:
                 test_rows.append({
                     "Model": mname,

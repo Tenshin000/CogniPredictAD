@@ -1,12 +1,11 @@
 import os
-import joblib
 import math
 import matplotlib.pyplot as plt
 import numpy as np
+import joblib
 import pandas as pd
 import pickle
 import seaborn as sns
-import itertools
 
 from CogniPredictAD.preprocessing import ADNIPreprocessor
 from IPython.display import display
@@ -29,19 +28,29 @@ from sklearn.tree import DecisionTreeClassifier
 
 class ADNIClassifier:
     """
-    ADNIClassifier 
-    Helper to to train and evaluate multiple classifier models on an ADNIMERGE dataset.
+    ADNIClassifier
+    --------------
+    Helper to train and evaluate a set of classification pipelines on an ADNIMERGE-style dataset.
 
-    The class can preload classification algorithms with parameters obtained by CV Hyperparameters Tuning. 
-    It runs repeated stratified cross-validation, computes validation metrics and plots confusion matrices, ROC curves and violin plots.
+    Key Features:
+      - Provide standard and alternative pre-configured classifier pipelines. 
+      - Run repeated stratified outer CV to obtain unbiased per-fold performance samples.
+      - Compute aggregated metrics and per-class reports across outer folds.
+      - Produce visualizations (ROC per class, confusion matrices, violin plots).
+      - Perform pairwise Wilcoxon signed-rank tests on outer-fold F1-macro scores.
+      - Refit chosen pipelines on full training data (with sampling adjustments) and persist a reduced
+        pipeline (scaler + classifier) to disk.
+      - All saved models use a deterministic .pkl path returned by _unique_model_path.
+    
+    Public API:
+        fit_evaluate_store_models
     """
     # ----------------------------#
     #        INITIALIZATION       #
     # ----------------------------# 
     def __init__(self, classifier: str = "standard"):
         """
-        Initialize the class and load a predefined set of classifiers 
-        based on the provided selection string.
+        Initialize the class and load a predefined set of classifiers based on the provided selection string.
         """
         classifier = classifier.lower()
         if classifier == "standard" or classifier == "None":
@@ -277,15 +286,20 @@ class ADNIClassifier:
     # ----------------------------# 
     def _softmax(self, arr):
         """
-        Compute the softmax function on rows of an array to convert values ​​(score/decision) into normalized probabilities.
+        Compute the softmax function on rows of an array to convert values (score/decision) into normalized probabilities.
         """
         e = np.exp(arr - np.max(arr, axis=1, keepdims=True))
         return e / np.sum(e, axis=1, keepdims=True)
 
     def _get_probabilities(self, fitted_clf, X, classes):
         """
-        Gets an array (n_samples, n_classes) of probabilities sorted by classes for a previously trained classifier.
-        
+        Produce a (n_samples, n_classes) probability matrix aligned to "classes".
+
+        Attempts, in order:
+        1. predict_proba (align and renormalize columns to "classes").
+        2. decision_function (softmax over scores).
+        3. Fallback to one-hot from predict.
+
         Returns calibrated probabilities whenever possible to ensure reliable ROC AUC.
         """
         # Try predict_proba first
@@ -301,7 +315,7 @@ class ADNIClassifier:
 
                 # Create DataFrame for alignment with expected classes
                 prob_df = pd.DataFrame(probs, columns=prob_cols)
-                # Reindex to include all classes; missing classes get very small probability
+                # Reindex to include all classes, missing classes get very small probability
                 prob_df = prob_df.reindex(columns=classes, fill_value=1e-6)
                 # Normalize so rows sum to 1
                 prob_df = prob_df.div(prob_df.sum(axis=1), axis=0)
@@ -315,7 +329,7 @@ class ADNIClassifier:
             try:
                 df = fitted_clf.decision_function(X)
                 if df.ndim == 1:
-                    # binary case
+                    # Binary case
                     df = np.vstack([-df, df]).T
                 probs = self._softmax(df)
                 prob_df = pd.DataFrame(probs, columns=classes[:probs.shape[1]])
@@ -336,24 +350,22 @@ class ADNIClassifier:
         return one_hot
 
     def _safe_clone_and_fit(self, clf, X_train, y_train):
-        """
-        clone (sklearn.base.clone) the clf object and train it on the supplied data; returns the fitted clone.
-        """
+        """Clone (sklearn.base.clone) an estimator and fit it on X_train/y_train. Returns the fitted clone."""
         cloned = clone(clf)
         cloned.fit(X_train, y_train)
         return cloned
 
     def _ensure_dir(self, path):
-        """Ensure Directory"""
+        """Create directory if it does not exist."""
         os.makedirs(path, exist_ok=True)
 
     def _clean_name(self, name):
-        """Clean Name"""
+        """Return a filesystem-safe model name by replacing spaces and slashes."""
         return name.replace(" ", "_").replace("/", "_")
     
     def _unique_model_path(self, base_dir, clf_name):
         """
-        Return a deterministic file path under base_dir for saving a model.
+        Return a deterministic filepath under base_dir for saving a model.
         Uses _clean_name and the fixed extension '.pkl'. If the file exists it will
         be overwritten when opened with "wb" (pickle) or by joblib.dump.
         """
@@ -367,8 +379,11 @@ class ADNIClassifier:
     def _plot_roc_per_class(self, roc_dict, classes):
         """
         Plot ROC curves for each class comparing all models in a single figure.
-        Uses a grid with 2 columns (2 graphs above, 2 below for 4 classes).
-        If number of classes != 4, uses ncols=2 and computes nrows = ceil(n_classes/2).
+
+        Layout:
+          - Two columns by default, rows computed as ceil(n_classes / 2).
+          - Each subplot contains ROC curves from every classifier for a single class.
+          - Missing or invalid ROC data are shown as the diagonal baseline with AUC=nan.
         """
         n_classes = len(classes)
         if n_classes == 0:
@@ -428,8 +443,10 @@ class ADNIClassifier:
     def _plot_confusion_matrices(self, confusion_dict, title_prefix="Confusion Matrix"):
         """
         Plot confusion matrices in a grid.
-        Automatically chooses integer formatting for count matrices and
-        decimal formatting for normalized (float) matrices.
+
+        - Uses integer annotation format where values are effectively integers.
+        - Uses decimal formatting when values are normalized floats.
+        - Arranges up to 3 columns of subplots.
         """
         n_classifiers = len(confusion_dict)
         if n_classifiers == 0:
@@ -472,6 +489,9 @@ class ADNIClassifier:
     def _plot_violin(self, accuracies_per_model):
         """
         Create a violin plot of per-fold accuracies for each model.
+
+        Input:
+          accuracies_per_model: dict mapping model_name -> list of per-fold accuracy values
         """
         violin_rows = []
         for model_name, acc_list in accuracies_per_model.items():
@@ -489,34 +509,61 @@ class ADNIClassifier:
         plt.tight_layout()
         plt.show()
 
+
     # ----------------------------#
     #   WILCOXON PAIRWISE TEST    #
     # ----------------------------#
     def _wilcoxon_pairwise(self, scores_per_model):
         """
         Perform pairwise Wilcoxon signed-rank tests between models and print results
-        in a readable table
+        in a readable table.
+
+        Purpose:
+        - Compare model performance across outer folds using the non-parametric
+          Wilcoxon signed-rank test.
+        - Each model must have a list of fold-level F1-macro scores.
+        - Produces a structured DataFrame containing the test statistic and p-value
+          for every unique model pair.
 
         Input:
             scores_per_model : dict
-                Dictionary mapping model_name -> list of outer-fold F1 macro scores
+                Mapping: model_name -> list of F1 macro scores (one score per outer fold)
 
         Output:
-            DataFrame of pairwise Wilcoxon results (Model A, Model B, Statistic, P-value)
+            DataFrame with one row per model pair:
+                - Model A
+                - Model B
+                - Statistic  (Wilcoxon test statistic)
+                - P-value    (two-sided)
         """
+        # Extract list of model names in the order they appear in the dictionary
         model_names = list(scores_per_model.keys())
         results = []
 
-        # Loop over all unique model pairs
+        # Iterate over all unique model pairs (A,B) without repetition
         for i in range(len(model_names)):
             for j in range(i+1, len(model_names)):
                 model_a = model_names[i]
                 model_b = model_names[j]
+
                 try:
-                    stat, p = wilcoxon(scores_per_model[model_a], scores_per_model[model_b], zero_method="wilcox", alternative="two-sided", mode='auto')
+                    # Perform Wilcoxon signed-rank test on paired fold-level scores.
+                    # zero_method="wilcox" excludes zero-differences from ranking.
+                    # alternative="two-sided" tests for any difference in medians.
+                    # mode='auto' lets SciPy choose the most suitable computation strategy.
+                    stat, p = wilcoxon(
+                        scores_per_model[model_a],
+                        scores_per_model[model_b],
+                        zero_method="wilcox",
+                        alternative="two-sided",
+                        mode='auto'
+                    )
                 except Exception:
-                    # If test fails (e.g., zero differences), return NaN
+                    # In cases where the test cannot be computed (e.g. all differences zero),
+                    # store NaN values to indicate failure.
                     stat, p = np.nan, np.nan
+
+                # Append pairwise comparison result
                 results.append({
                     "Model A": model_a,
                     "Model B": model_b,
@@ -524,11 +571,14 @@ class ADNIClassifier:
                     "P-value": p
                 })
 
-        # Convert results list to DataFrame
+        # Convert aggregated comparison results into a DataFrame
         df_results = pd.DataFrame(results)
-        # Sort by p-value for easier interpretation
+
+        # Sort by p-value for clearer interpretation (smaller p-values first)
         df_results = df_results.sort_values("P-value").reset_index(drop=True)
+
         return df_results
+
 
     # ----------------------------#
     #         PUBLIC API          #
@@ -537,10 +587,19 @@ class ADNIClassifier:
                                   output_dir: str = "../results/all_models",
                                   cv_splits: int = 5, cv_repeats: int = 5):
         """
-        Train, evaluate, and store multiple classifiers using Nested-style evaluation:
-        - Outer RepeatedStratifiedKFold is used to produce unbiased performance samples for comparison.
-        - Each outer-fold training subset is used to fit (clone.fit) the given pipeline and evaluated on the outer-fold validation subset.
-        Generates metrics, per-class reports, confusion matrices, ROC curves, violin plots, and Wilcoxon tests on outer-fold F1 macro.
+        Train, evaluate, and store multiple classifiers using outer RepeatedStratifiedKFold.
+
+        Workflow:
+          1. Run an outer repeated stratified CV to produce unbiased predictions per fold.
+          2. Aggregate per-fold predictions to compute overall metrics and per-class reports.
+          3. Compute confusion matrices and per-class ROC curves (one-vs-rest).
+          4. Refit each pipeline on the full training set (after adjusting sampling strategies)
+             and save a reduced pipeline (scaler + classifier) to disk.
+          5. Produce plots (ROC, confusion matrices, violin) and perform Wilcoxon pairwise tests
+             on outer-fold F1-macro scores.
+
+        Returns:
+            dict with keys "results_df", "per_class_df", "wilcoxon_results_df"
         """
         # Ensure output directory exists
         self._ensure_dir(output_dir)
@@ -623,7 +682,7 @@ class ADNIClassifier:
             }
             metrics_list.append(clf_metrics)
 
-            # --- Per-class metrics (aggregated across outer folds) ---
+            # Per-class metrics (aggregated across outer folds)
             class_report = classification_report(np.array(true_all), np.array(pred_all), labels=classes, output_dict=True, zero_division=0)
             for cls in classes:
                 rep = class_report.get(str(cls), {})
@@ -636,7 +695,7 @@ class ADNIClassifier:
                     "Support": rep.get("support", 0)
                 })
 
-            # --- Confusion matrices (aggregated across outer folds) ---
+            # Confusion matrices (aggregated across outer folds)
             cm = confusion_matrix(np.array(true_all), np.array(pred_all), labels=classes)
             confusion_dict[clf_name] = cm
             row_sums = cm.sum(axis=1, keepdims=True)
@@ -645,7 +704,7 @@ class ADNIClassifier:
                 cm_norm = np.nan_to_num(cm_norm)
             confusion_norm_dict[clf_name] = cm_norm
 
-            # --- ROC One-vs-Rest per class (aggregated across outer folds) ---
+            # ROC One-vs-Rest per class (aggregated across outer folds)
             y_true_bin = label_binarize(np.array(true_all), classes=classes)
             fpr_dict, tpr_dict, auc_dict = {}, {}, {}
             for i, cls in enumerate(classes):
@@ -664,7 +723,7 @@ class ADNIClassifier:
                 auc_dict[cls] = auc_val
             roc_dict[clf_name] = (fpr_dict, tpr_dict, auc_dict)
 
-            # --- Refit on full training set and save final model (same behavior as before) ---
+            # Refit on full training set and save final model (same behavior as before)
             final_clf = clone(clf)
 
             sample_dimension = max(len(X_train) // len(y_train.unique()), 500)
@@ -685,7 +744,7 @@ class ADNIClassifier:
             # Fit the modified pipeline on the full training set
             fitted_full = self._safe_clone_and_fit(final_clf, X_train, y_train)
 
-            # --- Extract only the scaler (if any) and the classifier ---
+            # Extract only the scaler (if any) and the classifier
             steps_to_save = []
             if isinstance(fitted_full, Pipeline):
                 for name, step in fitted_full.named_steps.items():
@@ -703,20 +762,20 @@ class ADNIClassifier:
             except Exception:
                 joblib.dump(pipeline_to_save, model_path)
                 
-        # --- Assemble results DataFrames --- (same structure as original)
+        # Assemble results DataFrames 
         results_df = pd.DataFrame(metrics_list).sort_values("F1 Score (macro)", ascending=False)
         per_class_df = pd.DataFrame(per_class_metrics_list)
 
         display(results_df)
         display(per_class_df)
 
-        # --- Plots --- (same plotting helpers used)
+        # Plots 
         self._plot_roc_per_class(roc_dict, classes)
         self._plot_confusion_matrices(confusion_dict, title_prefix="Confusion Matrix")
         self._plot_confusion_matrices(confusion_norm_dict, title_prefix="Normalized Confusion Matrix")
         self._plot_violin(accuracies_per_model)
 
-        # --- Wilcoxon pairwise test on OUTER-FOLD F1 macro scores (unbiased samples) ---
+        # Wilcoxon pairwise test on OUTER-FOLD F1 macro scores (unbiased samples) 
         wilcoxon_results_df = self._wilcoxon_pairwise(f1_macro_per_model)
         display(wilcoxon_results_df)
 

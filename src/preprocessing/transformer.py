@@ -62,15 +62,15 @@ class ADNITransformator:
         num = self.dataset[numerator_col]
         den = self.dataset[denominator_col]
 
-        # mask where either is NA or denominator is zero
+        # Mask where either is NA or denominator is zero
         either_na_mask = num.isna() | den.isna()
         denom_zero_mask = (den == 0)
 
-        # compute ratio safely (will produce inf if denom==0, so handle it)
+        # Compute ratio safely (will produce inf if denom==0, so handle it)
         ratio = pd.Series(np.nan, index=self.dataset.index, dtype=float)
         safe_mask = (~either_na_mask) & (~denom_zero_mask)
 
-        # perform division only where safe_mask is True
+        # Perform division only where safe_mask is True
         ratio.loc[safe_mask] = (num.loc[safe_mask].astype(float) / den.loc[safe_mask].astype(float)).values
 
         # Assign new column safely
@@ -389,7 +389,7 @@ class ADNITransformator:
         if handle_na == "ignore":
             na_count = self.dataset[column].isna().sum()
             if na_count > 0:
-                print(f"  Note: original column has {na_count} NaN(s); they remain NaN after binning.")
+                print(f"  Note: original column has {na_count} NaN(s). They remain NaN after binning.")
 
         # Replace original column with the binned labels (stringified to avoid category dtype issues downstream)
         self.dataset.loc[:, column] = binned.astype(str)
@@ -439,7 +439,7 @@ class ADNITransformator:
         elif handle_na not in ("ignore", "separate", "fill", "drop"):
             raise ValueError("handle_na must be one of ['ignore','separate','fill','drop'].")
 
-        # Apply qcut; use duplicates="drop" to be robust when there are not enough unique values
+        # Apply qcut. Use duplicates="drop" to be robust when there are not enough unique values
         try:
             binned = pd.qcut(col_for_binning, q=q, labels=labels, duplicates="drop")
         except ValueError as e:
@@ -478,7 +478,7 @@ class ADNITransformator:
         if handle_na == "ignore":
             na_count = self.dataset[column].isna().sum()
             if na_count > 0:
-                print(f"  Note: original column has {na_count} NaN(s); they remain NaN after binning.")
+                print(f"  Note: original column has {na_count} NaN(s). They remain NaN after binning.")
 
         # Replace original column with the binned labels (string)
         self.dataset.loc[:, column] = binned.astype(str)
@@ -564,7 +564,7 @@ class ADNITransformator:
         if handle_na == "ignore":
             na_count = self.dataset[column].isna().sum()
             if na_count > 0:
-                print(f"  Note: original column has {na_count} NaN(s); they remain NaN after binning.")
+                print(f"  Note: original column has {na_count} NaN(s). They remain NaN after binning.")
 
         # Replace original column with the binned labels (string)
         self.dataset.loc[:, column] = binned.astype(str)

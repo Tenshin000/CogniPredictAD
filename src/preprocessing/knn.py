@@ -22,7 +22,7 @@ def knn_impute_group(train_df: pd.DataFrame, test_df: pd.DataFrame = None, cols:
     if cols is None:
         cols = []
 
-    # keep only columns that actually exist in train_df
+    # Keep only columns that actually exist in train_df
     cols = [c for c in cols if c in train_df.columns]
     if len(cols) == 0:
         return None, None, None
@@ -51,6 +51,7 @@ def knn_impute_group(train_df: pd.DataFrame, test_df: pd.DataFrame = None, cols:
     imputed_train_scaled = knn.fit_transform(train_scaled)
     train_df.loc[:, cols] = pd.DataFrame(imputed_train_scaled * stds + means, index=train_df.index, columns=cols)
 
+    # Transform test if provided
     if test_block is not None:
         imputed_test_scaled = knn.transform(test_scaled)
         test_df.loc[:, cols] = pd.DataFrame(imputed_test_scaled * stds + means, index=test_df.index, columns=cols)

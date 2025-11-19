@@ -11,34 +11,60 @@ from lime.lime_tabular import LimeTabularExplainer
 from sklearn import tree
 from sklearn.preprocessing import StandardScaler
 from sklearn.tree import export_graphviz, plot_tree, _tree
+from sklearn.utils.validation import check_is_fitted
 from typing import Union, Optional, List, Sequence, Tuple, Any
 
 
 class ModelExplainer:
-    """Explain one or more classification models with SHAP and LIME.
-
-    Parameters
-    ----------
-    models : Sequence[Tuple[str, Any]]
-        Iterable of (name, fitted_model) pairs. Models must implement predict and for LIME predict_proba.
-    X_train : pd.DataFrame
-        Feature data used for explanations (not necessarily the training set, but representative data).
-    y_train : Optional[pd.Series]
-        True labels (optional, useful to pick instances).
-    feature_names : Optional[List[str]]
-        If None, uses X_train.columns if X_train is a DataFrame.
-    class_names : Optional[List[str]]
-        Names of classes for multiclass (optional).
-    background_size : int
-        Number of background samples to use for model-agnostic explainers when needed.
     """
+    ModelExplainer
+    --------------
+    Utilities to produce model-agnostic and model-specific explanations for one or more classifiers.
+    Supports SHAP (global and local plots), LIME (local explanations), and visualization of DecisionTreeClassifier objects.
+    Designed to accept an iterable of (name, model) pairs and a representative dataset (X_train) used as background / reference data for the explainers.
 
+    Key features:
+      - Robust attempt to construct a SHAP explainer using several fallbacks (callable, predict_proba, predict,
+        or background-based fallback). Returns both the explainer and a short description of the method used.
+      - Convenience methods to produce grids of SHAP summary / waterfall / force plots for multiple models.
+      - Per-model SHAP summary-only plotting, waterfall-only, and force-only functions to let the user pick
+        a specific visualization mode and set of instances.
+      - LIME explanations laid out side-by-side for quick per-instance comparisons across models.
+      - Decision tree unwrapping and visualization that attempts to find an inner DecisionTreeClassifier inside
+        common wrappers (Pipeline, GridSearchCV, ensemble wrappers, etc.), reorder classes to a desired ordering,
+        and adjust leaf ties consistently.
+      - Defensive programming: many try/except blocks and warnings for graceful degradation when a particular
+        explainer or plot type is not available for a model.
+
+    Notes:
+      - The class expects models to be already fitted when used with plotting functions that access internals.
+      - SHAP behavior may vary across SHAP versions; the implementation tries multiple APIs (shap.plots.beeswarm,
+        shap.summary_plot, shap.plots.waterfall, shap.plots.force) and falls back sensibly.
+      - LIME requires models to expose predict_proba; the method warns and skips models that lack it.
+    """
     # ----------------------------#
     #        INITIALIZATION       #
     # ----------------------------#
     def __init__(self, models: Sequence[Tuple[str, Any]], X_train: pd.DataFrame, y_train: Optional[pd.Series] = None,
                  feature_names: Optional[List[str]] = None, class_names: Optional[List[str]] = None,
                  background_size: int = 100, random_state: int = 42):
+        """
+        Parameters:
+            models : sequence of (name, model)
+                Iterable of (string name, fitted estimator) pairs to explain.
+            X_train : pd.DataFrame
+                Representative feature data used by explainers (background/feature matrix).
+            y_train : pd.Series, optional
+                Optional labels; may be useful when selecting instances or for LIME class_names.
+            feature_names : list[str], optional
+                Names of features; defaults to X_train.columns when X_train is a DataFrame.
+            class_names : list[str], optional
+                Optional class labels (strings) for multiclass outputs.
+            background_size : int
+                Maximum number of background samples to use when constructing fallback SHAP explainers.
+            random_state : int
+                Seed used when subsampling the background data.
+        """
         # Store models as list of (name, model) pairs
         self.models = list(models)
         # Copy of training data (used for explanations)
@@ -60,8 +86,7 @@ class ModelExplainer:
         Returns (explainer, used_method) or (None, reason)."""
         # Always use X_train (copied) for explainer construction
         X_for_model = self.X_train.copy()
-        # Decide output names to pass to SHAP (prefer user-provided class_names,
-        # otherwise try to infer from the model if available)
+        # Decide output names to pass to SHAP (prefer user-provided class_names, otherwise try to infer from the model if available)
         output_names = None
         if self.class_names is not None:
             output_names = self.class_names
@@ -134,11 +159,11 @@ class ModelExplainer:
             warnings.warn("No models supplied.")
             return None
 
-        # create grid reliably: n_models rows, 3 cols
+        # Create grid reliably: n_models rows, 3 cols
         fig, axes = plt.subplots(nrows=n_models, ncols=3,
                                 figsize=(figsize_per_row[0] * 3 if n_models == 1 else figsize_per_row[0] * 3,
                                         figsize_per_row[1] * n_models))
-        # normalize to 2D array shape (n_models, 3)
+        # Normalize to 2D array shape (n_models, 3)
         axes = np.array(axes)
         if axes.ndim == 1:
             axes = axes.reshape((1, -1))  # (1,3)
@@ -155,7 +180,7 @@ class ModelExplainer:
                     a.text(0.5, 0.5, f"SHAP not available\n({name})", ha="center", va="center")
                 continue
 
-            # compute shap values
+            # Compute shap values
             try:
                 shap_vals = explainer(self.X_train)
             except Exception as e:
@@ -167,20 +192,20 @@ class ModelExplainer:
             # SUMMARY (beeswarm / summary)
             try:
                 plt.sca(ax_summary)   # set current axis
-                # try to use the SHAP matplotlib backend (many versions respect current axis with matplotlib=True)
-                # prefer shap.plots.beeswarm or summary_plot with show=False; try both defensively
+                # Try to use the SHAP matplotlib backend (many versions respect current axis with matplotlib=True)
+                # Prefer shap.plots.beeswarm or summary_plot with show=False 
                 try:
-                    # shap.plots.beeswarm accepts an Explanation or array; matplotlib backend usually honors current ax
+                    # shap.plots.beeswarm accepts an Explanation or array 
                     shap.plots.beeswarm(shap_vals, show=False)
                 except Exception:
-                    # fallback to summary_plot (older API)
+                    # Fallback to summary_plot (older API)
                     shap.summary_plot(shap_vals, features=self.X_train, feature_names=self.feature_names, show=False)
                 ax_summary.set_title(f"{name} — SHAP summary")
             except Exception as e:
                 warnings.warn(f"[{name}] summary_plot failed: {e}")
                 ax_summary.text(0.5, 0.5, "summary_plot failed", ha="center", va="center")
 
-            # validate sample index
+            # Validate sample index
             if sample_idx0 < 0 or sample_idx0 >= len(self.X_train):
                 warnings.warn(f"sample_idx {sample_idx0} out of range (len={len(self.X_train)}). Skipping instance plots.")
                 ax_water.text(0.5, 0.5, "invalid sample_idx", ha="center", va="center")
@@ -251,10 +276,10 @@ class ModelExplainer:
 
             vals_shape = getattr(shap_vals, "values", None).shape if hasattr(shap_vals, "values") else None
 
-            # determine class names
+            # Determine class names
             class_names = self.class_names or list(getattr(model, "classes_", range(vals_shape[2] if vals_shape else 1)))
 
-            # convert to array if needed
+            # Convert to array if needed
             vals = shap_vals.values if hasattr(shap_vals, "values") else np.array(shap_vals)
 
             if vals.ndim == 3:  # multiclass case: (samples, features, classes) or (samples, features, outputs)
@@ -266,7 +291,7 @@ class ModelExplainer:
                         shap.summary_plot(vals[:, :, cls_idx], features=self.X_train, feature_names=self.feature_names, show=False)
                         plt.title(f"{name} — SHAP summary — {cname}")
                     except Exception:
-                        # fallback: beeswarm with Explanation object
+                        # Fallback: beeswarm with Explanation object
                         try:
                             single_expl = shap.Explanation(values=vals[:, :, cls_idx], feature_names=self.feature_names)
                             shap.plots.beeswarm(single_expl, show=False)
@@ -276,7 +301,7 @@ class ModelExplainer:
                     plt.tight_layout()
                     plt.show()
             else:
-                # single-output case
+                # Single-output case
                 plt.figure(figsize=figsize)
                 try:
                     shap.summary_plot(shap_vals, features=self.X_train, feature_names=self.feature_names, show=False)
@@ -498,8 +523,6 @@ class ModelExplainer:
         AdaBoost/Bagging, Voting, etc.) to find the underlying DecisionTreeClassifier
         instance that actually contains `.tree_`.
         """
-        from sklearn.utils.validation import check_is_fitted
-
         def _unwrap_to_tree(est):
             """Recursively try to locate an object that has .tree_ (DecisionTreeClassifier)."""
             seen = set()
@@ -513,23 +536,23 @@ class ModelExplainer:
                     continue
                 seen.add(cid)
 
-                # direct DecisionTreeClassifier-like
+                # Direct DecisionTreeClassifier-like
                 if hasattr(cur, "tree_"):
                     return cur
 
-                # common wrapper attributes that may contain an estimator
+                # Common wrapper attributes that may contain an estimator
                 if hasattr(cur, "best_estimator_"):
                     queue.append(cur.best_estimator_)
                 if hasattr(cur, "estimator_"):
                     queue.append(cur.estimator_)
                 if hasattr(cur, "base_estimator_"):
                     queue.append(cur.base_estimator_)
-                # sklearn Pipelines
+                # Sklearn Pipelines
                 if hasattr(cur, "steps") and isinstance(getattr(cur, "steps"), (list, tuple)) and len(cur.steps) > 0:
                     queue.append(cur.steps[-1][1])
                 if hasattr(cur, "named_steps") and isinstance(getattr(cur, "named_steps"), dict) and len(cur.named_steps) > 0:
                     queue.append(list(cur.named_steps.values())[-1])
-                # ensembles like VotingClassifier, BaggingClassifier, AdaBoostClassifier
+                # Ensembles like VotingClassifier, BaggingClassifier, AdaBoostClassifier
                 if hasattr(cur, "estimators_") and getattr(cur, "estimators_", None):
                     # estimators_ is usually a list of estimators or list of (name, estimator)
                     for e in cur.estimators_:
@@ -537,7 +560,7 @@ class ModelExplainer:
                 if hasattr(cur, "estimators") and getattr(cur, "estimators", None):
                     for e in cur.estimators:
                         queue.append(e[1] if isinstance(e, tuple) else e)
-                # sometimes "base_estimator" (without trailing underscore)
+                # Sometimes "base_estimator" (without trailing underscore)
                 if hasattr(cur, "base_estimator") and getattr(cur, "base_estimator", None):
                     queue.append(cur.base_estimator)
             return None
@@ -556,7 +579,7 @@ class ModelExplainer:
                     print(f"[{name}] could not find underlying DecisionTreeClassifier (no .tree_ in object or wrappers).")
                     continue
 
-                # ensure fitted
+                # Ensure fitted
                 try:
                     check_is_fitted(inner, attributes="tree_")
                 except Exception:
@@ -569,20 +592,20 @@ class ModelExplainer:
                 # Obtain original class ordering from the estimator if possible
                 orig_classes = list(getattr(tree_copy, "classes_", []))
                 if not orig_classes:
-                    # fallback: try outer model classes_
+                    # Fallback: try outer model classes_
                     orig_classes = list(getattr(model, "classes_", [])) or orig_classes
 
                 # Reorder classes according to desired_order, preserving any other classes
                 display_classes = [c for c in desired_order if c in orig_classes] + [c for c in orig_classes if c not in desired_order]
                 if display_classes:
-                    # map indices; if mapping fails, skip reordering
+                    # Map indices. If mapping fails, skip reordering
                     try:
                         idx_map = [orig_classes.index(c) for c in display_classes]
                         # tree_.value shape: (node_count, n_outputs, n_classes) in sklearn
                         try:
                             tree_copy.tree_.value[:] = tree_copy.tree_.value[:, :, idx_map]
                         except Exception:
-                            # some sklearn versions have different shapes; attempt a safer reorder if possible
+                            # Some sklearn versions have different shapes, attempt a safer reorder if possible
                             val = tree_copy.tree_.value
                             if val.ndim == 3 and val.shape[2] == len(orig_classes):
                                 reordered = val[:, :, idx_map]
@@ -608,7 +631,7 @@ class ModelExplainer:
                             max_val = np.max(vals)
                             tied_idx = [k for k, v in enumerate(vals) if v == max_val]
                             if len(tied_idx) > 1 and getattr(tree_copy, "classes_", None) is not None:
-                                # choose worst class based on desired_order priority
+                                # Choose worst class based on desired_order priority
                                 display = list(tree_copy.classes_)
                                 def severity_index(c):
                                     try:
@@ -617,7 +640,7 @@ class ModelExplainer:
                                         return len(desired_order)  # less severe
                                 tied_classes = [display[k] for k in tied_idx]
                                 worst_class = max(tied_classes, key=severity_index)
-                                # construct a new vector: set all to max_val - 1 and worst to max_val
+                                # Construct a new vector: set all to max_val - 1 and worst to max_val
                                 new_vec = np.full_like(vals, fill_value=max_val - 1)
                                 new_vec[display.index(worst_class)] = max_val
                                 if values.ndim == 3:
@@ -625,7 +648,6 @@ class ModelExplainer:
                                 else:
                                     tree_copy.tree_.value[i, :] = new_vec
                 except Exception:
-                    # non-critical; continue to plotting
                     pass
 
                 # Plot

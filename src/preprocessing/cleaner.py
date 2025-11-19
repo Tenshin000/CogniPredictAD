@@ -137,7 +137,7 @@ class ADNICleaner:
                 return "AD"
             return None
 
-        # Trova gli indici da modificare
+        # Find the indexes to modify
         smc_indices = self.dataset.index[self.dataset["DX_bl"] == "SMC"].tolist()
 
         for idx in smc_indices:
@@ -152,7 +152,7 @@ class ADNICleaner:
                 elif mapped == "AD":
                     replaced_ad_direct += 1
 
-        # Fallback finale: tutto ciò che rimane SMC diventa CN
+        # Final fallback: everything that remains SMC becomes CN
         remaining_smc = self.dataset["DX_bl"].value_counts().get("SMC", 0)
         if remaining_smc > 0:
             self.dataset.loc[self.dataset["DX_bl"] == "SMC", "DX_bl"] = "CN"
@@ -427,12 +427,12 @@ class ADNICleaner:
         imputer = SimpleImputer(strategy='constant', fill_value=value)
         # fit_transform expects 2D array
         filled = imputer.fit_transform(self.dataset[[column]])
-        # assign back avoiding chained assignment
+        # Assign back avoiding chained assignment
         self.dataset[column] = pd.Series(filled.ravel(), index=self.dataset.index).where(
             ~self.dataset[column].isna(), pd.Series(filled.ravel(), index=self.dataset.index)
         )
-        # The where above keeps existing non-NaN values; but since we used fit_transform on full column,
-        # we can simply assign the filled result; however to be safe, we'll keep assignment:
+        # The where above keeps existing non-NaN values, but since we used fit_transform on full column,
+        # we can simply assign the filled result. However to be safe, we'll keep assignment. 
         self.dataset[column] = pd.Series(filled.ravel(), index=self.dataset.index)
 
         print(f"NaN values in column '{column}' have been replaced with '{value}'.")
@@ -502,31 +502,42 @@ class ADNICleaner:
         if dataset is not None and dataset is not pd.NA:
             self.dataset = dataset
 
+        
         if class_col not in self.dataset.columns:
             print(f"Class column '{class_col}' not found in dataset. Operation skipped.")
             return self.dataset
 
+        # Iterate requested columns and impute each one independently.
         for col in columns:
             if col not in self.dataset.columns:
                 print(f"Column '{col}' not found in dataset. Skipping.")
                 continue
 
+            # Only numeric columns are supported by this routine.
             if not np.issubdtype(self.dataset[col].dropna().dtype, np.number):
                 print(f"Column '{col}' is not numeric. Skipping.")
                 continue
 
+            # Prepare a global imputer that can be used as a fallback for groups that have no observed values.
+            # Attempt to fit it, if fitting fails treat fallback as unavailable.
             global_imputer = SimpleImputer(strategy="mean")
             try:
                 global_imputer.fit(self.dataset[[col]])
             except Exception:
                 global_imputer = None
 
+            # Work on a copy of the column values and assign filled values back at the end.
             filled_col = self.dataset[col].copy()
 
+            # Group by the class column and iterate groups. groupby(...).groups yields a mapping
+            # of group_value -> index positions belonging to that group.
             for group_val, idx in self.dataset.groupby(class_col).groups.items():
                 group_idx = list(idx)
                 group_series = self.dataset.loc[group_idx, [col]]
 
+                # If the entire group is missing for this column, attempt global fallback:
+                # - If we have a fitted global_imputer, use it to fill the rows for this group.
+                # - If no global_imputer or transformation fails, leave the values as-is.
                 if group_series[col].dropna().empty:
                     if global_imputer is not None:
                         try:
@@ -536,6 +547,9 @@ class ADNICleaner:
                             continue
                     continue
 
+                # For groups with at least one observed value, fit a group-specific mean imputer
+                # and use it to fill missing values inside the group. If this local imputer fails,
+                # attempt the global_imputer fallback (if available). 
                 imputer = SimpleImputer(strategy="mean")
                 try:
                     filled_values = imputer.fit_transform(group_series)
@@ -548,7 +562,9 @@ class ADNICleaner:
                         except Exception:
                             continue
 
+            # Assign the completed column back into the dataset and report the operation.
             self.dataset[col] = filled_col
             print(f"Column '{col}' imputed with mean by class '{class_col}'.")
 
+        # Return the (possibly modified) dataset stored on the instance.
         return self.dataset
