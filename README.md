@@ -150,7 +150,6 @@ Outlier Detection was conducted using the **Local Outlier Factor** on robustly n
 Group differences across diagnoses were analysed using the **Kruskal–Wallis test**, chosen due to the skewed, non-Gaussian distributions and presence of outliers in many variables. Nearly all cognitive, functional, CSF, and MRI measures showed highly significant differences across CN, EMCI, LMCI, and AD, while demographic effects were weaker. These results confirm systematic progression-related changes and highlight the discriminative value of the main clinical and biological features for downstream classification.
 
 
-
 ## Learning Set
 The **preparation phase** focused on isolating a coherent baseline cohort, restructuring the heterogeneous *ADNIMERGE.csv* into an analyzable form, and enforcing clinically sound data standards. The raw dataset, originally **visit–centric** and affected by extensive missingness, redundant attributes, and inconsistencies across ADNI phases, was reduced to a strictly **baseline-oriented structure** in which each participant contributes a single, diagnostically reliable record.
 
