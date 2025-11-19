@@ -34,9 +34,9 @@ After getting Data access from the Alzheimer's Disease Neuroimaging Initiative (
 
 ### Notebook 4 (Data Preprocessing)
 - [Predicting clinical decline and conversion to Alzheimer's disease or dementia using novel Elecsys Aβ(1–42), pTau and tTau CSF immunoassays](https://www.nature.com/articles/s41598-019-54204-z)
-- [Tau as a biomarker of neurodegenerative diseases](https://pmc.ncbi.nlm.nih.gov/articles/PMC2993973/)
 
 ### Notebook 5 (New Data Exploration)
+- [Sex Differences in Alzheimer’s Disease](https://pmc.ncbi.nlm.nih.gov/articles/PMC10321561/)
 - [Apolipoprotein E epsilon4 association with dementia in a population-based study: The Framingham study](https://pubmed.ncbi.nlm.nih.gov/8618665/)
 - [Outlier detection with Local Outlier Factor (LOF)](https://scikit-learn.org/stable/auto_examples/neighbors/plot_lof_outlier_detection.html)
 
@@ -79,7 +79,7 @@ pip install -e .
 - **notebooks:** Collection of Jupyter notebooks that implement the entire flow. **The heart of the project is located in the *notebooks* folder. Most of the explanations and code are there, and I recommend reading them carefully to get a clear understanding of the project.** These include preliminary exploration (01), dataset preparation (02), data exploration (03), preprocessing (04), data exploration for classification (05), tuning (06), classifier training (07), explainability (08), model evaluation (09), and creation of operational models (10);
 - **results**: Contains all the models produced. In particular, it contains the final models Model.pkl and AltModel.pkl and the interpretable models XAIModel.pkl and AltXAIModel.pkl;
 - **src**: Reusable source code:
-  - **classification** contains classifier.py, evaluator.py, xai_recover.py and grid.py;
+  - **classification** contains classifier.py, evaluator.py, xai_recover.py and grid.py (providing the components for model training, performance evaluation, explainability recovery routines, and grid-based configuration or search utilities);
   - **preprocessing** contains cleaner, transformer, KNN imputer, outlier handling, and preprocessor (all routines used to build train/test and fill missing values);
   - **visualization** contains explainer.py and visualizer.py (SHAP wrappers, permutation explainer, plotting, and tree/rule export). The rule export and tree rendering functions are implemented here.
 - Root file (CogniPredictAD): Contains the main documents and the medic app in app.py.
