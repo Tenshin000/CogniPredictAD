@@ -16,6 +16,11 @@ The \textit{preliminary data exploration}'s descriptive summaries revealed exten
 
 In the \textit{data exploration}, the training set was inspected using a reduced set of clinically relevant variables and derived ratios. Summary statistics, boxplots, and correlation maps were used to assess distributions and multicollinearity. Clinical and biomarker distributions showed the expected disease gradient but with strong overlap, skewness, and outliers. Sex differences in MRI volumes confirmed the need for ICV normalization. Class counts showed \textit{only mild imbalance} across CN, EMCI, LMCI, and AD. 
 
-After preprocessing on the training set, I performed a \textit{new data exploration}. The final training file contained a compact multimodal set covering demographics, APOE4, cognition, Ecog, CSF ratios, and MRI/ICV ratios. Feature distributions were summarised using medians and IQRs. Outliers were assessed with \textbf{Local Outlier Factor} across clinical, CSF, MRI/ICV, and combined sets. Only a small number of high-anomaly cases emerged, many clinically plausible, supporting the use of models robust to skew and extreme values rather than broad exclusion. 
+After preprocessing on the training set, I performed a \textit{new data exploration}. The dataset included demographics, APOE4, cognition, Ecog, CSF ratios, and MRI/ICV volumes, with feature distributions summarised using medians and IQRs.
+
+Outlier Detection was carried out using the \textbf{Local Outlier Factor} on robustly normalised data, applied to clinical, MRI/ICV, CSF, and full-feature groups. Only a small set of subjects showed high anomaly scores: one cognitive outlier, two MRI/ICV outliers, and five CSF biomarker outliers. Most represented biologically plausible extreme profiles (e.g., severe AD cases or unusual biomarker combinations), indicating that anomalies reflect genuine variability rather than errors. This supports adopting models tolerant to skewness and extreme values rather than removing these points.
+
+Group differences across diagnoses were evaluated with the \textbf{Kruskal--Wallis test}, chosen because many features showed skewed, non-Gaussian distributions with outliers. Almost all cognitive, functional, CSF, and MRI measures showed highly significant differences across CN, EMCI, LMCI, and AD, while demographic variables displayed weaker effects. These results confirm that the main clinical and biological features vary systematically across disease stages and are informative for downstream classification.
+
 
 

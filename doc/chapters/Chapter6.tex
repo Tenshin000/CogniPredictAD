@@ -25,8 +25,6 @@ Redundant or low-information variables were removed through a combination of sta
 \subsection{Class Balancing}
 To address the residual \textbf{class imbalance}, a \textbf{hybrid sampling pipeline} was implemented. \textbf{Majority classes} were modestly \textbf{under-sampled} with \textbf{Random Undersampler}, while \textbf{minority classes} were synthetically \textbf{oversampled} using \textbf{SMOTENC}, which preserves mixed continuous–categorical structure. All diagnostic groups (\textbf{DX}) were brought to comparable sample sizes, producing a balanced dataset suitable for unbiased model comparison.
 
-\newpage
-
 \subsection{Some Considerations}
 \subsubsection{Correlation}
 The dataset contains groups of highly correlated variables (e.g., different neuropsychological scores, ECG components, and MRI volumetric measurements). Rather than eliminating them through aggressive reduction, I decided to retain them and rely on models that are intrinsically robust to correlation.
@@ -43,8 +41,6 @@ This choice was driven by one reason: I wanted to \textbf{preserve the clinical 
 
 \subsubsection{Binning}
 Binning was not applied because it would have reduced the useful information and discriminatory power of continuous variables. The models used already capture nonlinearities and thresholds, so prior discretization is unnecessary and could introduce artifacts.
-
-\newcolumn
 
 \subsection{Final Dataset}
 The resulting dataset contains a focused and interpretable feature set spanning demographic characteristics, genetic risk, cognitive performance, functional assessments, CSF ratios, and ICV-normalized MRI measures. Its structure is explicitly tailored for multiclass diagnostic modelling, reducing redundancy while retaining clinically meaningful variability.
