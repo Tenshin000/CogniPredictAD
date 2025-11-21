@@ -99,7 +99,7 @@ class ADNICleaner:
 
     def remap_smc_baseline(self, dataset: pd.DataFrame = None) -> pd.DataFrame:
         """ 
-        Replace 'SMC' values ​​in DX_bl according to DX mapping rules: 
+        Replace 'SMC' values in DX_bl according to DX mapping rules: 
         - If DX == 'CN' -> DX_bl = 'CN' 
         - If DX == 'MCI' -> DX_bl = 'EMCI' 
         - If DX == 'Dementia' -> DX_bl = 'AD' 

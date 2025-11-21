@@ -268,31 +268,48 @@ class ModelExplainer:
 
         for name, model in models:
             explainer, used = self._get_shap_explainer(name, model)
+            if explainer is None:
+                warnings.warn(f"[{name}] Could not create SHAP explainer: {used}. Skipping.")
+                continue
+
             try:
                 shap_vals = explainer(self.X_train)
             except Exception as e:
                 warnings.warn(f"[{name}] Explainer(...) failed: {e}. Skipping.")
                 continue
 
-            vals_shape = getattr(shap_vals, "values", None).shape if hasattr(shap_vals, "values") else None
-
-            # Determine class names
-            class_names = self.class_names or list(getattr(model, "classes_", range(vals_shape[2] if vals_shape else 1)))
-
-            # Convert to array if needed
+            # Extract SHAP values and check if multiclass
             vals = shap_vals.values if hasattr(shap_vals, "values") else np.array(shap_vals)
+            is_multiclass = vals.ndim == 3
 
-            if vals.ndim == 3:  # multiclass case: (samples, features, classes) or (samples, features, outputs)
-                # SHAP sometimes gives (samples, features, classes) or (samples, features, outputs)
+            # Determine class names for display
+            if self.class_names:
+                display_classes = self.class_names
+            elif hasattr(model, "classes_"):
+                display_classes = list(model.classes_)
+            else:
+                display_classes = [f"Class {i}" for i in range(vals.shape[2] if is_multiclass else 1)]
+
+            # If multiclass, reorder shap_values to match self.class_names
+            if is_multiclass and hasattr(model, "classes_") and self.class_names:
+                try:
+                    # Map indices from model's internal order to self.class_names
+                    idx_map = [list(model.classes_).index(c) for c in self.class_names if c in model.classes_]
+                    vals = vals[:, :, idx_map]
+                except Exception as e:
+                    warnings.warn(f"[{name}] Could not reorder shap_values to match class_names: {e}")
+
+            # Plot SHAP summary per class
+            if is_multiclass:
                 n_classes = vals.shape[2]
-                for cls_idx, cname in enumerate(class_names[:n_classes]):
+                for cls_idx, cname in enumerate(display_classes[:n_classes]):
                     plt.figure(figsize=figsize)
                     try:
                         shap.summary_plot(vals[:, :, cls_idx], features=self.X_train, feature_names=self.feature_names, show=False)
                         plt.title(f"{name} — SHAP summary — {cname}")
                     except Exception:
-                        # Fallback: beeswarm with Explanation object
                         try:
+                            # Fallback for older SHAP versions
                             single_expl = shap.Explanation(values=vals[:, :, cls_idx], feature_names=self.feature_names)
                             shap.plots.beeswarm(single_expl, show=False)
                             plt.title(f"{name} — SHAP summary — {cname}")
@@ -304,7 +321,7 @@ class ModelExplainer:
                 # Single-output case
                 plt.figure(figsize=figsize)
                 try:
-                    shap.summary_plot(shap_vals, features=self.X_train, feature_names=self.feature_names, show=False)
+                    shap.summary_plot(vals, features=self.X_train, feature_names=self.feature_names, show=False)
                     plt.title(f"{name} — SHAP summary")
                 except Exception as e:
                     warnings.warn(f"[{name}] summary plot failed: {e}")
