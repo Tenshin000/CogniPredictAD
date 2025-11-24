@@ -56,7 +56,7 @@ class ADNIClassifier:
         if classifier == "standard" or classifier == "None":
             self.classifiers = self._default_classifiers()
         elif classifier == "alternative":
-            self.classifiers = self._alernative_classifiers()
+            self.classifiers = self._alternative_classifiers()
         else:
             raise ValueError(f"Unknown classifier preset: {classifier}")
 
@@ -172,7 +172,7 @@ class ADNIClassifier:
                 ])
             }
     
-    def _alernative_classifiers(self):
+    def _alternative_classifiers(self):
         preprocessing = ADNIPreprocessor()
         categorical_features = [1, 3]  # PTGENDER, APOE4
         undersample_dict = {"CN": 385, "LMCI": 385}
