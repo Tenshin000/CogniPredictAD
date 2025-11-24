@@ -322,22 +322,7 @@ class ADNIClassifier:
 
                 return prob_df.values
             except Exception:
-                pass
-
-        # Fallback to decision_function if predict_proba not available
-        if hasattr(fitted_clf, "decision_function"):
-            try:
-                df = fitted_clf.decision_function(X)
-                if df.ndim == 1:
-                    # Binary case
-                    df = np.vstack([-df, df]).T
-                probs = self._softmax(df)
-                prob_df = pd.DataFrame(probs, columns=classes[:probs.shape[1]])
-                prob_df = prob_df.reindex(columns=classes, fill_value=1e-6)
-                # Normalize to ensure sum to 1
-                prob_df = prob_df.div(prob_df.sum(axis=1), axis=0)
-                return prob_df.values
-            except Exception:
+                # If predict_proba fails, fall through to next method.
                 pass
 
         # Last resort: hard predictions -> convert to one-hot
@@ -402,7 +387,7 @@ class ADNIClassifier:
 
         for idx, cls in enumerate(classes):
             ax = axes[idx]
-            # Plot each classifier"s ROC for this class
+            # Plot each classifier's ROC for this class
             for clf_name, (fpr_dict, tpr_dict, auc_dict) in roc_dict.items():
                 fpr = fpr_dict.get(cls, None)
                 tpr = tpr_dict.get(cls, None)

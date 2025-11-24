@@ -103,21 +103,6 @@ class ADNIEvaluator:
                 # If predict_proba fails, fall through to next method.
                 pass
 
-        # Try decision_function and convert scores to probabilities via softmax
-        if hasattr(fitted_clf, "decision_function"):
-            try:
-                df = fitted_clf.decision_function(X)
-                # For binary one-dimensional output, build two-column representation
-                if df.ndim == 1:
-                    df = np.vstack([-df, df]).T
-                probs = self._softmax(df)
-                prob_df = pd.DataFrame(probs, columns=classes[:probs.shape[1]])
-                prob_df = prob_df.reindex(columns=classes, fill_value=1e-6)
-                prob_df = prob_df.div(prob_df.sum(axis=1), axis=0)
-                return prob_df.values
-            except Exception:
-                pass
-
         # Fallback: one-hot encoding of hard predictions
         preds = fitted_clf.predict(X)
         one_hot = np.zeros((len(preds), len(classes)))
